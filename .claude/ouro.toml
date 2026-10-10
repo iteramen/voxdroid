@@ -1,0 +1,40 @@
+# Binding for ouro (https://github.com/iteramen/ouro), the issue-to-PR workflow this repo is
+# developed with.
+schema = 1
+
+[repo]
+slug = "iteramen/voxdroid"
+default_branch = "main"
+protected_branch_prefixes = []
+
+[labels]
+scope = []
+area = []
+type = ["bug", "enhancement", "documentation"]
+
+# `run` builds a Windows checkout through WSL (CONTRIBUTING.md); `ci` is the same on Linux.
+[[gate]]
+areas = ["*"]
+run = 'wsl -d Ubuntu-22.04 -- bash -lc "./gradlew lint testDebugUnitTest assembleDebug"'
+ci = "./gradlew lint testDebugUnitTest assembleDebug"
+
+[ship]
+policy = "stop-at-pr"
+review = "adversarial-review"
+test_first_for_bugs = true
+
+[rolling_issues]
+drift_audit = "Docs drift audit"
+loop_runs = "Loop runs"
+
+[authority]
+local = ["CONTRIBUTING.md"]
+
+[overlays]
+implement = ["CONTRIBUTING.md"]
+land = []
+drift = []
+
+[owner]
+role = "loop owner"
+ruling_approvers = ["BoJl4apa"]

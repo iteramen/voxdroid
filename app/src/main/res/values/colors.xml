@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dot_idle">#FF8C8C8C</color>
+    <color name="dot_recording">#FFDC2828</color>
+    <color name="dot_working">#FFE6A01E</color>
+    <color name="dot_error">#FFC81E5A</color>
+</resources>

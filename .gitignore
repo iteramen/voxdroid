@@ -1,0 +1,13 @@
+/build
+*/build/
+/.gradle
+/local.properties
+app/gradle.lockfile
+*.jks
+*.keystore
+keystore.properties
+.idea/
+# Kotlin 2.x compiler daemon session files
+.kotlin/
+.claude/ouro.local.toml
+.claude/worktrees/

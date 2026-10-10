@@ -1,0 +1,24 @@
+name: CI
+
+# Runs every [[gate]] from .claude/ouro.toml (its `ci` command) through ouro's gates action.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Gates from the binding
+        uses: iteramen/ouro/actions/gates@b8fea213ea8736266e16667a0910ea3cd60bc058 # v0.4.0

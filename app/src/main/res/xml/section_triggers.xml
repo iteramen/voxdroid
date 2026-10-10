@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="trigger_volume"
+        android:summary="@string/settings_trigger_volume_summary"
+        android:title="@string/settings_trigger_volume" />
+
+    <EditTextPreference
+        android:defaultValue="500"
+        android:key="volume_hold_ms"
+        android:title="@string/settings_volume_hold_ms"
+        app:useSimpleSummaryProvider="true" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="trigger_button"
+        android:summary="@string/settings_trigger_button_summary"
+        android:title="@string/settings_trigger_button" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="allow_during_call"
+        android:summary="@string/settings_allow_during_call_summary"
+        android:title="@string/settings_allow_during_call" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="haptic_cues"
+        android:summary="@string/settings_haptic_cues_summary"
+        android:title="@string/settings_haptic_cues" />
+
+</PreferenceScreen>

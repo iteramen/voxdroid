@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 31+. Both mechanisms: on some manufacturers' devices allowBackup="false" stops cloud backup but not device transfer. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude
+            domain="sharedpref"
+            path="secrets.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude
+            domain="sharedpref"
+            path="secrets.xml" />
+    </device-transfer>
+</data-extraction-rules>

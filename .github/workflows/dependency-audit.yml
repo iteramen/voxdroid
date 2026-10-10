@@ -1,0 +1,38 @@
+name: dependency audit
+
+# OSV-Scanner over the APK's runtime classpaths; blocks on any known vulnerability. Only the
+# *RuntimeClasspath configurations are locked (app/build.gradle.kts), so build tooling's
+# advisories stay out of scope. An exception is an [[IgnoredVulns]] entry (id, reason,
+# ignoreUntil) in a root osv-scanner.toml. Bump the binary's release and SHA256 together.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # bash rather than the default shell: pipefail.
+      - name: osv-scanner over the runtime classpaths
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:dependencies --write-locks
+          tool="$(mktemp -d)"
+          curl -fsSL -o "$tool/osv-scanner_linux_amd64" https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64
+          echo "ca69b3d3cd08f889a49dc0a383122f71cc528b83803671df5fd874d97485b108  $tool/osv-scanner_linux_amd64" | sha256sum -c -
+          chmod +x "$tool/osv-scanner_linux_amd64"
+          # osv-scanner looks for its config beside the scanned file (app/), not at the root.
+          cfg=()
+          if [ -f osv-scanner.toml ]; then cfg=(--config osv-scanner.toml); fi
+          "$tool/osv-scanner_linux_amd64" scan source "${cfg[@]}" -L app/gradle.lockfile

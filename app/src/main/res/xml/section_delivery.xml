@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/settings_no_field_mode">
+        <CheckBoxPreference
+            android:key="no_field_refuse"
+            android:persistent="false"
+            android:title="@string/settings_no_field_refuse"
+            android:widgetLayout="@layout/preference_widget_radio" />
+        <CheckBoxPreference
+            android:key="no_field_clipboard"
+            android:persistent="false"
+            android:title="@string/settings_no_field_clipboard"
+            android:widgetLayout="@layout/preference_widget_radio" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

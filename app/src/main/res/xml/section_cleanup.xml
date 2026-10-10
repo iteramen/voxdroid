@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="polish_enabled"
+        android:summary="@string/settings_polish_enabled_summary"
+        android:title="@string/settings_polish_enabled" />
+
+    <EditTextPreference
+        android:defaultValue=""
+        android:dialogMessage="@string/settings_polish_base_url_hint"
+        android:key="polish_base_url"
+        android:title="@string/settings_polish_base_url" />
+
+    <EditTextPreference
+        android:defaultValue=""
+        android:dialogMessage="@string/settings_polish_model_hint"
+        android:key="polish_model"
+        android:title="@string/settings_polish_model"
+        app:useSimpleSummaryProvider="true" />
+
+    <EditTextPreference
+        android:defaultValue=""
+        android:dialogMessage="@string/settings_token_hint"
+        android:key="polish_token"
+        android:title="@string/settings_polish_token" />
+
+    <EditTextPreference
+        android:defaultValue="0"
+        android:dialogMessage="@string/settings_polish_min_words_hint"
+        android:key="polish_min_words"
+        android:title="@string/settings_polish_min_words"
+        app:useSimpleSummaryProvider="true" />
+
+    <EditTextPreference
+        android:defaultValue="20"
+        android:dialogMessage="@string/settings_timeout_hint"
+        android:key="polish_timeout_s"
+        android:title="@string/settings_polish_timeout"
+        app:useSimpleSummaryProvider="true" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="capitalize_first_word"
+        android:summary="@string/settings_capitalize_first_word_summary"
+        android:title="@string/settings_capitalize_first_word" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="strip_terminal_period"
+        android:summary="@string/settings_strip_terminal_period_summary"
+        android:title="@string/settings_strip_terminal_period" />
+
+</PreferenceScreen>

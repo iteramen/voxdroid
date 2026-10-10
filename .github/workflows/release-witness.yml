@@ -1,0 +1,33 @@
+name: release witness
+
+# The unsigned-release warning must print on every bundleRelease, including a configuration-cache
+# hit (run 2). keystore.properties is absent here, so nothing is signed or uploaded.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # bash rather than the default shell: pipefail.
+      - name: release witness
+        shell: bash
+        run: |
+          line='release signing: keystore.properties absent, release artifacts will be unsigned'
+          for i in 1 2; do
+            ./gradlew bundleRelease --configuration-cache 2>&1 | tee "release-$i.log"
+            test "$(grep -c "$line" "release-$i.log")" = 1
+          done
+          grep -qE 'Configuration cache entry (stored|reused)' release-1.log
+          grep -q 'Reusing configuration cache.' release-2.log

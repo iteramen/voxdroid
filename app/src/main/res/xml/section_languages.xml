@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <EditTextPreference
+        android:dialogMessage="@string/settings_chip_languages_hint"
+        android:key="chip_languages"
+        android:title="@string/settings_your_languages"
+        app:useSimpleSummaryProvider="true" />
+
+    <PreferenceCategory
+        android:key="category_languages"
+        android:title="@string/settings_languages" />
+
+</PreferenceScreen>

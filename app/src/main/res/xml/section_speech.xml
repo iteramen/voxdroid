@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <EditTextPreference
+        android:defaultValue=""
+        android:dialogMessage="@string/settings_stt_base_url_hint"
+        android:key="stt_base_url"
+        android:title="@string/settings_stt_base_url" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="allow_insecure_http"
+        android:summary="@string/settings_allow_insecure_http_summary"
+        android:title="@string/settings_allow_insecure_http"
+        app:singleLineTitle="false" />
+
+    <EditTextPreference
+        android:defaultValue=""
+        android:dialogMessage="@string/settings_token_hint"
+        android:key="stt_token"
+        android:title="@string/settings_stt_token" />
+
+    <EditTextPreference
+        android:defaultValue="whisper-1"
+        android:dialogMessage="@string/settings_stt_model_hint"
+        android:key="stt_model"
+        android:title="@string/settings_stt_model"
+        app:useSimpleSummaryProvider="true" />
+
+    <EditTextPreference
+        android:defaultValue=""
+        android:dialogMessage="@string/settings_stt_prompt_hint"
+        android:key="stt_prompt"
+        android:title="@string/settings_stt_prompt"
+        app:useSimpleSummaryProvider="true" />
+
+    <EditTextPreference
+        android:defaultValue="30"
+        android:dialogMessage="@string/settings_timeout_hint"
+        android:key="stt_timeout_s"
+        android:title="@string/settings_stt_timeout"
+        app:useSimpleSummaryProvider="true" />
+
+    <EditTextPreference
+        android:defaultValue="0.3"
+        android:dialogMessage="@string/settings_no_speech_threshold_hint"
+        android:key="no_speech_threshold"
+        android:title="@string/settings_no_speech_threshold"
+        app:useSimpleSummaryProvider="true" />
+
+</PreferenceScreen>
