@@ -1,0 +1,123 @@
+name: release
+
+# A tag becomes a signed APK on GitHub Releases, with SHA256SUMS and a build-provenance
+# attestation. Signed with the GitHub-release key, never the Play upload key.
+on:
+  push:
+    tags: ["v*"]
+  # Releases an already-pushed tag after a failed run; a published release stops at `released`.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, e.g. v0.1.0"
+        required: true
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # The tag reaches scripts only through env and is validated before anything reads it.
+      - id: tag
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::not a release tag: $(printf %s "$TAG" | tr -d '\r\n' | head -c 80)"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          case "$TAG" in
+            *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
+            *)   echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - id: released
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null)" = "false" ]; then
+            echo "::notice::$TAG is already released; delete it first to replace it"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.released.outputs.exists != 'true'
+        with:
+          ref: refs/tags/${{ steps.tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Tag must name the version the app shows
+        if: steps.released.outputs.exists != 'true'
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          base="${TAG#v}"; base="${base%%-*}"
+          version="$(sed -n 's/^ *versionName = "\(.*\)"$/\1/p' app/build.gradle.kts)"
+          if [ "$base" != "$version" ]; then
+            echo "::error::tag $TAG claims version $base, app/build.gradle.kts says $version" >&2
+            exit 1
+          fi
+
+      # The keystore lives only in the runner's temp dir for this job.
+      - name: Signing config
+        if: steps.released.outputs.exists != 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.VOXDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.VOXDROID_KEYSTORE_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" && test -n "$KEYSTORE_PASSWORD"
+          printf %s "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/github.jks"
+          {
+            echo "storeFile=$RUNNER_TEMP/github.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=github"
+            echo "keyPassword=$KEYSTORE_PASSWORD"
+          } > keystore.properties
+
+      - if: steps.released.outputs.exists != 'true'
+        run: ./gradlew testDebugUnitTest assembleRelease
+
+      - name: Assemble the APK and its checksum
+        if: steps.released.outputs.exists != 'true'
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          mkdir dist
+          apk="voxdroid-$TAG.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/$apk"
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
+          "$apksigner" verify --print-certs "dist/$apk" | grep "SHA-256 digest"
+          (cd dist && sha256sum "$apk" > SHA256SUMS && cat SHA256SUMS)
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: steps.released.outputs.exists != 'true'
+        with:
+          subject-path: dist/voxdroid-${{ steps.tag.outputs.tag }}.apk
+
+      - name: Publish the release
+        if: steps.released.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
+        run: |
+          args=(--generate-notes --verify-tag)
+          if [ "$PRERELEASE" = "true" ]; then args+=(--prerelease); fi
+          gh release create "$TAG" "${args[@]}" "dist/voxdroid-$TAG.apk" dist/SHA256SUMS
+
+      - if: always()
+        run: rm -f keystore.properties "$RUNNER_TEMP/github.jks"

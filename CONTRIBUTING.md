@@ -15,7 +15,9 @@ JDK 17 and the Android SDK (platform 36, build-tools 36). On Linux:
 
 That is the gate every pull request must pass, and what CI runs. Two more CI jobs:
 `release-witness.yml` (the release bundle builds and warns that it is unsigned) and
-`dependency-audit.yml` (OSV-Scanner over the shipped dependencies; blocks).
+`dependency-audit.yml` (OSV-Scanner over the shipped dependencies; blocks). A `v*` tag runs
+`release.yml`: a signed APK on GitHub Releases, with `SHA256SUMS` and an attestation. It signs with
+the GitHub-release key held in the repository's secrets, never the Play upload key.
 
 On Windows, build in WSL Ubuntu against the Windows checkout (`/mnt/c/...`):
 
@@ -47,7 +49,7 @@ CI runs, then set the new distribution sum from the `.sha256` file Gradle publis
 ```sh
 export GRADLE_USER_HOME=$(mktemp -d)
 rm gradle/verification-metadata.xml
-./gradlew --write-verification-metadata sha256 lint testDebugUnitTest assembleDebug bundleRelease :app:dependencies
+./gradlew --write-verification-metadata sha256 lint testDebugUnitTest assembleDebug assembleRelease bundleRelease :app:dependencies
 ```
 
 The file records `aapt2` for Linux only, so verification fails on a Windows or macOS host build.
