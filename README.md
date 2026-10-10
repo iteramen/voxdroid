@@ -29,6 +29,10 @@ no-speech gate and `language_probabilities` the auto-detect routing below.
 ## Install
 
 - **Google Play:** coming soon.
+- **GitHub:** a signed APK on [Releases](https://github.com/iteramen/voxdroid/releases).
+  [docs/sideload.md](docs/sideload.md) walks through Android's hurdles for an app from outside
+  Play: allowing the install, Play Protect, and the restricted setting that blocks a sideloaded
+  accessibility service.
 - **From source:** build as [CONTRIBUTING.md](CONTRIBUTING.md) describes, then
   `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
 

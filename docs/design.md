@@ -212,9 +212,10 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
   `./gradlew lint testDebugUnitTest assembleDebug`; `release-witness.yml` builds `bundleRelease`
   twice and requires the unsigned-release warning on both; `dependency-audit.yml` runs
   OSV-Scanner over the runtime classpaths and blocks. Release artifacts are unsigned unless
-  `keystore.properties` is present, and CI uploads nothing.
+  `keystore.properties` is present. A `v*` tag runs `release.yml`, which signs an APK with the
+  GitHub-release key and publishes it with `SHA256SUMS` and an attestation.
 
 ## Not built yet
 
-- A release: nothing is released, Google Play is still to come, and no APK is on GitHub releases.
+- The Google Play listing.
 - Read-aloud, always-on transcription, and an opt-in capture log of takes.

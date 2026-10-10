@@ -1,10 +1,14 @@
 # Changelog
 
-Notable changes per release. Nothing has been released yet.
+Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
+build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+## 0.1.0 — 2026-10-10
+
 Added
+- A signed APK on GitHub Releases, and [docs/sideload.md](docs/sideload.md) on installing it.
 - Dictation through an accessibility service, with Gboard staying up: hold volume-down or tap the
   accessibility button, and the text lands at the cursor of the focused field.
 - Speech-to-text against your own OpenAI-compatible server, with an optional cleanup pass that

@@ -212,6 +212,10 @@ scope:** the shell or the system broadcasting to `ProfileInstallReceiver`.
 - Every build task fails on a tampered or unlisted artifact, transitive ones and build tooling
   included, checked against a sha256 in the generated `gradle/verification-metadata.xml` (no PGP).
   The Gradle wrapper sets `validateDistributionUrl=true` and `distributionSha256Sum`.
+- GitHub release APKs are built by `release.yml` from the tag, signed with a key used only for
+  GitHub releases (SHA-256 certificate fingerprint in [docs/sideload.md](docs/sideload.md)), and
+  published with `SHA256SUMS` and a build-provenance attestation. The key lives in the
+  repository's Actions secrets and on the job's runner only while it signs.
 - CI runs the gate (`lint testDebugUnitTest assembleDebug`), the release witness and the
   dependency audit, all with `contents: read`, every action pinned by commit SHA
   (`.github/workflows/`). The audit runs OSV-Scanner over a lockfile of the runtime classpaths and
