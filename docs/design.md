@@ -138,6 +138,10 @@ that are not two lowercase letters are dropped and logged, `Language.kt` — `la
 node and returns a `Field` only for an editable one: the node as identity (window plus node id),
 and whether it is a password field (`isPassword`, or a password input type on the node or in the
 keyboard's `EditorInfo`, `isPasswordInputType`). The node cache is off after every lookup.
+Jetpack Compose answers the input-focus query only once something has read its focused node, so
+when the answer is missing or not editable and the keyboard has an input started, `firstMatch`
+walks the window depth-first (at most 500 nodes) for a focused, editable node; reading it also
+fixes Compose's later answers, so the field compares equal at delivery.
 
 - **At the start** (`admit`): a call in progress (`isCallMode`, unless `allow_during_call`) or a
   password field refuses; a field records; no field records only in clipboard mode.

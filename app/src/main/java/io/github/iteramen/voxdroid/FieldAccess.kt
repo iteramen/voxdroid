@@ -17,8 +17,12 @@ class FieldAccess(private val service: AccessibilityService) {
     }
 
     private fun lookup(): Field? {
-        val node = service.getRootInActiveWindow(0)?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return null
-        if (!node.isEditable) return null
+        val root = service.getRootInActiveWindow(0) ?: return null
+        // Compose answers input focus only after its focused node was read; the walk reads it.
+        val node = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.takeIf { it.isEditable }
+            ?: root.takeIf { service.inputMethod?.currentInputStarted == true }
+                ?.let { firstMatch(it, WALK_CAP, ::children) { n -> n.isFocused && n.isEditable } }
+            ?: return null
         // Compose sets no input type on its nodes but writes the variation into the EditorInfo (API 33).
         val imeType = service.inputMethod?.currentInputEditorInfo?.inputType ?: 0
         val password = node.isPassword || isPasswordInputType(node.inputType) || isPasswordInputType(imeType)
@@ -41,6 +45,25 @@ class FieldAccess(private val service: AccessibilityService) {
     }
 
     fun keyboardTag(): String? = FieldAccessTag.current(service)
+
+    private fun children(node: AccessibilityNodeInfo) = (0 until node.childCount).mapNotNull { node.getChild(it) }
+
+    private companion object {
+        // One IPC per node with the cache off; a page's whole tree would stall the trigger.
+        const val WALK_CAP = 500
+    }
+}
+
+/** Depth-first from [root] in child order, visiting at most [cap] nodes. */
+internal fun <N> firstMatch(root: N, cap: Int, children: (N) -> List<N>, match: (N) -> Boolean): N? {
+    val stack = ArrayDeque(listOf(root))
+    var visited = 0
+    while (stack.isNotEmpty() && visited++ < cap) {
+        val node = stack.removeLast()
+        if (match(node)) return node
+        children(node).asReversed().forEach(stack::addLast)
+    }
+    return null
 }
 
 object FieldAccessTag {
