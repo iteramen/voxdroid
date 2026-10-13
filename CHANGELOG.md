@@ -5,6 +5,8 @@ build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+## 0.1.1 — 2026-10-13
+
 Fixed
 - ChatGPT, Grok and other Jetpack Compose apps no longer refuse with `no text field` while their
   text box is focused and the keyboard is up.
