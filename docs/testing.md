@@ -307,6 +307,8 @@ does both from the status card's **Turn on**.
       media playing starts dictation instead of lowering the volume continuously
 - [ ] tap the accessibility button, speak, tap it again: same as above
 - [ ] the same in Keep and in one Compose field (Google Messages)
+- [ ] force-stop ChatGPT, open it and tap its text box, then trigger at once: it records, no
+      `no text field`
 - [ ] `■ Stop` stops; `✕` discards, and nothing is typed; a vertical drag that starts on either
       button moves the pill up or down; a slightly wobbly tap still taps. Once Stop is pressed the
       pill shows no `✕` while it reads `stt…` or `polish…`; an error pill shows `✕` again
