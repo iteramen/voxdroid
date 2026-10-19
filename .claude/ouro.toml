@@ -24,7 +24,6 @@ review = "adversarial-review"
 test_first_for_bugs = true
 
 [rolling_issues]
-drift_audit = "Docs drift audit"
 loop_runs = "Loop runs"
 
 [authority]
@@ -33,7 +32,6 @@ local = ["CONTRIBUTING.md"]
 [overlays]
 implement = ["CONTRIBUTING.md"]
 land = []
-drift = []
 
 [owner]
 role = "loop owner"
