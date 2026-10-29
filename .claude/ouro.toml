@@ -14,7 +14,6 @@ type = ["bug", "enhancement", "documentation"]
 
 # `run` builds a Windows checkout through WSL (CONTRIBUTING.md); `ci` is the same on Linux.
 [[gate]]
-areas = ["*"]
 run = 'wsl -d Ubuntu-22.04 -- bash -lc "./gradlew lint testDebugUnitTest assembleDebug"'
 ci = "./gradlew lint testDebugUnitTest assembleDebug"
 
