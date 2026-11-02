@@ -21,4 +21,4 @@ jobs:
           persist-credentials: false
 
       - name: Gates from the binding
-        uses: iteramen/ouro/actions/gates@279ebe8171426c9291322426ebaf7eb27002d967 # v1.9.1
+        uses: iteramen/ouro/actions/gates@db7a64d44ec380b8b787a804d4db9658be705ee4 # v1.9.3
