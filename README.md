@@ -65,8 +65,8 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 ## Dictate
 
 - **Start:** hold volume-down (500 ms by default, at least 300; Triggers page) or tap the
-  accessibility button. Recording starts at once and the pill appears above the keyboard with a
-  red dot and a timer. A quick volume-down press while idle still lowers the volume.
+  accessibility button. Recording starts once the start tone has played (at once with tones off)
+  and the pill appears above the keyboard with a red dot and a timer. A quick volume-down press while idle still lowers the volume.
 - **Stop:** press volume-down, tap the accessibility button again, or tap **■ Stop** on the pill.
   There is no silence timeout: pause to think as long as you like. A take stops itself at five
   minutes and is transcribed.
@@ -80,6 +80,8 @@ dictation**. While the screen is open, it checks every five seconds that the spe
   *Copy to the clipboard*.
 - Drag the pill up or down; it keeps that height above the keyboard. With *Vibrate on start and
   done* on, a click marks a start and a landing, and a double click a failure or a refusal.
+  *Tones on start and done* (on by default) beeps for the same moments, at *Tone volume (%)* (5 by
+  default), and stays quiet while the phone is on silent or vibrate or Do Not Disturb is on.
 
 ## Privacy in brief
 

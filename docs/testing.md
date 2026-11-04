@@ -417,3 +417,37 @@ by default.
       `stt transport` error, and note whether the latest vibrations from
       `io.github.iteramen.voxdroid` read `IGNORED_BACKGROUND`
 - [ ] unknown, record what happens: the same start, done and error cues with battery saver on
+
+## Cue tones
+
+A high beep (880 Hz) before recording starts, a lower one (660 Hz) when text lands or is copied,
+a falling pair (440 Hz, then 220 Hz) wherever the double click plays. **Tones on start and done**
+and **Tone volume (%)** (default on, 5) are on the Triggers page. Run with the ringer on and Do
+Not Disturb off unless a row says otherwise, and the notification volume up.
+
+- [ ] hold volume-down in a chat: one high beep, then the pill appears and the click plays; tap the
+      accessibility button instead: the same
+- [ ] stop the take: one lower beep as the text lands; mode Clipboard with no field focused: the
+      same beep with `copied to the clipboard`
+- [ ] airplane mode on and dictate: the falling pair with the `stt transport` error pill; point
+      `Cleanup endpoint` at a dead port: the raw text lands with the falling pair, not the lower
+      beep
+- [ ] trigger in a password field, and with no text field focused (mode Refuse): the falling pair
+      and no high beep; start in one chat and switch chats before the text arrives: the falling
+      pair with `field changed — not inserted`
+- [ ] trigger in silence and stop: no tone with `silence`; `✕` while recording, the screen turning
+      off while the pill reads `stt…`, and Stop alone: no tone
+- [ ] trigger and tap `✕` within the beep, or turn the screen off within it: no pill, no microphone
+      indicator, and no tone afterwards
+- [ ] turn **Tones on start and done** off: none of the rows above beeps, and the clicks still play
+- [ ] **Tone volume (%)** at 0: no tone; at 5 against 50: the second is clearly louder; the setting
+      survives a force stop
+- [ ] tones on, **Vibrate on start and done** off: beeps and no clicks; both on: both, the click
+      at the start coming once the beep has finished
+- [ ] ringer on vibrate, ringer silent, and Do Not Disturb on (in each case try Priority only
+      too): no tone, the clicks unchanged, and the system volumes and DND state unchanged afterwards
+- [ ] with music playing: the music ducks for each beep and comes back
+- [ ] the beeps come from the phone speaker with nothing connected, from a wired headset when
+      plugged in, and from a Bluetooth headset when connected; a take starts and lands each time
+- [ ] dictate one word on the speaker at volume 100 % against a server that logs or keeps the
+      upload: the start beep is not in the uploaded audio

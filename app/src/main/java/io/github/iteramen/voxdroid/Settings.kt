@@ -9,6 +9,13 @@ internal fun typed(raw: String?): String = raw.orEmpty().trim()
 
 internal const val HAPTIC_CUES_DEFAULT = true
 
+internal const val AUDIO_CUES_DEFAULT = true
+
+internal const val CUE_VOLUME_DEFAULT = 5
+
+/** Percent of full scale. */
+internal fun cueVolume(stored: Int): Int = stored.coerceIn(0, 100)
+
 internal const val ALLOW_INSECURE_HTTP_DEFAULT = false
 
 /** Two app-private files: `voxdroid`, and `secrets` for the tokens alone, the file `android:dataExtractionRules` keeps off a backup. */
@@ -55,6 +62,10 @@ class Settings(context: Context) {
     val allowDuringCall: Boolean get() = prefs.getBoolean("allow_during_call", false)
 
     val hapticCues: Boolean get() = prefs.getBoolean("haptic_cues", HAPTIC_CUES_DEFAULT)
+
+    val audioCues: Boolean get() = prefs.getBoolean("audio_cues", AUDIO_CUES_DEFAULT)
+
+    val cueVolume: Int get() = cueVolume(prefs.getInt("cue_volume", CUE_VOLUME_DEFAULT))
 
     val volumeHoldMs: Int get() = prefs.getInt("volume_hold_ms", DEFAULT_HOLD_MS).coerceAtLeast(MIN_HOLD_MS)
 

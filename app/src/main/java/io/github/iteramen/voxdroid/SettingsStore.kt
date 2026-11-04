@@ -101,6 +101,13 @@ internal class SettingsStore(context: Context) : PreferenceDataStore() {
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean = prefs.getBoolean(key, defValue)
 
+    /** The cue volume's slider; the base class throws on a put. */
+    override fun putInt(key: String, value: Int) {
+        prefs.edit().putInt(key, value).apply()
+    }
+
+    override fun getInt(key: String, defValue: Int): Int = prefs.getInt(key, defValue)
+
     private companion object {
         const val SETTINGS_FILE = "voxdroid"
         const val SECRETS_FILE = "secrets"
