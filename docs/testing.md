@@ -353,6 +353,16 @@ does both from the status card's **Turn on**.
       volume-down (or tap the accessibility button): the pill and its Retry stay as they were; tap
       into the original field again and tap Retry, and the same take lands
 - [ ] start a take, then lock the screen: nothing is typed after unlocking, and the pill is gone
+- [ ] screen timeout at 30 s: dictate for over 40 s without touching the phone and stop with
+      volume-down: the screen stays on throughout and the text lands
+- [ ] screen timeout at 30 s, STT and cleanup timeouts at 60 s: point the STT base URL at a stub
+      that holds its reply for about 40 s, dictate, stop, and leave the phone alone: the screen
+      stays on through `stt…` and the text lands; the same with a cleanup stub held about 40 s
+      through `polish…`
+- [ ] screen timeout at 30 s: after a take lands, and after an error pill shows (airplane mode),
+      leave the phone alone: the screen times out about 30 s later as usual
+- [ ] while recording, tap into the field and type on Gboard: the pill still takes no focus and
+      the keys land in the field
 - [ ] with the cleanup endpoint configured and `Minimum words` at its default, stop a take and
       turn the screen off while the pill reads `stt…`: nothing is typed, and the cleanup server's
       access log shows no request for that dictation — the transcript of an abandoned take never

@@ -5,6 +5,10 @@ build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+Fixed
+- The screen no longer times out mid-take and throws the dictation away: it stays on while
+  recording and while the transcript and cleanup are pending. Locking the screen still cancels.
+
 ## 0.1.1 — 2026-10-13
 
 Fixed
