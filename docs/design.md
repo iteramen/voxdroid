@@ -109,8 +109,12 @@ cancels its timer. A connection failure is named from the exception's type, neve
 `polish timed out, raw text`; any other send failure keeps `stt transport` or
 `polish failed, raw text`. When the endpoint's host is in 100.64.0.0/10 or ends in `.ts.net`
 (`tailnetHost`), the line ends `— Tailscale not connected?`: a guess from the host alone, never
-from Tailscale's state, and never on an HTTP status, a malformed reply or a refusal. Centred,
-its bottom sits a saved distance above the keyboard
+from Tailscale's state, and never on an HTTP status, a malformed reply or a refusal.
+While Recording and Working the pill's window carries
+`FLAG_KEEP_SCREEN_ON` (`keepsScreenOn`), so the automatic timeout, which would send the same
+`ACTION_SCREEN_OFF` as the power button and cancel, does not fire; an Error, a notice or the
+pill's removal releases it, and no wake lock backs it. Centred, its bottom sits a saved distance
+above the keyboard
 window (`keyboardTop`) or the screen's bottom (`PillPlacement.kt` — `place`, `remember`); a
 vertical drag saves a new one (`Settings.kt` — `pillSaved`); `typeWindowsChanged`, the only
 subscribed event, re-places it (`follow`). Haptic cues (`Cue.kt`): a click for a start and for

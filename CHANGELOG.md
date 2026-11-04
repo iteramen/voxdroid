@@ -12,6 +12,10 @@ Changed
   `unreachable` instead of `transport`. For a host in 100.64.0.0/10 or under `.ts.net`, the pill
   also asks `Tailscale not connected?`.
 
+Fixed
+- The screen no longer times out mid-take and throws the dictation away: it stays on while
+  recording and while the transcript and cleanup are pending. Locking the screen still cancels.
+
 ## 0.1.1 — 2026-10-13
 
 Fixed
