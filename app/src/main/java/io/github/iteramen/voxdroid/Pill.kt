@@ -65,10 +65,12 @@ class Pill(
             }
             TakeState.Idle -> hide()
         }
+        keepScreenOn(keepsScreenOn(state))
     }
 
     fun flash(message: String) {
         val v = view ?: attach()
+        keepScreenOn(false)
         v.findViewById<TextView>(R.id.pill_line).text = message
         v.findViewById<Button>(R.id.pill_primary).visibility = View.GONE
         v.findViewById<Button>(R.id.pill_cancel).visibility = View.VISIBLE
@@ -102,6 +104,17 @@ class Pill(
         val p = params ?: return
         if ((v as PillLayout).dragging) return
         p.y = topFor(v)
+        windows.updateViewLayout(v, p)
+    }
+
+    /** The window is reused across states, so the flag is set and cleared in place; removing the window releases it. */
+    private fun keepScreenOn(on: Boolean) {
+        val v = view ?: return
+        val p = params ?: return
+        val flags = if (on) p.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            else p.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON.inv()
+        if (flags == p.flags) return
+        p.flags = flags
         windows.updateViewLayout(v, p)
     }
 

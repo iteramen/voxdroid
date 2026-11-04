@@ -101,7 +101,10 @@ The start field is kept through an Error, so a Retry delivers into it.
 The pill (`Pill.kt`) is a `TYPE_ACCESSIBILITY_OVERLAY` that never takes focus. Recording: red
 dot, elapsed time, **■ Stop**, **✕**. Working: `stt…` or `polish…`, no ✕. Error: the stage's bar
 (`stt transport`, `stt[he] HTTP 502`), **↻ Retry** while audio is held, ✕. A notice (`flash`)
-shows for 2.5 s, one line per take. Centred, its bottom sits a saved distance above the keyboard
+shows for 2.5 s, one line per take. While Recording and Working the pill's window carries
+`FLAG_KEEP_SCREEN_ON` (`keepsScreenOn`), so the automatic timeout, which would send the same
+`ACTION_SCREEN_OFF` as the power button and cancel, does not fire; an Error, a notice or the
+pill's removal releases it, and no wake lock backs it. Centred, its bottom sits a saved distance above the keyboard
 window (`keyboardTop`) or the screen's bottom (`PillPlacement.kt` — `place`, `remember`); a
 vertical drag saves a new one (`Settings.kt` — `pillSaved`); `typeWindowsChanged`, the only
 subscribed event, re-places it (`follow`). Haptic cues (`Cue.kt`): a click for a start and for
