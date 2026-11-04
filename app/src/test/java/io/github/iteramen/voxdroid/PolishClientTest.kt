@@ -305,8 +305,18 @@ class PolishClientTest {
 
         val outcome = polish(client(server.url), "two words", 3)
 
-        assertEquals(PolishOutcome.Text("two words"), outcome)
+        assertEquals(PolishOutcome.SkippedShort("two words"), outcome)
         assertEquals(0, server.requests.size)
+    }
+
+    @Test
+    fun belowMinWordsAFailingOrBlockedEndpointIsStillASkipNotAFallback() {
+        val failing = start(status = 500)
+        val blocked = failing.url.replace("http://127.0.0.1", "http://[::ffff:127.0.0.1]")
+
+        assertEquals(PolishOutcome.SkippedShort(" two  words "), polish(client(failing.url), " two  words ", 3))
+        assertEquals(PolishOutcome.SkippedShort("two words"), polish(client(blocked, allowInsecureHttp = false), "two words", 3))
+        assertEquals(0, failing.requests.size)
     }
 
     @Test
