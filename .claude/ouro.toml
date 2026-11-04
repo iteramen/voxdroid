@@ -12,14 +12,17 @@ scope = []
 area = []
 type = ["bug", "enhancement", "documentation"]
 
-# `run` builds a Windows checkout through WSL (CONTRIBUTING.md); `ci` is the same on Linux.
+# The Windows acceptance runner and Linux CI command execute the same Gradle tasks.
+# CI is the final validation authority; local Windows/WSL results are supporting evidence.
 [[gate]]
-run = 'wsl -d Ubuntu-22.04 -- bash -lc "./gradlew lint testDebugUnitTest assembleDebug"'
+run = "pwsh -NoProfile -Command \"wsl -d Ubuntu-22.04 -- bash -lc './gradlew lint testDebugUnitTest assembleDebug'\""
 ci = "./gradlew lint testDebugUnitTest assembleDebug"
 
 [ship]
 policy = "stop-at-pr"
 review = "adversarial-review"
+validation = "ci"
+validation_checks = ["gates"]
 test_first_for_bugs = true
 
 [rolling_issues]
