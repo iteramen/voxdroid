@@ -38,7 +38,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private var recordingSince = 0L
     private var startField: Field? = null
     private var takeKeyboardTag: String? = null
-    private var polishNotice: Int? = null
+    private var polishNotice: String? = null
 
     private val button = object : AccessibilityButtonController.AccessibilityButtonCallback() {
         override fun onClicked(controller: AccessibilityButtonController) {
@@ -117,16 +117,12 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             val inCall = isCallMode(getSystemService(AudioManager::class.java).mode) && !settings.allowDuringCall
             when (val admission = admit(field, settings.noFieldMode, inCall)) {
                 is Admission.Refuse -> {
-                    // Only from Idle: a flash would hide the Retry and cancel of an error pill that
-                    // still holds the take's audio.
-                    if (machine.state == TakeState.Idle) {
-                        pill.flash(getString(pillString(refusalText(admission.notice))))
-                    }
+                    if (flashesOver(machine.state)) flashText(refusalText(admission.notice))
                     pill.cue(cueFor(admission))
                     return
                 }
                 Admission.InCall -> {
-                    if (machine.state == TakeState.Idle) pill.flash(getString(pillString(PillText.InCallNotRecorded)))
+                    if (flashesOver(machine.state)) flashText(PillText.InCallNotRecorded)
                     pill.cue(cueFor(admission))
                     return
                 }
@@ -144,6 +140,8 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         render()
         pill.cue(cueFor(before, machine.state, sameTake = beforeTake == machine.currentTake))
     }
+
+    private fun flashText(text: PillText) = pill.flash(getString(pillString(text)), flashMs(isFailure(text)))
 
     private fun render() {
         val state = machine.state
@@ -219,7 +217,9 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     override fun deliver(text: String) {
         // Every notice for this take on one line, so neither hides the other.
         val notes = mutableListOf<String>()
-        polishNotice?.let { notes += getString(it) }
+        polishNotice?.let { notes += it }
+        val polishFailed = polishNotice != null
+        var shown: PillText? = null
         val start = startField
         startField = null
         val result = finish(text, settings.stripTerminalPeriod)
@@ -234,16 +234,17 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
                 Delivery.Insert -> Unit
                 is Delivery.Clipboard -> {
                     fields.copy(finished)
-                    notes += getString(pillString(deliveryText(decision.notice, copied = true)))
+                    shown = deliveryText(decision.notice, copied = true)
                 }
-                is Delivery.Drop -> notes += getString(pillString(deliveryText(decision.notice, copied = false)))
+                is Delivery.Drop -> shown = deliveryText(decision.notice, copied = false)
             }
+            shown?.let { notes += getString(pillString(it)) }
         }
         // The cue needs the take's pill still attached, so the pill hides only once the text has landed.
-        pill.cue(cueFor(decision, polishNotice != null))
+        pill.cue(cueFor(decision, polishFailed))
         polishNotice = null
         pill.hide()
-        if (notes.isNotEmpty()) pill.flash(notes.joinToString(" · "))
+        if (notes.isNotEmpty()) pill.flash(notes.joinToString(" · "), flashMs(polishFailed, shown?.let(::isFailure) == true))
     }
 
     override fun ended() {
@@ -266,7 +267,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     }
 
     private fun silent(take: Int) {
-        if (take == machine.currentTake) pill.flash(getString(R.string.pill_silence))
+        if (take == machine.currentTake) pill.flash(getString(R.string.pill_silence), flashMs(false))
         dispatch(TakeEvent.Transcript("", take))
     }
 
@@ -278,8 +279,8 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
                 // deliver() shows this beside its own notice.
                 polishNotice = when {
                     take != machine.currentTake -> null
-                    outcome.blocked -> R.string.pill_polish_blocked
-                    else -> R.string.pill_polish_failed
+                    outcome.blocked -> getString(R.string.pill_polish_blocked)
+                    else -> outcome.notice ?: getString(R.string.pill_polish_failed)
                 }
                 dispatch(TakeEvent.Transcript(outcome.raw, take))
             }

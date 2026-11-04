@@ -116,6 +116,17 @@ class RoutedTest {
     }
 
     @Test
+    fun aLaneConnectionFailureKeepsItsClassAndHintUnderTheLanesName() {
+        val down = SttError("stt timed out — $TAILSCALE_HINT", "stt transport: timeout after 5000 ms")
+        val routed = routed(lanes = mapOf("he" to broken(down)))
+
+        val failed = routed.transcribe(wav, HEBREW, null).exceptionOrNull() as SttError
+
+        assertEquals("stt[he] timed out — Tailscale not connected?", failed.bar)
+        assertEquals("stt[he] transport: timeout after 5000 ms", failed.message)
+    }
+
+    @Test
     fun aLaneErrorOnAResentAutoTakeIsNamedForItsLane() {
         val gateway = SttError("stt HTTP 502", "stt HTTP 502: <html>gateway</html>")
         val auto = SttLanguage.Auto(listOf("he", "en"))

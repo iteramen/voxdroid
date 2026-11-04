@@ -100,8 +100,17 @@ The start field is kept through an Error, so a Retry delivers into it.
 
 The pill (`Pill.kt`) is a `TYPE_ACCESSIBILITY_OVERLAY` that never takes focus. Recording: red
 dot, elapsed time, **■ Stop**, **✕**. Working: `stt…` or `polish…`, no ✕. Error: the stage's bar
-(`stt transport`, `stt[he] HTTP 502`), **↻ Retry** while audio is held, ✕. A notice (`flash`)
-shows for 2.5 s, one line per take. Centred, its bottom sits a saved distance above the keyboard
+(`stt timed out`, `stt[he] HTTP 502`), **↻ Retry** while audio is held, ✕; it stays until ✕,
+Retry or a new take, and no refusal flashes over it (`Delivery.kt` — `flashesOver`). A notice
+(`flash`), one line per take, shows for 4 s when any part of it is a failure or a refusal and for
+2.5 s otherwise (`silence`, `copied to the clipboard`; `flashMs`, `isFailure`); a new take's pill
+cancels its timer. A connection failure is named from the exception's type, never its text
+(`Http.kt` — `reachOf`): `timed out` or `unreachable`, as the STT bar or as
+`polish timed out, raw text`; any other send failure keeps `stt transport` or
+`polish failed, raw text`. When the endpoint's host is in 100.64.0.0/10 or ends in `.ts.net`
+(`tailnetHost`), the line ends `— Tailscale not connected?`: a guess from the host alone, never
+from Tailscale's state, and never on an HTTP status, a malformed reply or a refusal. Centred,
+its bottom sits a saved distance above the keyboard
 window (`keyboardTop`) or the screen's bottom (`PillPlacement.kt` — `place`, `remember`); a
 vertical drag saves a new one (`Settings.kt` — `pillSaved`); `typeWindowsChanged`, the only
 subscribed event, re-places it (`follow`). Haptic cues (`Cue.kt`): a click for a start and for

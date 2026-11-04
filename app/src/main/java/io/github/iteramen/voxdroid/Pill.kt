@@ -67,14 +67,14 @@ class Pill(
         }
     }
 
-    fun flash(message: String) {
+    fun flash(message: String, durationMs: Long) {
         val v = view ?: attach()
         v.findViewById<TextView>(R.id.pill_line).text = message
         v.findViewById<Button>(R.id.pill_primary).visibility = View.GONE
         v.findViewById<Button>(R.id.pill_cancel).visibility = View.VISIBLE
         tint(v.findViewById(R.id.pill_dot), R.color.dot_idle)
         main.removeCallbacks(hideLater)
-        main.postDelayed(hideLater, FLASH_MS)
+        main.postDelayed(hideLater, durationMs)
     }
 
     /** The platform plays nothing for a view that is not attached, so a cue on a pill just added plays once the window attaches. */
@@ -160,7 +160,6 @@ class Pill(
     }
 
     private companion object {
-        const val FLASH_MS = 2500L
         const val MARGIN_DP = 12
     }
 }
