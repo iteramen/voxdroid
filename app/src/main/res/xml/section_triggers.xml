@@ -32,4 +32,19 @@
         android:summary="@string/settings_haptic_cues_summary"
         android:title="@string/settings_haptic_cues" />
 
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="audio_cues"
+        android:summary="@string/settings_audio_cues_summary"
+        android:title="@string/settings_audio_cues" />
+
+    <SeekBarPreference
+        android:defaultValue="5"
+        android:dependency="audio_cues"
+        android:key="cue_volume"
+        android:max="100"
+        android:title="@string/settings_cue_volume"
+        app:min="0"
+        app:showSeekBarValue="true" />
+
 </PreferenceScreen>

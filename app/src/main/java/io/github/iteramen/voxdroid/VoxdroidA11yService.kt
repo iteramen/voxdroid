@@ -34,6 +34,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private val machine = Take(this)
     private val gesture = VolumeGesture()
     private lateinit var pill: Pill
+    private lateinit var tones: TonePlayer
     private var recorder: AudioRecorder? = null
     private var recordingSince = 0L
     private var startField: Field? = null
@@ -68,6 +69,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             onStop = { dispatch(TakeEvent.Trigger) },
             onRetry = { dispatch(TakeEvent.Retry) },
             onCancel = { dispatch(TakeEvent.Cancel) })
+        tones = TonePlayer(this, settings, main)
         accessibilityButtonController.registerAccessibilityButtonCallback(button)
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
     }
@@ -105,6 +107,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             if (machine.state != TakeState.Idle) machine.on(TakeEvent.Cancel)
             unregisterReceiver(screenOff)
             pill.hide()
+            tones.stop()
         }
         main.removeCallbacksAndMessages(null)
         worker.shutdownNow()
@@ -112,18 +115,18 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     }
 
     private fun dispatch(event: TakeEvent) {
-        if (event == TakeEvent.Trigger && machine.state !is TakeState.Recording && machine.state !is TakeState.Working) {
+        if (event == TakeEvent.Trigger && (machine.state == TakeState.Idle || machine.state is TakeState.Error)) {
             val field = fields.focused()
             val inCall = isCallMode(getSystemService(AudioManager::class.java).mode) && !settings.allowDuringCall
             when (val admission = admit(field, settings.noFieldMode, inCall)) {
                 is Admission.Refuse -> {
                     if (flashesOver(machine.state)) flashText(refusalText(admission.notice))
-                    pill.cue(cueFor(admission))
+                    cue(cueFor(admission))
                     return
                 }
                 Admission.InCall -> {
                     if (flashesOver(machine.state)) flashText(PillText.InCallNotRecorded)
-                    pill.cue(cueFor(admission))
+                    cue(cueFor(admission))
                     return
                 }
                 Admission.Record -> {
@@ -138,7 +141,13 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         machine.on(event)
         if (event == TakeEvent.Cancel) pill.hide()
         render()
-        pill.cue(cueFor(before, machine.state, sameTake = beforeTake == machine.currentTake))
+        cue(cueFor(before, machine.state, sameTake = beforeTake == machine.currentTake))
+    }
+
+    /** The click on the pill and the tone; a Confirm sounds [confirm]. */
+    private fun cue(cue: Cue, confirm: Tone? = null) {
+        pill.cue(cue)
+        toneFor(cue, confirm)?.let { tones.play(it) }
     }
 
     private fun flashText(text: PillText) = pill.flash(getString(pillString(text)), flashMs(isFailure(text)))
@@ -149,8 +158,12 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             main.removeCallbacks(tick)
             return
         }
+        if (state == TakeState.Starting) return
         pill.show(state, (SystemClock.elapsedRealtime() - recordingSince) / MILLIS_PER_SECOND)
     }
+
+    override fun startTone(take: Int): Boolean =
+        tones.play(Tone.Start) { dispatch(TakeEvent.StartToneEnded(take)) }
 
     override fun startRecording(): String? {
         // A microphone foreground service without RECORD_AUDIO throws a SecurityException on Android 14+,
@@ -241,7 +254,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             shown?.let { notes += getString(pillString(it)) }
         }
         // The cue needs the take's pill still attached, so the pill hides only once the text has landed.
-        pill.cue(cueFor(decision, polishFailed))
+        cue(cueFor(decision, polishFailed), Tone.Landed)
         polishNotice = null
         pill.hide()
         if (notes.isNotEmpty()) pill.flash(notes.joinToString(" · "), flashMs(polishFailed, shown?.let(::isFailure) == true))

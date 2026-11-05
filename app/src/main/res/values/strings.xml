@@ -10,6 +10,9 @@
     <string name="settings_allow_during_call_summary">While off, a take is refused during a call.</string>
     <string name="settings_haptic_cues">Vibrate on start and done</string>
     <string name="settings_haptic_cues_summary">A click when dictation starts and when its text lands, a double click when it fails. Follows Android\'s Touch feedback setting.</string>
+    <string name="settings_audio_cues">Tones on start and done</string>
+    <string name="settings_audio_cues_summary">A high tone before recording starts, a lower one when its text lands, a falling pair when it fails. Silent while the phone is on silent or vibrate, or Do Not Disturb is on.</string>
+    <string name="settings_cue_volume">Tone volume (%)</string>
     <string name="settings_volume_hold_ms">Hold for (ms)</string>
     <string name="settings_no_field_mode">No text field, or the field changed</string>
     <string name="settings_no_field_refuse">Refuse</string>
