@@ -271,7 +271,7 @@ caption:
 1. **Acquire** (`CaptionAudio.kt` — `captionAcquire`): 64 KiB reads into a spool, hashed as they
    go, the source closed on every path. 32 MiB (`CAPTION_MAX_ENCODED_BYTES`) is accepted, byte
    32 MiB + 1 is `TooLarge`, and no declared size or type is consulted. A read or spool-write
-   failure is `ReadFailed`.
+   failure, or a spool that cannot be deleted before upload, is `ReadFailed`.
 2. **Identify.** The SHA-256 of the encoded bytes, algorithm `encoded-sha256-v1`
    (`CAPTION_FINGERPRINT`), is the audio's identity. A URI, file name, sender, time, duration or
    screen position never is.

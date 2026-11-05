@@ -103,7 +103,7 @@ class CaptionAudioTest {
         val valid = captionOgg(ByteArray(0))
         val twoPackets = valid.copyOfRange(0, 27).also { it[26] = 2 } +
             byteArrayOf(19, 10) + valid.copyOfRange(28, 47) + ByteArray(10)
-        val unfinished = captionOgg().also { it[27] = 255.toByte() }
+        val unfinished = captionOgg(ByteArray(300)).also { it[27] = 255.toByte() }
         val shortId = valid.copyOf(46).also { it[27] = 18 }
         val continued = valid.copyOf().also { it[5] = 3 }
         for ((name, head) in mapOf("two packets" to twoPackets, "unfinished" to unfinished,

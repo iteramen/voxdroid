@@ -36,7 +36,7 @@ sealed interface CaptionOutcome {
     /** The decoder failed or produced no frame. */
     data object Malformed : CaptionOutcome
 
-    /** The source could not be read, or the spool could not be written. */
+    /** The source could not be read, or the spool could not be written, or could not be deleted before upload. */
     data object ReadFailed : CaptionOutcome
 
     /** Cancelled, or superseded by a later request on the same processor. */
