@@ -107,6 +107,8 @@ tasks.withType<Test>().configureEach {
         "src/main/res/xml/section_triggers.xml",
         "src/main/res/values/strings.xml",
         "src/main/res/xml/section_speech.xml",
+        "src/main/res/xml/data_extraction_rules.xml",
+        "src/main/java",
     )
 }
 

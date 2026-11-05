@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- API 31+. Both mechanisms: on some manufacturers' devices allowBackup="false" stops cloud backup but not device transfer. -->
+<!-- API 31+. Both mechanisms: on some manufacturers' devices allowBackup="false" stops cloud backup but not device transfer.
+     captions is a directory under filesDir (CaptionCache.kt — CAPTION_DIR): excluding it covers every file in it, sidecars included. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude
             domain="sharedpref"
             path="secrets.xml" />
+        <exclude
+            domain="file"
+            path="captions" />
     </cloud-backup>
     <device-transfer>
         <exclude
             domain="sharedpref"
             path="secrets.xml" />
+        <exclude
+            domain="file"
+            path="captions" />
     </device-transfer>
 </data-extraction-rules>
