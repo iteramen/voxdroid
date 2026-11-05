@@ -42,6 +42,9 @@ internal class CaptionSession(private val now: () -> Long) {
     fun current(id: Long): Boolean = generation == id && origin != null
     fun id(): Long = generation
 
+    /** Losing the selection before sharing must revoke eligibility to receive an audio grant. */
+    fun selectionLost() { if (phase == CaptionPhase.Selected) invalidate() }
+
     fun share(id: Long): Boolean {
         if (!current(id) || phase != CaptionPhase.Selected || now() >= expiresAt) return false
         phase = CaptionPhase.Sharing

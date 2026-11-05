@@ -41,6 +41,16 @@ class CaptionSessionTest {
         assertFalse(session.shown(old))
     }
 
+    @Test fun clearingSelectionRevokesReceiveUntilSharingHasActuallyStarted() {
+        session.select(origin)
+        session.selectionLost()
+        assertNull("a cleared selection cannot authorize a later share", session.receive(origin.source))
+        val shared = session.select(origin)
+        assertTrue(session.share(shared))
+        session.selectionLost() // Native sharing can remove selection chrome while opening its chooser.
+        assertEquals(shared, session.receive(origin.source))
+    }
+
     @Test fun expiredSelectionsAndReceiverReturnsFailClosed() {
         var id = session.select(origin)
         clock += CaptionSession.HANDOFF_MS

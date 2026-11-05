@@ -87,8 +87,9 @@ internal class CaptionController(
                     ticket = cache.begin()
                 }
             }
-        } else if (selected.count > 1 && session.phase == CaptionPhase.Selected) {
-            cancel(clearOrigin = false)
+        } else if (session.phase == CaptionPhase.Selected) {
+            session.selectionLost()
+            cancel(clearOrigin = false, clearRefresh = false)
         }
     }
 

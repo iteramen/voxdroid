@@ -570,8 +570,9 @@ For both owner-prepared Telegram Cassandra and WhatsApp fixture conversations:
 - [ ] Volume-down dictation and stopping an active dictation with the button still work normally.
 - [ ] Privacy/security/accessibility/Data safety docs and in-app description match the proven flow.
 
-Build evidence so far: lint, 448 unit tests and isolated assemble passed before handset acceptance.
-The owner-invalidation race regression failed before the fix and passed with the session guard.
+Build evidence so far: lint, 449 unit tests and isolated assemble passed before handset acceptance.
+The owner-invalidation and cleared-selection regressions failed before their fixes and passed
+with the session guards.
 Normal debug and unsigned release builds also passed before that final guard; normal CI must
 confirm the final source head. Three synthetic device-helper tests preserve unrelated services and
 limit settings projection; a synthetic WAV exercised the loopback server without handset data.
