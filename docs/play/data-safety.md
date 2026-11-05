@@ -46,6 +46,38 @@ Every category not listed here is **Not collected**.
   third-party SDK that could collect any other category (`app/build.gradle.kts` —
   `dependencies`).
 
+## Planned: voice-message captions (not in the app)
+
+The answers above describe the app as it ships. The caption processing code is present and unused
+(`CaptionProcessor.kt`); nothing in the app receives a voice message, so the form does not change
+for this code. The pull request that turns on the first caption integration (a share target, a
+button or a panel) updates this sheet, [`docs/privacy.md`](../privacy.md), the
+[accessibility declaration](accessibility-declaration.md) and the in-app description together,
+before the release, to the flow it actually ships. Answers from this sheet must not be carried
+into it unchecked:
+
+- **New data: received voice messages and their transcripts.** The audio and the text are another
+  person's, chosen by the user. The audio goes to the user's speech server and lanes, and the
+  transcript to the cleanup server if configured, as for dictation. The data-type choice (Audio
+  for the recording; Messages, "Other in-app messages", or App activity, "Other user-generated
+  content", for the transcript of a received message) is checked against the Console's current
+  definitions when the integration lands. The **Messages: Not collected** answer above rests on
+  voxdroid having no messaging of its own, and is not carried over once received messages are
+  captioned.
+- **Not ephemeral on the device while it decodes.** The encoded message is written to a private,
+  backup-excluded file during decoding and deleted before any request
+  ([SECURITY.md](../SECURITY.md#imported-voice-messages-inactive)). Whether that, and a transmission
+  to the user's own server, still answers "processed ephemerally" is checked against Play's
+  definition then, not assumed.
+- **Optional retention.** *Remember voice-message transcripts*, off by default, keeps transcript
+  text on the device for 30 days, excluded from backup and transfer, with *Delete all*
+  (`CaptionCache.kt`). The deletion answer ("nothing to delete") is revisited with it: on-device
+  deletion exists then, and the user's servers keep what they receive under their own policies.
+- **Purpose:** App functionality. The captions are the feature: readable voice messages for
+  people who are deaf or hard of hearing.
+
+No Play Console submission or change is made for this code.
+
 ## Personal info and accounts
 
 **Not collected; no account.** voxdroid has no sign-in, no name or email field, and no profile.

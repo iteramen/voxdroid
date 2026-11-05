@@ -539,6 +539,16 @@ class SttClientTest {
     }
 
     @Test
+    fun aTransportFailureIsNotRetriedOnceTheRequestIsNoLongerCurrent() {
+        val server = start(reply = """{"text":"second try"}""", closeFirst = true)
+
+        val out = client(server.url, current = { server.requests.isEmpty() }).transcribe(wav, auto, null)
+
+        assertEquals("stt transport", (out.exceptionOrNull() as SttError).bar)
+        assertEquals("no retry is started after cancel or a deadline", 1, server.requests.size)
+    }
+
+    @Test
     fun aDeadEndpointNamesTheStageOnTheBar() {
         // Bind a port, learn it, then drop the socket: nothing is listening there, so the
         // connection is refused outright instead of waiting on a dropped SYN.

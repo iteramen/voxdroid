@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- API 31+. Both mechanisms: on some manufacturers' devices allowBackup="false" stops cloud backup but not device transfer.
-     captions is a directory under filesDir (CaptionCache.kt — CAPTION_DIR): excluding it covers every file in it, sidecars included. -->
+     captions is a directory under filesDir (CaptionCache.kt — CAPTION_DIR): excluding it covers every file in it, sidecars included.
+     caption_spool is the voice-message spool under filesDir (CaptionAudio.kt — CAPTION_SPOOL_DIR), excluded whole the same way. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude
@@ -9,6 +10,9 @@
         <exclude
             domain="file"
             path="captions" />
+        <exclude
+            domain="file"
+            path="caption_spool" />
     </cloud-backup>
     <device-transfer>
         <exclude
@@ -17,5 +21,8 @@
         <exclude
             domain="file"
             path="captions" />
+        <exclude
+            domain="file"
+            path="caption_spool" />
     </device-transfer>
 </data-extraction-rules>

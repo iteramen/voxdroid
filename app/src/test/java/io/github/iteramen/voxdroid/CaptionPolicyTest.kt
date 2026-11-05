@@ -11,12 +11,16 @@ import javax.xml.parsers.DocumentBuilderFactory
 class CaptionPolicyTest {
 
     @Test
-    fun everyFileTheCacheOwnsIsExcludedFromCloudBackupAndDeviceTransfer() {
+    fun everyFileTheCaptionsOwnIsExcludedFromCloudBackupAndDeviceTransfer() {
         val filesDir = File("files")
         val dir = captionDir(filesDir)
         val entry = File(dir, CaptionKey("pcm16-sha256.v1", "a".repeat(64), "p").digest + CaptionCache.ENTRY_SUFFIX)
-        val owned = listOf(dir, entry, File(dir, CaptionCache.STATE), CaptionCache.sidecarOf(entry), CaptionCache.sidecarOf(File(dir, CaptionCache.STATE)))
-            .map { it.relativeTo(filesDir).invariantSeparatorsPath }
+        val spoolDir = captionSpoolDir(filesDir)
+        val spool = File(spoolDir, "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0$CAPTION_SPOOL_SUFFIX")
+        val owned = listOf(
+            dir, entry, File(dir, CaptionCache.STATE), CaptionCache.sidecarOf(entry), CaptionCache.sidecarOf(File(dir, CaptionCache.STATE)),
+            spoolDir, spool,
+        ).map { it.relativeTo(filesDir).invariantSeparatorsPath }
 
         val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(rulesFile())
         for (section in listOf("cloud-backup", "device-transfer")) {
@@ -31,22 +35,38 @@ class CaptionPolicyTest {
     }
 
     @Test
-    fun nothingInTheAppUsesTheCacheYet() {
+    fun nothingInTheAppUsesTheCaptionFoundationYet() {
         val sources = sourceDir().walk().filter { it.isFile && it.extension == "kt" }.toList()
-        assertTrue("the source walk must find the cache itself", sources.any { it.name == "CaptionCache.kt" })
-        val users = sources.filter { it.name != "CaptionCache.kt" && CACHE_NAMES.containsMatchIn(it.readText()) }
+        assertTrue("the source walk must find the foundation itself", sources.map { it.name }.containsAll(FOUNDATION))
+        val users = sources.filter { it.name !in FOUNDATION && CAPTION_NAMES.containsMatchIn(it.readText()) }
         assertEquals("dictation, the microphone and delivery stay unconnected", emptyList<String>(), users.map { it.name })
 
         val cache = sources.single { it.name == "CaptionCache.kt" }.readText()
         val reached = DICTATION_NAMES.findAll(cache).map { it.value }.toSet()
         assertEquals("the cache reaches into nothing that dictates", emptySet<String>(), reached)
+
+        val service = sources.single { it.name == "VoxdroidA11yService.kt" }.readText()
+        assertTrue("the positive control: the live names match the service", LIVE_NAMES.containsMatchIn(service))
+        for (file in sources.filter { it.name in FOUNDATION }) {
+            val live = LIVE_NAMES.findAll(file.readText()).map { it.value }.toSet()
+            assertEquals("${file.name} reaches no recording, take, field, keyboard language or log", emptySet<String>(), live)
+        }
+        val processor = sources.single { it.name == "CaptionProcessor.kt" }.readText()
+        assertTrue("the positive control: the processor's own source is read", processor.contains("SttLanguage.Auto(settings.languages)"))
     }
 
     private companion object {
-        val CACHE_NAMES = Regex("""\b(Caption\w*|openCaptionCache|captionDir|CAPTION_\w+)\b""")
+        val FOUNDATION = setOf("CaptionCache.kt", "CaptionAudio.kt", "CaptionMediaDecoder.kt", "CaptionProcessor.kt")
+        val CAPTION_NAMES = Regex("""\b([Cc]aption\w*|CAPTION_\w+)\b""")
         val DICTATION_NAMES = Regex(
             """\b(AudioRecorder|AudioRecord|Take|TakeHost|SttClient|PolishClient|boundedPost|deliver|insert|copy|commitText|""" +
                 """VoxdroidA11yService|Settings|SettingsStore|getSharedPreferences|Log)\b""",
+        )
+
+        /** What the processing foundation may not touch: it reuses STT, routing and cleanup, never the live take or its field. */
+        val LIVE_NAMES = Regex(
+            """\b(AudioRecorder|AudioRecord|RECORD_AUDIO|Take|TakeHost|TakeEvent|machine|deliver|insert|commitText|FieldAccess|""" +
+                """ClipboardManager|VoxdroidA11yService|keyboardTag|takeFor|takeLanguage|candidatesFor|isExplicit|Log)\b""",
         )
 
         fun rulesFile(): File = sequenceOf(

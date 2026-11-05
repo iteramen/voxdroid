@@ -29,6 +29,22 @@ Two gestures reach the service (`res/xml/a11y_entry.xml`):
   work without a precise touch on a small target.
 - **Low vision.** Speaking is not a visual act.
 
+### In development: captions for people who are deaf or hard of hearing
+
+A second purpose is being built: private, readable captions of voice messages the user has
+received, so that people who are deaf or hard of hearing can read what they cannot hear. It is not
+in the app: no gesture, share target, setting or panel reaches it, and the service does nothing for
+it. Only the processing code exists, unused (`CaptionProcessor.kt`). Nothing in the service's
+declaration (`res/xml/a11y_entry.xml`), capabilities or flags is added or changed for it, and this
+page claims nothing for it before it ships.
+
+The pull request that turns on the first caption integration updates this page with the
+accessibility API use that integration actually makes, if any, and why it is the least access that
+works. The in-app description, the listing text, [`docs/privacy.md`](../privacy.md) and
+[`data-safety.md`](data-safety.md) are made to match it in that same pull request, before the
+release. That this feature serves people with a disability does not by itself mean Play approves
+the API use; the Permission Declaration Form is filled in for what ships, as below.
+
 ## What the service does
 
 - **Reads the focused text field** when a dictation starts and again when its text arrives:
