@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.github.iteramen.voxdroid.probe" android:versionCode="1" android:versionName="29-probe-1">
+<uses-sdk android:minSdkVersion="33" android:targetSdkVersion="36"/>
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+<application android:label="Voice handoff probe" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:allowBackup="false" android:debuggable="true">
+<activity android:name=".ProbeActivity" android:exported="true">
+<intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+<intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="audio/*"/><data android:mimeType="application/ogg"/></intent-filter>
+</activity><service android:name=".ProbeActivity$Worker" android:exported="false"/>
+</application></manifest>
