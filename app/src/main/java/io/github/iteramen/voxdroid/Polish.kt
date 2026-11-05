@@ -36,6 +36,9 @@ interface Polisher {
 sealed interface PolishOutcome {
     data class Text(val text: String) : PolishOutcome
 
+    /** The transcript was under Minimum words, so the polisher was never called and [raw] goes out as dictated. */
+    data class SkippedShort(val raw: String) : PolishOutcome
+
     data class Fallback(val raw: String, val detail: String, val blocked: Boolean = false, val notice: String? = null) : PolishOutcome
 }
 
@@ -52,7 +55,7 @@ private val FIRST_PERSON = setOf("i", "i'm", "i've", "i'll", "i'd")
 
 /** Fewer than [minWords] words skips the stage; any failure falls back to the raw transcript. */
 fun polish(polisher: Polisher, raw: String, minWords: Int, lowercaseRule: Boolean = false): PolishOutcome {
-    if (wordCount(raw) < minWords) return PolishOutcome.Text(raw)
+    if (wordCount(raw) < minWords) return PolishOutcome.SkippedShort(raw)
     return polisher.polish(raw).fold(
         onSuccess = { PolishOutcome.Text(if (lowercaseRule) restoreFirstI(it) else it) },
         onFailure = {

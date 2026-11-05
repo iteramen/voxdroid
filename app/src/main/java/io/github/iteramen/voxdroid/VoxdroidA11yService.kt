@@ -287,6 +287,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private fun answerPolished(outcome: PolishOutcome, take: Int) {
         when (outcome) {
             is PolishOutcome.Text -> dispatch(TakeEvent.Transcript(outcome.text, take))
+            is PolishOutcome.SkippedShort -> dispatch(TakeEvent.Transcript(outcome.raw, take))
             is PolishOutcome.Fallback -> {
                 Log.d(TAG, outcome.detail)
                 // deliver() shows this beside its own notice.
