@@ -5,6 +5,8 @@ build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+## 0.2.1 — 2026-11-05
+
 Added
 - Groundwork for private voice-message captions, for people who are deaf or hard of hearing. The
   processing code is in the app and unused: no voice message is received or transcribed yet.
