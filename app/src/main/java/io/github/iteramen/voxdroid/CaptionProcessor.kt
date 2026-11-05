@@ -8,7 +8,7 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicLong
 
 /** Bump on any change to what [captionProfile] reads or to how audio is normalized. */
-internal const val CAPTION_PROFILE_VERSION = "caption-profile-v1"
+internal const val CAPTION_PROFILE_VERSION = "caption-profile-v2"
 
 /** The normalization [CaptionNormalizer] applies, part of every profile. */
 internal const val CAPTION_NORMALIZATION = "pcm16-mono-16k-wav44-box-v1"
@@ -103,12 +103,13 @@ fun captionSettings(settings: Settings, polishPrompt: String): CaptionSettings =
 
 /**
  * The opaque processing profile for [CaptionKey]: a version and a SHA-256 over every non-secret setting that shapes the
- * caption. Tokens, timeouts and the insecure-http switch are left out: none changes what a successful request returns.
+ * caption. Tokens are left out. Timeouts and the insecure-http switch are included because they can change a cleanup fallback.
  * `null` (uncacheable) when an address has user info, a query or a fragment: those can hold credentials, and leaving
  * them out could make two endpoints share a profile.
  */
 internal fun captionProfile(s: CaptionSettings): String? {
     val fields = mutableListOf(CAPTION_NORMALIZATION, profileUrl(s.sttBaseUrl) ?: return null, s.sttModel, s.sttPrompt, s.noSpeechThreshold.toString())
+    fields += listOf(s.sttTimeoutS.toString(), s.polishTimeoutS.toString(), s.allowInsecureHttp.toString())
     fields += s.languages.size.toString()
     fields += s.languages
     fields += s.lanes.size.toString()
@@ -204,7 +205,7 @@ class CaptionProcessor internal constructor(
             val normalizer = CaptionNormalizer()
             decoder.decode(spool, normalizer, check)
             val wav = normalizer.toWav()
-            CaptionSpools.release(spool)
+            if (!CaptionSpools.release(spool)) return CaptionOutcome.ReadFailed
             check()
             caption(wav, sha256, settings, current, check)
         } catch (stop: CaptionStop) {

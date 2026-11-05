@@ -99,6 +99,20 @@ class CaptionAudioTest {
     }
 
     @Test
+    fun opusIdMustBeTheSingleCompleteFirstPagePacket() {
+        val valid = captionOgg(ByteArray(0))
+        val twoPackets = valid.copyOfRange(0, 27).also { it[26] = 2 } +
+            byteArrayOf(19, 10) + valid.copyOfRange(28, 47) + ByteArray(10)
+        val unfinished = captionOgg().also { it[27] = 255.toByte() }
+        val shortId = valid.copyOf(46).also { it[27] = 18 }
+        val continued = valid.copyOf().also { it[5] = 3 }
+        for ((name, head) in mapOf("two packets" to twoPackets, "unfinished" to unfinished,
+            "short ID" to shortId, "continued first page" to continued)) {
+            assertFalse(name, captionIsOggOpus(head))
+        }
+    }
+
+    @Test
     fun stereo48kHzBecomesMono16kHzByAveraging() {
         val normalizer = CaptionNormalizer()
         normalizer.format(48_000, 2, true)

@@ -310,11 +310,11 @@ each network stage throws `Cancelled` or `TimedOut`; `Routed` and `SttClient` ge
 `current`, so no resend or retry starts after it. A reply that comes back afterwards is dropped,
 never returned. An HTTP call already under way runs to its own timeout.
 
-**Profile** (`captionProfile`): `caption-profile-v1:` and a SHA-256 over a length-prefixed list of
+**Profile** (`captionProfile`): `caption-profile-v2:` and a SHA-256 over a length-prefixed list of
 the normalization version, the STT address, model, glossary and no-speech threshold, the language
 list, each lane's code and address, the cleanup address, model, prompt, *Minimum words* and
-capitalization (or no cleanup), and the terminal-period switch. Tokens, timeouts and the
-insecure-http switch are left out: none changes a successful caption. An address with user info, a
+capitalization (or no cleanup), and the terminal-period switch. Tokens are left out; timeouts and the
+insecure-http switch are included because they can change a raw-text cleanup fallback into cleaned text. An address with user info, a
 query or a fragment returns `null`, and the caption comes back with no key: shown, never cached.
 A hidden change on the server's side is the later Re-transcribe action's to refresh.
 

@@ -22,8 +22,8 @@ internal const val CAPTION_SPOOL_DIR = "caption_spool"
 
 internal const val CAPTION_SPOOL_SUFFIX = ".ogg"
 
-/** The Ogg page header (27 bytes), a full segment table (255) and the 8-byte `OpusHead` magic. */
-internal const val CAPTION_HEAD_BYTES = 27 + 255 + 8
+/** The largest Ogg page: 27-byte header, 255 lacing entries and at most 255 bytes per segment. */
+internal const val CAPTION_HEAD_BYTES = 27 + 255 + 255 * 255
 
 private const val COPY_CHUNK_BYTES = 64 * 1024
 private const val TARGET_RATE = 16_000
@@ -90,7 +90,16 @@ internal fun captionIsOggOpus(head: ByteArray): Boolean {
     if (head[4].toInt() != 0 || head[5].toInt() and OGG_BOS == 0) return false
     val segments = head[OGG_SEGMENTS_OFFSET].toInt() and 0xff
     val at = OGG_PAGE_HEADER_BYTES + segments
-    return segments > 0 && head.size >= at + 8 && String(head, at, 8, Charsets.US_ASCII) == "OpusHead"
+    if (segments == 0 || head.size < at || head[5].toInt() and 0x01 != 0) return false
+    var packetBytes = 0
+    repeat(segments) { index ->
+        val lace = head[OGG_PAGE_HEADER_BYTES + index].toInt() and 0xff
+        // Exactly one packet, completed on this page; a zero terminator after a 255-byte segment is valid.
+        if ((index < segments - 1 && lace != 255) || (index == segments - 1 && lace == 255)) return false
+        packetBytes += lace
+    }
+    return packetBytes >= 19 && head.size >= at + packetBytes &&
+        String(head, at, 8, Charsets.US_ASCII) == "OpusHead"
 }
 
 /** Where a [CaptionDecoder] puts what it decodes. */

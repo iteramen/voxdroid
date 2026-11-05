@@ -65,6 +65,21 @@ class CaptionProcessorTest {
     }
 
     @Test
+    fun aSpoolDeleteFailurePreventsNetworkRequests() {
+        decoder = FakeDecoder(during = { file ->
+            assertTrue(file.delete())
+            assertTrue(file.mkdir())
+            File(file, "held").writeText("synthetic deletion failure")
+        })
+        processor = open()
+        assertEquals(CaptionOutcome.ReadFailed, run())
+        assertTrue(stt.calls.isEmpty())
+        assertTrue(polisher.calls.isEmpty())
+        assertTrue("recovery sweep retries orphaned task data", processor.sweep())
+        assertSpoolEmpty()
+    }
+
+    @Test
     fun sttGetsTheNormalizedWavAndNeverTheOggBytes() {
         val audio = captionOgg()
 
@@ -324,6 +339,9 @@ class CaptionProcessorTest {
         val changed = mapOf(
             "stt url" to settings(sttBaseUrl = "https://other.example/v1"),
             "stt model" to settings(sttModel = "large-v3"),
+            "stt timeout" to settings(sttTimeoutS = 99),
+            "cleanup timeout" to settings(polishTimeoutS = 99),
+            "insecure switch" to settings(allowInsecureHttp = true),
             "glossary" to settings(sttPrompt = "Acme"),
             "no-speech threshold" to settings(noSpeechThreshold = 0.5f),
             "languages" to settings(languages = listOf("en", "he")),
@@ -340,8 +358,6 @@ class CaptionProcessorTest {
 
         val same = mapOf(
             "tokens" to settings(sttToken = "other", polishToken = "other"),
-            "timeouts" to settings(sttTimeoutS = 99, polishTimeoutS = 99),
-            "insecure switch" to settings(allowInsecureHttp = true),
             "trailing slash and spaces" to settings(sttBaseUrl = " https://stt.example/v1/ "),
             "a cleanup url while cleanup is off" to settings(polishEnabled = false, polishBaseUrl = "https://x.example/?key=1"),
         )
