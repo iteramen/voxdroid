@@ -64,17 +64,21 @@ class Pill(
                 primary.setOnClickListener { onRetry() }
             }
             TakeState.Idle -> hide()
+            // Never rendered: the service keeps whatever the pill showed until the microphone opens.
+            TakeState.Starting -> Unit
         }
+        keepScreenOn(keepsScreenOn(state))
     }
 
-    fun flash(message: String) {
+    fun flash(message: String, durationMs: Long) {
         val v = view ?: attach()
+        keepScreenOn(false)
         v.findViewById<TextView>(R.id.pill_line).text = message
         v.findViewById<Button>(R.id.pill_primary).visibility = View.GONE
         v.findViewById<Button>(R.id.pill_cancel).visibility = View.VISIBLE
         tint(v.findViewById(R.id.pill_dot), R.color.dot_idle)
         main.removeCallbacks(hideLater)
-        main.postDelayed(hideLater, FLASH_MS)
+        main.postDelayed(hideLater, durationMs)
     }
 
     /** The platform plays nothing for a view that is not attached, so a cue on a pill just added plays once the window attaches. */
@@ -102,6 +106,17 @@ class Pill(
         val p = params ?: return
         if ((v as PillLayout).dragging) return
         p.y = topFor(v)
+        windows.updateViewLayout(v, p)
+    }
+
+    /** The window is reused across states, so the flag is set and cleared in place; removing the window releases it. */
+    private fun keepScreenOn(on: Boolean) {
+        val v = view ?: return
+        val p = params ?: return
+        val flags = if (on) p.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            else p.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON.inv()
+        if (flags == p.flags) return
+        p.flags = flags
         windows.updateViewLayout(v, p)
     }
 
@@ -160,7 +175,6 @@ class Pill(
     }
 
     private companion object {
-        const val FLASH_MS = 2500L
         const val MARGIN_DP = 12
     }
 }

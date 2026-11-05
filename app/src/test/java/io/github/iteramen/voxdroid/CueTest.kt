@@ -116,7 +116,17 @@ class CueTest {
         assertEquals("defaultValue", HAPTIC_CUES_DEFAULT.toString(), haptic.single().getAttributeNS(ANDROID_NS, "defaultValue"))
     }
 
+    @Test
+    fun theStartClickWaitsForTheMicrophoneBehindTheStartTone() {
+        assertEquals("the tone begins", Cue.None, cueFor(TakeState.Idle, TakeState.Starting, sameTake = false))
+        assertEquals("the microphone opens", Cue.Confirm, cueFor(TakeState.Starting, TakeState.Recording, sameTake = true))
+        val mic = TakeState.Error("mic: unavailable", canRetry = false)
+        assertEquals("the microphone fails", Cue.Reject, cueFor(TakeState.Starting, mic, sameTake = true))
+        assertEquals("a cancel during the tone", Cue.None, cueFor(TakeState.Starting, TakeState.Idle, sameTake = false))
+    }
+
     private class FailingHost : TakeHost {
+        override fun startTone(take: Int) = false
         override fun startRecording(): String = "mic: unavailable"
         override fun stopRecording(): ByteArray = ByteArray(0)
         override fun armCap() = Unit

@@ -1,8 +1,14 @@
 package io.github.iteramen.voxdroid
 
 import java.io.IOException
+import java.net.ConnectException
 import java.net.HttpURLConnection
+import java.net.MalformedURLException
+import java.net.NoRouteToHostException
+import java.net.PortUnreachableException
+import java.net.SocketTimeoutException
 import java.net.URL
+import java.net.UnknownHostException
 import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.atomic.AtomicBoolean
@@ -10,9 +16,53 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal sealed interface Attempt {
     class Answered(val status: Int, val body: String) : Attempt
     class Unreadable(val status: Int, val cause: String) : Attempt
-    class SendFailed(val cause: String) : Attempt
+    /** [reach] is null for a failure that is not the connection's: a refused port, URL or token header. */
+    class SendFailed(val cause: String, val reach: Reach? = null) : Attempt
     object Blocked : Attempt
 }
+
+/** A connection failure as the pill names it, read from the exception's type and never from its text. */
+internal enum class Reach(val label: String) {
+    TimedOut("timed out"),
+    Unreachable("unreachable"),
+}
+
+internal fun reachOf(failure: IOException): Reach? = when (failure) {
+    is SocketTimeoutException -> Reach.TimedOut
+    is UnknownHostException, is ConnectException, is NoRouteToHostException, is PortUnreachableException -> Reach.Unreachable
+    else -> null
+}
+
+/** A hint from the host alone: 100.64.0.0/10 or a name under `.ts.net` says nothing about whether Tailscale is up. */
+internal fun tailnetHost(host: String): Boolean {
+    val name = host.removeSuffix(".")
+    if (name.length > TS_NET.length && name.endsWith(TS_NET, ignoreCase = true)) return true
+    val octets = name.split('.')
+    if (octets.size != IPV4_OCTETS || octets.any { it.isEmpty() || it.length > 3 || !it.all(Char::isAsciiDigit) }) return false
+    val (first, second) = octets.map(String::toInt)
+    return octets.all { it.toInt() <= MAX_OCTET } && first == CGNAT_FIRST && second in CGNAT_SECOND
+}
+
+internal fun tailnetUrl(url: String): Boolean = try {
+    tailnetHost(URL(url.trim()).host)
+} catch (malformed: MalformedURLException) {
+    false
+}
+
+/** The pill's line for a connection failure, built from fixed words only: nothing from the exception, the reply or the URL but the host's class. */
+internal fun connectionNote(head: String, reach: Reach, url: String, tail: String = ""): String {
+    val note = "$head ${reach.label}$tail"
+    return if (tailnetUrl(url)) "$note — $TAILSCALE_HINT" else note
+}
+
+private fun Char.isAsciiDigit() = this in '0'..'9'
+
+private const val TS_NET = ".ts.net"
+private const val IPV4_OCTETS = 4
+private const val MAX_OCTET = 255
+private const val CGNAT_FIRST = 100
+private val CGNAT_SECOND = 64..127
+internal const val TAILSCALE_HINT = "Tailscale not connected?"
 
 internal const val HTTP_OK_FIRST = 200
 internal const val HTTP_OK_LAST = 299
@@ -89,9 +139,9 @@ internal fun boundedPost(
         }
     } catch (transport: IOException) {
         if (timedOut.get()) {
-            Attempt.SendFailed("timeout after $timeoutMs ms")
+            Attempt.SendFailed("timeout after $timeoutMs ms", Reach.TimedOut)
         } else {
-            Attempt.SendFailed(causeDetail(transport, token))
+            Attempt.SendFailed(causeDetail(transport, token), reachOf(transport))
         }
     } finally {
         watchdog.cancel()

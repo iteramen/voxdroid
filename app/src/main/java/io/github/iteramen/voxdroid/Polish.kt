@@ -26,8 +26,8 @@ internal fun systemPrompt(base: String, glossary: String?): String {
 
 internal fun wordCount(text: String): Int = text.split(WHITESPACE).count { it.isNotEmpty() }
 
-/** [message] is the whole line for logcat and never carries the token; [blocked] marks a refused insecure endpoint. */
-class PolishError(message: String, val blocked: Boolean = false) : Exception(message)
+/** [message] is the whole line for logcat and never carries the token; [blocked] marks a refused insecure endpoint; [notice] is a connection failure's pill line. */
+class PolishError(message: String, val blocked: Boolean = false, val notice: String? = null) : Exception(message)
 
 interface Polisher {
     fun polish(raw: String): Result<String>
@@ -39,7 +39,7 @@ sealed interface PolishOutcome {
     /** The transcript was under Minimum words, so the polisher was never called and [raw] goes out as dictated. */
     data class SkippedShort(val raw: String) : PolishOutcome
 
-    data class Fallback(val raw: String, val detail: String, val blocked: Boolean = false) : PolishOutcome
+    data class Fallback(val raw: String, val detail: String, val blocked: Boolean = false, val notice: String? = null) : PolishOutcome
 }
 
 /** Restores the capital the model took off a first-word "i", "i'm", "i've", "i'll" or "i'd"; nothing else is touched. */
@@ -58,7 +58,10 @@ fun polish(polisher: Polisher, raw: String, minWords: Int, lowercaseRule: Boolea
     if (wordCount(raw) < minWords) return PolishOutcome.SkippedShort(raw)
     return polisher.polish(raw).fold(
         onSuccess = { PolishOutcome.Text(if (lowercaseRule) restoreFirstI(it) else it) },
-        onFailure = { PolishOutcome.Fallback(raw, it.message.orEmpty(), blocked = (it as? PolishError)?.blocked == true) },
+        onFailure = {
+            val error = it as? PolishError
+            PolishOutcome.Fallback(raw, it.message.orEmpty(), blocked = error?.blocked == true, notice = error?.notice)
+        },
     )
 }
 
@@ -91,7 +94,8 @@ class PolishClient(
             is Attempt.Answered -> attempt
             is Attempt.Unreadable ->
                 return fail("polish HTTP ${attempt.status} body unreadable", attempt.cause)
-            is Attempt.SendFailed -> return fail("polish transport", attempt.cause)
+            is Attempt.SendFailed ->
+                return fail(TRANSPORT, attempt.cause, notice = attempt.reach?.let { connectionNote(STAGE, it, endpoint, tail = RAW_TEXT) })
             Attempt.Blocked -> return Result.failure(PolishError(INSECURE_BLOCKED, blocked = true))
         }
         if (answered.status !in HTTP_OK_FIRST..HTTP_OK_LAST) {
@@ -112,12 +116,15 @@ class PolishClient(
         return Result.success(trimmed)
     }
 
-    private fun <T> fail(head: String, detail: String? = null): Result<T> =
-        Result.failure(PolishError(if (detail.isNullOrEmpty()) head else "$head: $detail"))
+    private fun <T> fail(head: String, detail: String? = null, notice: String? = null): Result<T> =
+        Result.failure(PolishError(if (detail.isNullOrEmpty()) head else "$head: $detail", notice = notice))
 
     private companion object {
         const val PATH = "/chat/completions"
         const val CONTENT_TYPE = "application/json"
+        const val STAGE = "polish"
+        const val TRANSPORT = "polish transport"
+        const val RAW_TEXT = ", raw text"
         const val NO_ENDPOINT = "polish: no endpoint configured"
         const val INSECURE_BLOCKED = "polish: insecure endpoint blocked"
         const val NO_CONTENT = "polish response has no content field"

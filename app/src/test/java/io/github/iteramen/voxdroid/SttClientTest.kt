@@ -546,8 +546,74 @@ class SttClientTest {
 
         val error = client("http://127.0.0.1:$port").transcribe(wav, auto, null).exceptionOrNull()!!
 
-        assertEquals("stt transport", (error as SttError).bar)
+        assertEquals("stt unreachable", (error as SttError).bar)
         assertTrue(error.message, error.message!!.startsWith("stt transport: "))
+    }
+
+    @Test
+    fun aDeadEndpointsBarCarriesNoCredentialTokenOrExceptionText() {
+        val port = ServerSocket(0).use { it.localPort }
+
+        val error = client("http://user:$SENTINEL@127.0.0.1:$port", token = TOKEN).transcribe(wav, auto, null).exceptionOrNull()!!
+
+        assertEquals("stt unreachable", (error as SttError).bar)
+        assertFalse(error.message, error.message!!.contains(TOKEN))
+    }
+
+    @Test
+    fun aTailnetHostsHttpAuthAndMalformedRepliesGetNoTailscaleHint() {
+        val cases = listOf(
+            Triple(500, "upstream rejected: Bearer $TOKEN $SENTINEL", "stt HTTP 500"),
+            Triple(401, """{"error":"bad key $SENTINEL"}""", "stt HTTP 401"),
+            Triple(403, "forbidden $SENTINEL", "stt HTTP 403"),
+            Triple(200, "<html>$SENTINEL</html>", "stt response is not an object"),
+            Triple(200, """{"text":"$SENTINEL""", "stt JSON"),
+        )
+        for ((status, reply, bar) in cases) {
+            val server = start(status = status, reply = reply)
+
+            val error = throughProxy(server) {
+                client(TAILNET_URL, token = TOKEN).transcribe(wav, auto, null).exceptionOrNull()!!
+            }
+
+            server.stop()
+            assertEquals("the request went through the proxy", 1, server.requests.size)
+            assertEquals(bar, (error as SttError).bar)
+        }
+    }
+
+    @Test
+    fun aTailnetHostThatNeverAnswersTimesOutWithTheTailscaleQuestion() {
+        val error = throughSilentProxy {
+            SttClient(TAILNET_URL, true, "whisper-1", TOKEN, WATCHDOG_TIMEOUT_MS, true, { true }) {}
+                .transcribe(wav, auto, null).exceptionOrNull()!!
+        }
+
+        assertEquals("stt timed out — Tailscale not connected?", (error as SttError).bar)
+        assertFalse(error.message, error.message!!.contains(TOKEN))
+    }
+
+    @Test
+    fun aTailnetHostIsReachedThroughTheProxyTheHintTestsUse() {
+        val server = start(reply = """{"text":"through the proxy"}""")
+
+        val out = throughProxy(server) { client(TAILNET_URL).transcribe(wav, auto, null) }
+
+        assertEquals("through the proxy", out.getOrThrow().text)
+        assertEquals("/v1/audio/transcriptions", server.requests.single().path)
+    }
+
+    @Test
+    fun aTailnetHostsPolicyAndConfigurationRefusalsGetNoTailscaleHint() {
+        val blocked = client(TAILNET_URL, allowInsecureHttp = false).transcribe(wav, auto, null).exceptionOrNull()!!
+        val port = client("http://100.64.0.1:99999/v1").transcribe(wav, auto, null).exceptionOrNull()!!
+        val header = client(TAILNET_URL, token = BROKEN_TOKEN).transcribe(wav, auto, null).exceptionOrNull()!!
+        val named = client("http://box.tailnet.ts.net/v1", allowInsecureHttp = false).transcribe(wav, auto, null).exceptionOrNull()!!
+
+        assertEquals("stt: insecure endpoint blocked", (blocked as SttError).bar)
+        assertEquals("stt transport", (port as SttError).bar)
+        assertEquals("stt transport", (header as SttError).bar)
+        assertEquals("stt: insecure endpoint blocked", (named as SttError).bar)
     }
 
     @Test
@@ -653,7 +719,7 @@ class SttClientTest {
             val elapsedMs = (System.nanoTime() - start) / NANOS_PER_MILLI
 
             println("aPeerThatAcceptsAndNeverReadsIsBoundedByTheWatchdog elapsed $elapsedMs ms")
-            assertEquals("stt transport", (error as SttError).bar)
+            assertEquals("stt timed out", (error as SttError).bar)
             assertTrue("elapsed was $elapsedMs ms", elapsedMs < 4_000)
         } finally {
             serverSocket.close()
@@ -684,6 +750,7 @@ class SttClientTest {
     private fun wavOfSamples(samples: Int) = wav(ByteArray(samples * 2))
 
     private companion object {
+        const val TAILNET_URL = "http://100.64.0.1/v1"
         const val SIXTY_SECONDS_SAMPLES = 60 * 16_000
         const val RATE_OFFSET = 24
         const val SENTINEL = "SENTINEL_PAST_THE_PREFIX"
@@ -693,6 +760,40 @@ class SttClientTest {
         const val WATCHDOG_TIMEOUT_MS = 1_000
         const val FOUR_MEGABYTES = 4 * 1024 * 1024
         const val NANOS_PER_MILLI = 1_000_000L
+    }
+}
+
+/** The JVM's HttpURLConnection sends a non-loopback host's request to [server] as a proxy, so a tailnet host gets a real reply. */
+internal fun <T> throughProxy(port: Int, block: () -> T): T {
+    val keys = listOf("http.proxyHost", "http.proxyPort")
+    val saved = keys.associateWith { System.getProperty(it) }
+    System.setProperty("http.proxyHost", "127.0.0.1")
+    System.setProperty("http.proxyPort", port.toString())
+    try {
+        return block()
+    } finally {
+        for ((key, value) in saved) if (value == null) System.clearProperty(key) else System.setProperty(key, value)
+    }
+}
+
+private fun <T> throughProxy(server: Endpoint, block: () -> T): T = throughProxy(server.port, block)
+
+/** A proxy that accepts and never answers, so a tailnet host's request times out without leaving loopback. */
+internal fun <T> throughSilentProxy(block: () -> T): T {
+    val silent = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
+    val held = Collections.synchronizedList(mutableListOf<java.net.Socket>())
+    Thread {
+        try {
+            while (true) held.add(silent.accept())
+        } catch (closed: IOException) {
+            // close() below ends accept() this way.
+        }
+    }.apply { isDaemon = true }.start()
+    try {
+        return throughProxy(silent.localPort, block)
+    } finally {
+        silent.close()
+        held.forEach { it.close() }
     }
 }
 
@@ -788,7 +889,9 @@ private class Endpoint(
         server.start()
     }
 
-    val url: String get() = "http://127.0.0.1:${server.address.port}"
+    val port: Int get() = server.address.port
+
+    val url: String get() = "http://127.0.0.1:$port"
 
     fun stop() {
         server.stop(0)

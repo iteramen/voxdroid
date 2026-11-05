@@ -65,21 +65,23 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 ## Dictate
 
 - **Start:** hold volume-down (500 ms by default, at least 300; Triggers page) or tap the
-  accessibility button. Recording starts at once and the pill appears above the keyboard with a
-  red dot and a timer. A quick volume-down press while idle still lowers the volume.
+  accessibility button. Recording starts once the start tone has played (at once with tones off)
+  and the pill appears above the keyboard with a red dot and a timer. A quick volume-down press while idle still lowers the volume.
 - **Stop:** press volume-down, tap the accessibility button again, or tap **■ Stop** on the pill.
   There is no silence timeout: pause to think as long as you like. A take stops itself at five
   minutes and is transcribed.
 - **Discard:** tap **✕** while recording. Turning the screen off abandons the take at any stage.
 - **The text** lands at the cursor of the field that was focused when you started, with a space in
   front when needed. Line breaks become spaces, and one trailing period comes off (Cleanup page).
-- **Errors** name the failing stage on the pill (`stt transport`, `stt[he] HTTP 502`); after a failed
+- **Errors** name the failing stage on the pill (`stt timed out`, `stt[he] HTTP 502`); after a failed
   transcription, **↻ Retry** sends the same audio again without re-speaking.
 - **Refused:** a password field; a phone call in progress, unless *Dictate during a call* is on; no
   text field, or a field that changed before the text arrived, unless the Delivery page is set to
   *Copy to the clipboard*.
 - Drag the pill up or down; it keeps that height above the keyboard. With *Vibrate on start and
   done* on, a click marks a start and a landing, and a double click a failure or a refusal.
+  *Tones on start and done* (on by default) beeps for the same moments, at *Tone volume (%)* (5 by
+  default), and stays quiet while the phone is on silent or vibrate or Do Not Disturb is on.
 
 ## Privacy in brief
 

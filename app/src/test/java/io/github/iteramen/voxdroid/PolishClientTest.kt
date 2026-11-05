@@ -94,6 +94,7 @@ class PolishClientTest {
 
         assertEquals(RAW, fallback(outcome).raw)
         assertTrue(fallback(outcome).detail, fallback(outcome).detail.startsWith("polish transport: "))
+        assertEquals("polish timed out, raw text", fallback(outcome).notice)
     }
 
     @Test
@@ -101,10 +102,62 @@ class PolishClientTest {
         // Bind a port, learn it, then drop the socket: nothing is listening there.
         val port = ServerSocket(0).use { it.localPort }
 
-        val outcome = polish(client("http://127.0.0.1:$port"), RAW, 0)
+        val outcome = polish(client("http://user:$SENTINEL@127.0.0.1:$port", token = TOKEN), RAW, 0)
 
         assertEquals(RAW, fallback(outcome).raw)
         assertTrue(fallback(outcome).detail, fallback(outcome).detail.startsWith("polish transport: "))
+        assertEquals("polish unreachable, raw text", fallback(outcome).notice)
+    }
+
+    @Test
+    fun aTailnetHostsHttpAuthAndMalformedRepliesKeepTheGenericNotice() {
+        val cases = listOf(
+            500 to "upstream rejected: Bearer $TOKEN $SENTINEL",
+            401 to """{"error":"bad key $SENTINEL"}""",
+            403 to "forbidden $SENTINEL",
+            200 to "<html>$SENTINEL</html>",
+            200 to """{"choices":[]}""",
+        )
+        for ((status, reply) in cases) {
+            val server = start(status = status, reply = reply)
+
+            val outcome = throughProxy(server.port) { polish(client(TAILNET_URL, token = TOKEN), RAW, 0) }
+
+            server.stop()
+            assertEquals("the request went through the proxy", 1, server.requests.size)
+            assertEquals(RAW, fallback(outcome).raw)
+            assertNull("$status $reply", fallback(outcome).notice)
+        }
+    }
+
+    @Test
+    fun aTailnetHostThatNeverAnswersTimesOutWithTheTailscaleQuestion() {
+        val outcome = throughSilentProxy { polish(client(TAILNET_URL, token = TOKEN, timeoutMs = SHORT_TIMEOUT_MS), RAW, 0) }
+
+        assertEquals(RAW, fallback(outcome).raw)
+        assertEquals("polish timed out, raw text — Tailscale not connected?", fallback(outcome).notice)
+    }
+
+    @Test
+    fun aTailnetHostIsReachedThroughTheProxyTheHintTestsUse() {
+        val server = start(reply = content("through the proxy"))
+
+        val outcome = throughProxy(server.port) { polish(client(TAILNET_URL), RAW, 0) }
+
+        assertEquals(PolishOutcome.Text("through the proxy"), outcome)
+        assertEquals("/v1/chat/completions", server.requests.single().path)
+    }
+
+    @Test
+    fun aTailnetHostsPolicyAndConfigurationRefusalsKeepTheirOwnNotice() {
+        val blocked = fallback(polish(client(TAILNET_URL, allowInsecureHttp = false), RAW, 0))
+        val port = fallback(polish(client("http://100.64.0.1:99999/v1"), RAW, 0))
+        val header = fallback(polish(client(TAILNET_URL, token = BROKEN_TOKEN), RAW, 0))
+
+        assertTrue(blocked.blocked)
+        assertNull(blocked.notice)
+        assertNull(port.notice)
+        assertNull(header.notice)
     }
 
     @Test
@@ -372,6 +425,7 @@ class PolishClientTest {
     ) = PolishClient(baseUrl, allowInsecureHttp, "gemma", token, timeoutMs, systemPrompt)
 
     private companion object {
+        const val TAILNET_URL = "http://100.64.0.1/v1"
         const val RAW = "hello world"
         const val SENTINEL = "SENTINEL_PAST_THE_PREFIX"
         const val TOKEN = "tokenvalue12345"
@@ -414,7 +468,9 @@ private class Completions(status: Int, reply: String, delayMs: Long, closeFirst:
         server.start()
     }
 
-    val url: String get() = "http://127.0.0.1:${server.address.port}"
+    val port: Int get() = server.address.port
+
+    val url: String get() = "http://127.0.0.1:$port"
 
     fun stop() = server.stop(0)
 }
