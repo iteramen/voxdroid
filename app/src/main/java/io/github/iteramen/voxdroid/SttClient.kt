@@ -63,7 +63,8 @@ class SttClient(
             is Attempt.Answered -> attempt
             is Attempt.Unreadable ->
                 return fail("stt HTTP ${attempt.status} body unreadable", attempt.cause)
-            is Attempt.SendFailed -> return fail("stt transport", attempt.cause)
+            is Attempt.SendFailed ->
+                return fail(TRANSPORT, attempt.cause, bar = attempt.reach?.let { connectionNote(STAGE, it, endpoint) } ?: TRANSPORT)
             Attempt.Blocked -> return fail(INSECURE_BLOCKED)
         }
         if (answered.status !in HTTP_OK_FIRST..HTTP_OK_LAST) {
@@ -126,13 +127,15 @@ class SttClient(
     private fun post(contentType: String, body: ByteArray): Attempt =
         boundedPost(endpoint + PATH, allowInsecureHttp, contentType, token, body, timeoutMs, WATCHDOG_THREAD)
 
-    private fun <T> fail(bar: String, detail: String? = null): Result<T> =
-        Result.failure(SttError(bar, if (detail.isNullOrEmpty()) bar else "$bar: $detail"))
+    private fun <T> fail(head: String, detail: String? = null, bar: String = head): Result<T> =
+        Result.failure(SttError(bar, if (detail.isNullOrEmpty()) head else "$head: $detail"))
 
     private fun prefix(body: String) = bodyPrefix(body, token)
 
     private companion object {
         const val PATH = "/audio/transcriptions"
+        const val STAGE = "stt"
+        const val TRANSPORT = "stt transport"
         const val NO_ENDPOINT = "stt: no endpoint configured"
         const val INSECURE_BLOCKED = "stt: insecure endpoint blocked"
         const val BOUNDARY_PREFIX = "voxdroid"

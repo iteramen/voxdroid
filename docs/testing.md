@@ -180,9 +180,17 @@ Languages), then a **Privacy policy** row.
 Against a working STT endpoint:
 
 - [ ] dictate a sentence in English: the text lands at the cursor, one line, no stray line breaks
-- [ ] turn airplane mode on and dictate: the pill reads `stt transport`; turn the radio back on and
+- [ ] turn airplane mode on and dictate: the pill reads `stt unreachable` or `stt timed out`, never
+      `Tailscale not connected?` for an endpoint outside the tailnet; turn the radio back on and
       tap `↻ Retry` — the same dictation lands, from the audio still held in memory
-- [ ] point `STT endpoint` at a port nothing listens on and dictate: the pill reads `stt transport`
+- [ ] point `STT endpoint` at a port nothing listens on and dictate: the pill reads `stt unreachable`
+- [ ] point `STT endpoint` at a tailnet host (a `100.x` address or a `*.ts.net` name) and disconnect
+      Tailscale, then dictate: the pill reads `stt timed out — Tailscale not connected?` or
+      `stt unreachable — Tailscale not connected?`, with no token, URL or server text on it, and it
+      stays with `↻ Retry` well past 4 seconds; reconnect Tailscale and tap `↻ Retry`: the same
+      dictation lands
+- [ ] the same tailnet endpoint, connected, answering 401 or 500: the pill reads `stt HTTP 401` or
+      `stt HTTP 500` and never asks about Tailscale
 - [ ] trigger in silence and stop: nothing is typed and the pill shows `silence`
 - [ ] point `STT endpoint` at a whisper-server started without `--vad-model` and dictate for over
       60 seconds: the text lands, and `adb logcat -s voxdroid` shows
@@ -209,8 +217,14 @@ those rows would go green with no request sent.
       terms in a Hebrew or Russian sentence: they come back in Latin, spelled as the glossary lists
       them
 - [ ] point `Cleanup endpoint` at a port nothing listens on and dictate: the pill shows `polish…`,
-      **the raw transcript still lands at the cursor**, then `polish failed, raw text` — never an
-      error state, never a lost dictation
+      **the raw transcript still lands at the cursor**, then `polish unreachable, raw text` for
+      about 4 seconds — never an error state, never a lost dictation
+- [ ] point `Cleanup endpoint` at a tailnet host (a `100.x` address or a `*.ts.net` name) and
+      disconnect Tailscale, then dictate: the raw transcript lands, and the pill reads
+      `polish timed out, raw text — Tailscale not connected?` (or `unreachable`) for about 4
+      seconds; reconnect Tailscale and dictate again: the cleaned text lands with no notice
+- [ ] the same tailnet cleanup endpoint, connected, answering 500: the raw transcript lands with
+      `polish failed, raw text`, with no Tailscale question
 - [ ] same with the cleanup endpoint answering 500, and with it answering slower than
       `Cleanup timeout, seconds`: the raw transcript lands each time
 - [ ] `Cleanup pass` on with `Cleanup endpoint` (or `Cleanup model`) empty: the transcript lands
@@ -269,7 +283,7 @@ on that language's own page, opened from its row there (`עברית (he)` for `h
 - [ ] Gboard on русский with the `ru` switch on, speak Russian: it lands, and the request log on
       the default endpoint carries `language=ru`
 - [ ] on `עברית (he)`'s page, point `Lane URL for he` at a port nothing listens on, Gboard on
-      עברית, dictate: the pill reads `stt[he] transport` and the default endpoint was not called
+      עברית, dictate: the pill reads `stt[he] unreachable` and the default endpoint was not called
 - [ ] with an STT token set and the STT endpoint on a different host than the lane, leave the
       "Send the STT token to the he lane" switch on `עברית (he)`'s page alone: it reads off, "No
       token goes to this lane.". Gboard on עברית, dictate: the lane server's log shows no
@@ -324,6 +338,13 @@ does both from the status card's **Turn on**.
       changed — not inserted`) and read both, with no ellipsis; at the largest font size
       `password field — not recorded` is still whole on its two lines, and the pill grows upward
       without overlapping Gboard
+- [ ] time the notices with a stopwatch: `password field — not recorded`, `no text field — not
+      recorded` and `field changed — not inserted` each stay about 4 seconds; `silence` and
+      `copied to the clipboard` about 2.5 seconds; a joined `polish failed, raw text · copied to
+      the clipboard` about 4 seconds. Start a new take while a 4-second notice shows: the timer
+      replaces it and the new take's pill is not hidden when the old notice would have ended
+- [ ] an error pill with `↻ Retry` (airplane mode) stays up with no timer: wait 10 seconds and it
+      is still there, until `✕`, `↻ Retry` or a new take
 - [ ] start in one chat, switch to another before the text arrives: `field changed — not
       inserted`, and nothing lands in either chat
 - [ ] focus a View password field (`textPassword`), its text masked, and trigger: `password field —
@@ -353,6 +374,16 @@ does both from the status card's **Turn on**.
       volume-down (or tap the accessibility button): the pill and its Retry stay as they were; tap
       into the original field again and tap Retry, and the same take lands
 - [ ] start a take, then lock the screen: nothing is typed after unlocking, and the pill is gone
+- [ ] screen timeout at 30 s: dictate for over 40 s without touching the phone and stop with
+      volume-down: the screen stays on throughout and the text lands
+- [ ] screen timeout at 30 s, STT and cleanup timeouts at 60 s: point the STT base URL at a stub
+      that holds its reply for about 40 s, dictate, stop, and leave the phone alone: the screen
+      stays on through `stt…` and the text lands; the same with a cleanup stub held about 40 s
+      through `polish…`
+- [ ] screen timeout at 30 s: after a take lands, and after an error pill shows (airplane mode),
+      leave the phone alone: the screen times out about 30 s later as usual
+- [ ] while recording, tap into the field and type on Gboard: the pill still takes no focus and
+      the keys land in the field
 - [ ] with the cleanup endpoint configured and `Minimum words` at its default, stop a take and
       turn the screen off while the pill reads `stt…`: nothing is typed, and the cleanup server's
       access log shows no request for that dictation — the transcript of an abandoned take never
@@ -398,7 +429,7 @@ by default.
       instead: the same click
 - [ ] stop the take: one click as the text lands; mode Clipboard with no field focused: one click
       with `copied to the clipboard`
-- [ ] turn airplane mode on and dictate: a double click with the `stt transport` error pill; revoke
+- [ ] turn airplane mode on and dictate: a double click with the `stt unreachable` error pill; revoke
       the microphone and trigger: a double click with `grant the microphone in voxdroid`
 - [ ] trigger in a password field: a double click with `password field — not recorded`; during a
       call: a double click with `call in progress — not recorded`
@@ -407,14 +438,14 @@ by default.
 - [ ] start in one chat and switch to another before the text arrives: a double click with
       `field changed — not inserted`
 - [ ] point `Cleanup endpoint` at a port nothing listens on and dictate: the raw text lands with a
-      double click, not a click, and `polish failed, raw text` shows
+      double click, not a click, and `polish unreachable, raw text` shows
 - [ ] `✕` while recording, and the screen turning off while the pill reads `stt…`: nothing;
       trigger in silence and stop: nothing with `silence`
 - [ ] turn **Vibrate on start and done** off: none of the rows above vibrates
 - [ ] turn Android's **Touch feedback** setting off: none of the rows above vibrates
 - [ ] unknown, record what happens: the done and error cues fire after the recording's foreground
       service has stopped. Run `adb shell dumpsys vibrator_manager` after a take lands and after an
-      `stt transport` error, and note whether the latest vibrations from
+      `stt unreachable` error, and note whether the latest vibrations from
       `io.github.iteramen.voxdroid` read `IGNORED_BACKGROUND`
 - [ ] unknown, record what happens: the same start, done and error cues with battery saver on
 

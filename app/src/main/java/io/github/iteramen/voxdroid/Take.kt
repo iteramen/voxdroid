@@ -11,6 +11,9 @@ sealed interface TakeState {
 
 enum class Stage { Stt, Polish }
 
+/** An automatic screen timeout is the same ACTION_SCREEN_OFF as the power button, which cancels: hold the screen while a take is in flight. */
+fun keepsScreenOn(state: TakeState): Boolean = state == TakeState.Recording || state is TakeState.Working
+
 sealed interface TakeEvent {
     data object Trigger : TakeEvent
     data object Retry : TakeEvent
