@@ -66,7 +66,7 @@ into it unchecked:
   captioned.
 - **Not ephemeral on the device while it decodes.** The encoded message is written to a private,
   backup-excluded file during decoding and deleted before any request
-  ([SECURITY.md](../SECURITY.md#imported-voice-messages-inactive)). Whether that, and a transmission
+  ([SECURITY.md](../../SECURITY.md#imported-voice-messages-inactive)). Whether that, and a transmission
   to the user's own server, still answers "processed ephemerally" is checked against Play's
   definition then, not assumed.
 - **Optional retention.** *Remember voice-message transcripts*, off by default, keeps transcript
