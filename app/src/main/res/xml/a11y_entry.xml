@@ -2,7 +2,7 @@
 <!-- isAccessibilityTool="true": voxdroid is a voice-input tool for people with motor impairments,
      a class Play's AccessibilityService policy names. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeWindowsChanged"
+    android:accessibilityEventTypes="typeWindowsChanged|typeWindowStateChanged|typeWindowContentChanged|typeViewScrolled|typeViewClicked|typeViewLongClicked"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagRequestAccessibilityButton|flagRequestFilterKeyEvents|flagInputMethodEditor|flagRetrieveInteractiveWindows"
     android:canRequestFilterKeyEvents="true"

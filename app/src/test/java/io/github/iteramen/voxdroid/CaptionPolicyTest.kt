@@ -35,11 +35,15 @@ class CaptionPolicyTest {
     }
 
     @Test
-    fun nothingInTheAppUsesTheCaptionFoundationYet() {
+    fun onlyTheExplicitCaptionIntegrationUsesTheFoundation() {
         val sources = sourceDir().walk().filter { it.isFile && it.extension == "kt" }.toList()
         assertTrue("the source walk must find the foundation itself", sources.map { it.name }.containsAll(FOUNDATION))
         val users = sources.filter { it.name !in FOUNDATION && CAPTION_NAMES.containsMatchIn(it.readText()) }
-        assertEquals("dictation, the microphone and delivery stay unconnected", emptyList<String>(), users.map { it.name })
+        val allowed = setOf("CaptionController.kt", "CaptionReceiveActivity.kt", "CaptionSession.kt", "CaptionAccessibility.kt",
+            "CaptionPanel.kt", "VoxdroidA11yService.kt", "Settings.kt", "SettingsActivity.kt", "SectionFragment.kt")
+        assertTrue("unexpected caption callers: ${users.map { it.name }.filter { it !in allowed }}", users.all { it.name in allowed })
+        assertTrue("positive control: receiver/controller/settings are wired", users.map { it.name }.containsAll(
+            setOf("CaptionReceiveActivity.kt", "CaptionController.kt", "SectionFragment.kt", "VoxdroidA11yService.kt")))
 
         val cache = sources.single { it.name == "CaptionCache.kt" }.readText()
         val reached = DICTATION_NAMES.findAll(cache).map { it.value }.toSet()
@@ -53,6 +57,11 @@ class CaptionPolicyTest {
         }
         val processor = sources.single { it.name == "CaptionProcessor.kt" }.readText()
         assertTrue("the positive control: the processor's own source is read", processor.contains("SttLanguage.Auto(settings.languages)"))
+        val importing = setOf("CaptionReceiveActivity.kt", "CaptionController.kt", "CaptionAccessibility.kt")
+        val forbidden = Regex("""\b(AudioRecorder|AudioRecord|RECORD_AUDIO|FieldAccess|commitText|startRecording|goForeground)\b""")
+        for (file in sources.filter { it.name in importing }) {
+            assertEquals("${file.name} cannot record or deliver text", emptySet<String>(), forbidden.findAll(file.readText()).map { it.value }.toSet())
+        }
     }
 
     private companion object {

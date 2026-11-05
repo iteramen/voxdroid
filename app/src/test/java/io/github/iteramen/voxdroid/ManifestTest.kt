@@ -10,6 +10,33 @@ import javax.xml.parsers.DocumentBuilderFactory
 class ManifestTest {
 
     @Test
+    fun theCaptionReceiverIsAnExplicitSingleAudioShareSurface() {
+        val document = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(manifestFile())
+        val activities = document.getElementsByTagName("activity")
+        val receivers = (0 until activities.length).map { activities.item(it) as Element }
+            .filter { it.getAttributeNS(ANDROID_NS, "name") == ".CaptionReceiveActivity" }
+        assertEquals(1, receivers.size)
+        val receiver = receivers.single()
+        assertEquals("true", receiver.getAttributeNS(ANDROID_NS, "exported"))
+        assertEquals("true", receiver.getAttributeNS(ANDROID_NS, "excludeFromRecents"))
+        val actions = receiver.getElementsByTagName("action")
+        assertEquals(listOf("android.intent.action.SEND"), (0 until actions.length).map {
+            (actions.item(it) as Element).getAttributeNS(ANDROID_NS, "name")
+        })
+        val data = receiver.getElementsByTagName("data")
+        assertEquals(setOf("audio/*", "application/ogg"), (0 until data.length).map {
+            (data.item(it) as Element).getAttributeNS(ANDROID_NS, "mimeType")
+        }.toSet())
+        val queries = document.getElementsByTagName("queries")
+        assertEquals(1, queries.length)
+        val packages = (queries.item(0) as Element).getElementsByTagName("package")
+        assertEquals(setOf("com.whatsapp", "org.telegram.messenger"), (0 until packages.length).map {
+            (packages.item(it) as Element).getAttributeNS(ANDROID_NS, "name")
+        }.toSet())
+    }
+
+    @Test
     fun declaresTheMicrophoneTheNetworkAndTheMicrophoneServiceAndNothingElse() {
         val elements = DocumentBuilderFactory.newInstance()
             .apply { isNamespaceAware = true }

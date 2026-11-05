@@ -322,6 +322,19 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/row_voice_messages"
+                style="@style/Voxdroid.Row">
+                <TextView style="@style/Voxdroid.RowIcon" android:text="@string/section_speech_icon" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/Voxdroid.RowTitle" android:text="@string/caption_section" />
+                    <TextView style="@style/Voxdroid.RowSummary" android:text="@string/caption_section_summary" />
+                </LinearLayout>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/row_privacy"
                 style="@style/Voxdroid.Row"
                 android:visibility="gone">

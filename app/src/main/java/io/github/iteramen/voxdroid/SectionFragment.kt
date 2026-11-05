@@ -52,6 +52,41 @@ class SectionFragment : PreferenceFragmentCompat() {
         number(KEY_POLISH_TIMEOUT)
         number(KEY_VOLUME_HOLD)
         noFieldRows()
+        captionRows()
+    }
+
+    private fun captionRows() {
+        val enable = findPreference<SwitchPreferenceCompat>("voice_captions") ?: return
+        enable.setOnPreferenceChangeListener { _, value ->
+            if (value != true) true else {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.caption_enable_title)
+                    .setMessage(R.string.caption_enable_disclosure)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.caption_enable) { _, _ -> enable.isChecked = true }
+                    .show()
+                false
+            }
+        }
+        val cache = openCaptionCache(requireContext())
+        findPreference<SwitchPreferenceCompat>("remember_voice_messages")?.apply {
+            isChecked = cache.enabled
+            setOnPreferenceChangeListener { _, value ->
+                val success = cache.setEnabled(value == true)
+                if (!success) android.widget.Toast.makeText(requireContext(), R.string.caption_storage_failed, android.widget.Toast.LENGTH_LONG).show()
+                success
+            }
+        }
+        findPreference<Preference>("delete_voice_messages")?.setOnPreferenceClickListener {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.caption_delete_all)
+                .setMessage(R.string.caption_delete_confirm)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.caption_delete_all) { _, _ ->
+                    if (!cache.deleteAll()) android.widget.Toast.makeText(requireContext(), R.string.caption_storage_failed, android.widget.Toast.LENGTH_LONG).show()
+                }.show()
+            true
+        }
     }
 
     /** Non-persistent rows, so the store is written on a tap only; the checked state is set after inflation because attaching resets it. */
