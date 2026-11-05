@@ -86,6 +86,18 @@ fun deliveryText(notice: Notice, copied: Boolean): PillText = when (notice) {
     Notice.PasswordField -> PillText.PasswordNotInserted
 }
 
+/** Only a copy delivered the text; every other notice reports a refusal or a drop. */
+fun isFailure(text: PillText): Boolean = text != PillText.Copied && text != PillText.FieldChangedCopied
+
+/** A notice joined from several parts stays as long as its most severe part. */
+fun flashMs(vararg failures: Boolean): Long = if (failures.any { it }) FAILURE_FLASH_MS else NOTICE_FLASH_MS
+
+/** An error pill holds the take's audio and its Retry until ✕, Retry or a new take, so no notice replaces it. */
+fun flashesOver(state: TakeState): Boolean = state == TakeState.Idle
+
+internal const val FAILURE_FLASH_MS = 4000L
+internal const val NOTICE_FLASH_MS = 2500L
+
 internal fun noFieldChecked(row: NoFieldMode, stored: String): Boolean = NoFieldMode.parse(stored) == row
 
 internal fun noFieldTap(row: NoFieldMode, stored: String): String? =

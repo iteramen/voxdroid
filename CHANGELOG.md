@@ -5,6 +5,13 @@ build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+Changed
+- A failure or refusal notice stays up for 4 seconds; `silence` and `copied to the clipboard` stay
+  2.5 seconds.
+- A connection failure to the STT endpoint, a lane or the cleanup endpoint reads `timed out` or
+  `unreachable` instead of `transport`. For a host in 100.64.0.0/10 or under `.ts.net`, the pill
+  also asks `Tailscale not connected?`.
+
 Fixed
 - The screen no longer times out mid-take and throws the dictation away: it stays on while
   recording and while the transcript and cleanup are pending. Locking the screen still cancels.
