@@ -87,11 +87,57 @@ read the screen; that is what the permission is.
   microphone indicator show while recording.
 - The recorder is released at stop. The WAV is held in memory for Retry until delivery, cancel or a
   new take, and is never written to disk (`Recorder.kt` — `AudioRecorder.stop`; `Take.kt` —
-  `audio`).
+  `audio`). This memory-only rule is dictation's; the inactive voice-message foundation below
+  spools a received message's encoded bytes to a private file while it decodes them.
 
-**In scope:** the microphone capturing outside a take; audio written to disk; a recording kept
-after delivery or cancel. **Out of scope:** what the platform's microphone arbitration does to a
-take.
+**In scope:** the microphone capturing outside a take; dictation audio written to disk; a recording
+kept after delivery or cancel. **Out of scope:** what the platform's microphone arbitration does to
+a take.
+
+### Imported voice messages (inactive)
+
+The processing foundation for a future voice-message caption feature is in the code and inactive:
+no producer, share target, exported receiver, setting or panel exists, and nothing in the app calls
+it. It opens no microphone, reads no keyboard or field, and types or copies nothing
+(`CaptionProcessor.kt`, `CaptionAudio.kt`, `CaptionMediaDecoder.kt`; `CaptionPolicyTest`). What it
+does once a producer hands it one audio stream:
+
+- **Bounded acquisition.** The stream is read once, in 64 KiB chunks, while the caller's URI grant
+  is valid, and closed on every path. At most 32 MiB is accepted, counted over the bytes actually
+  read; a declared size or type is never asked for. Byte 32 MiB + 1 rejects the request
+  (`CaptionAudio.kt` — `captionAcquire`, `CAPTION_MAX_ENCODED_BYTES`).
+- **Strict format.** The first Ogg page must carry the Opus ID header alone (`captionIsOggOpus`),
+  the extractor must report one `audio/opus` track, and the decoder must produce PCM16, mono or
+  stereo, at a multiple of 16 kHz. At most five minutes of decoded frames are taken, counted at the
+  decoder's rate, not read from metadata. Any failure rejects the whole request; there is no
+  partial caption (`CaptionNormalizer`, `CAPTION_MAX_SECONDS`).
+- **Private, short-lived spool.** The encoded bytes go to `filesDir/caption_spool/<random UUID>.ogg`
+  so the platform extractor can seek, a directory excluded whole from cloud backup and device
+  transfer (`res/xml/data_extraction_rules.xml`). The spool is deleted once decoding ends, before
+  any network request, and again on every error, cancellation and timeout. Opening the processor
+  deletes spools that no running request owns, which is what a killed process leaves
+  (`CaptionSpools`). The decoded audio, 16 kHz mono and at most 9.6 MB, stays in memory. No URI,
+  file name, sender or chat is stored, and no audio reaches the caption cache or a log.
+- **Untrusted media in the platform codec.** `MediaExtractor` and `MediaCodec` parse the received
+  file in voxdroid's process. Every dequeue waits at most 10 ms with a cancellation and deadline
+  check between, and both objects are released on every path. A call that blocks inside the
+  platform (`setDataSource`, `configure`) is not bounded by voxdroid; a platform exception is
+  `Malformed` (`CaptionMediaDecoder.kt`).
+- **Requests.** The normalized 16 kHz WAV, never the Ogg bytes, goes to the same STT endpoint, lanes
+  and cleanup endpoint as dictation, under the same cleartext gate and tokens, auto-detected over the
+  whole *Your languages* list. Cancel, a later request, or the request's deadline stop it: no
+  request is started afterwards, and a reply that arrives afterwards is dropped (`CaptionProcessor`
+  — `process`; `SttClient.kt` — `send`; `Routed.kt`). An upload already under way completes at
+  the server.
+- **Identity.** A caption's key is the SHA-256 of the encoded bytes (`encoded-sha256-v1`) and a
+  versioned SHA-256 profile of the non-secret settings that shape it. Tokens are never part of it,
+  and an address with user info, a query or a fragment makes the caption uncacheable
+  (`captionProfile`). Nothing writes to the caption cache yet.
+
+**In scope:** imported audio in a backup, a device transfer or a log; a spool outliving its
+request beyond the next open; a request sent after cancel or the deadline; more than 32 MiB read or
+more than five minutes decoded; a token reaching the profile. **Out of scope:** vulnerabilities in
+the platform's own media extractor and codecs, which voxdroid cannot patch.
 
 ### STT and cleanup endpoints
 
@@ -171,10 +217,12 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   key; no audio, profile, credential, URI or chat identity. Records expire 30 days after the write
   and nothing in the cache is logged. Turning it off or Delete all removes every record, and a
   request begun before either cannot write afterwards (`CaptionCache.kt` — `begin`, `put`).
+- The voice-message spool directory, `filesDir/caption_spool/`, is excluded whole the same way
+  ([Imported voice messages](#imported-voice-messages-inactive)).
 
 **In scope:** a token in a log, an error string, a backup or a device transfer; a caption record
-in a backup or a device transfer, outliving 30 days, or written by a request begun before Delete
-all or turning off. **Out of scope:**
+or spool file in a backup or a device transfer; a caption record outliving 30 days, or written by
+a request begun before Delete all or turning off. **Out of scope:**
 the other preferences file, which holds the addresses, languages and glossary and is backed up; a
 rooted device or a debugger attached to the app's process.
 

@@ -482,3 +482,48 @@ Not Disturb off unless a row says otherwise, and the notification volume up.
       plugged in, and from a Bluetooth headset when connected; a take starts and lands each time
 - [ ] dictate one word on the speaker at volume 100 % against a server that logs or keeps the
       upload: the start beep is not in the uploaded audio
+
+## Voice-message processing
+
+**Unrun.** Nothing in any current build calls `CaptionProcessor`, so none of these rows can run
+yet. They run with the first caption producer, or a debug-only harness written for them, before
+captions ship. The acquisition probes recorded in [design.md](design.md#voice-message-processing-inactive)
+are the codec baseline, not a run of these rows. Use prepared fixtures you recorded yourself,
+never someone else's voice message. List the spool with
+`adb shell run-as io.github.iteramen.voxdroid ls files/caption_spool` (debug build).
+
+Platform decoder and normalizer (`CaptionMediaDecoder`, `CaptionNormalizer`):
+
+- [ ] unrun: a WhatsApp and a Telegram Ogg/Opus fixture each come back `Captioned`; the WAV sent to
+      a server that keeps uploads is 16 kHz mono, and its length matches the decoded frames
+      divided by three, not the container's metadata duration
+- [ ] unrun: a stereo Ogg/Opus fixture is averaged to mono and still transcribes
+- [ ] unrun: an MP3, an AAC `.m4a` and an Ogg Vorbis file are `Unsupported`; a truncated Ogg/Opus
+      file is `Malformed`, or `TimedOut` at the budget, and never runs past the budget; record which
+- [ ] unrun: a fixture just over five minutes of audio is `TooLong`, one just under is `Captioned`
+- [ ] unknown, record what happens: decode time for a five-minute fixture, and whether any
+      `setDataSource` or `configure` call blocks for longer than a second
+
+Cancellation, deadline and spool:
+
+- [ ] unrun: `cancel()` during a five-minute decode returns `Cancelled` within a second, and the
+      spool directory is empty afterwards
+- [ ] unrun: a budget shorter than the decode returns `TimedOut`, nothing reaches the STT server's
+      log, and the spool directory is empty
+- [ ] unrun: a budget that ends while STT is running drops the reply, sends no lane resend and no
+      cleanup request (check both servers' logs), and returns `TimedOut`
+- [ ] unrun: force-stop the app mid-decode (`adb shell am force-stop io.github.iteramen.voxdroid`):
+      a spool file is left; the next open of the processor deletes it
+- [ ] unrun: `caption_spool` is excluded from device transfer: with a spool file planted through
+      `run-as`, transfer to a second phone, and the directory is absent there
+
+The first enabled integration (each row is that pull request's to run):
+
+- [ ] unrun: sharing the same voice message twice yields the same `audioSha256`; two different
+      messages differ
+- [ ] unrun: the stream is read inside the receiving call; a reopen after returning to the
+      messaging app is not attempted, and a revoked grant ends `ReadFailed`, not a hang
+- [ ] unrun: a message that is not downloaded yet, and a message from a chat no longer on screen,
+      each end in a refusal, never a caption of another message
+- [ ] unrun: the in-app accessibility description, the listing text, `docs/privacy.md` and
+      `docs/play/data-safety.md` match the shipped audio, panel and cache flow

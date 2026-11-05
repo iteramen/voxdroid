@@ -43,6 +43,7 @@ Logic that needs no Android lives in plain functions and classes, so the JVM tes
 | `Pill.kt`, `PillPlacement.kt`, `Cue.kt`, `Tone.kt` | the overlay, its placement and drag, haptic cues; the cue tones, their mute policy (`audible`) and `TonePlayer` |
 | `Settings.kt`, `SettingsStore.kt` | the two preference files |
 | `CaptionCache.kt` | the voice-message caption cache; no producer, nothing in the app calls it yet ([below](#caption-cache-inactive)) |
+| `CaptionProcessor.kt`, `CaptionAudio.kt`, `CaptionMediaDecoder.kt` | voice-message processing: acquisition, fingerprint, Ogg/Opus decode, 16 kHz WAV, STT and cleanup; nothing in the app calls it yet ([below](#voice-message-processing-inactive)) |
 | `SettingsActivity.kt`, `Readiness.kt`, `EndpointProbe.kt` | the launcher: a status card whose button fixes the first problem (`problems`), the five page rows, the privacy row |
 | `SectionActivity.kt`, `SectionFragment.kt`, `TryActivity.kt` | one page per `res/xml/section_*.xml`, a language's filled in code (`languagePage`); a field for a first take |
 | `app/src/{debug,release}/…/SelfEnable.kt` | debug only: turning the service on with `WRITE_SECURE_SETTINGS` granted over adb |
@@ -242,6 +243,81 @@ not reach it (`CaptionPolicyTest`). A producer opens it with `openCaptionCache(c
   sidecar, keeps the old record and returns `Failed`. One process-wide lock orders every
   operation, so a ticket check and its write cannot interleave with Delete all.
 
+### Voice-message processing (inactive)
+
+`CaptionProcessor.kt` turns one received voice message into a typed `CaptionOutcome`. Nothing calls
+it: no producer, exported receiver, messaging adapter, setting or panel exists, it reads no
+keyboard or field and delivers nothing, and it does not touch the cache; cache lookup, write and
+the user's control over remembering come with the producer (`CaptionPolicyTest`). A producer
+opens it with `openCaptionProcessor(context)`, snapshots `captionSettings(settings, prompt)` at
+the request's start, and calls `process(stream, settings, budgetMs)` off the main thread.
+
+**The input contract**, from controlled acquisition probes with prepared fixtures (no private
+audio is kept in the repository):
+
+- On a Pixel 10 with Android 17 (API 37), WhatsApp 2.26.42.74 supplied `audio/ogg; codecs=opus`
+  from `com.whatsapp.provider.media`, and Telegram 13.1.1 supplied Ogg/Opus too. Every fixture
+  decoded with `MediaExtractor` and `MediaCodec` to EOS as mono PCM16 at 48 kHz. Metadata durations
+  differed slightly from the decoded frames, so the frames are what is counted.
+- A native share grant was readable inside the receiver, but reopening the URI 2 s after returning
+  failed: the stream is read once, at once. A controlled cold-start handoff passed for one fixture
+  per app, with matching encoded fingerprints.
+- These are codec and acquisition facts. Automatic selection, undownloaded notes, stale-origin
+  guards and end-to-end captions are unproven and stay with the producer's issue.
+
+**The pipeline** (`process`), each stage able to end the whole request; there is no partial
+caption:
+
+1. **Acquire** (`CaptionAudio.kt` — `captionAcquire`): 64 KiB reads into a spool, hashed as they
+   go, the source closed on every path. 32 MiB (`CAPTION_MAX_ENCODED_BYTES`) is accepted, byte
+   32 MiB + 1 is `TooLarge`, and no declared size or type is consulted. A read or spool-write
+   failure, or a spool that cannot be deleted before upload, is `ReadFailed`.
+2. **Identify.** The SHA-256 of the encoded bytes, algorithm `encoded-sha256-v1`
+   (`CAPTION_FINGERPRINT`), is the audio's identity. A URI, file name, sender, time, duration or
+   screen position never is.
+3. **Check the container** (`captionIsOggOpus`): an Ogg first page, version 0 with BOS set, whose
+   only packet is `OpusHead` (RFC 7845); anything else is `Unsupported` and is never decoded.
+4. **Decode** (`CaptionMediaDecoder.kt`): one `audio/opus` track through `MediaExtractor` and
+   `MediaCodec`, 10 ms dequeues with the request's check between them, both objects released on
+   every path. A platform exception is `Malformed`. A native call that blocks (`setDataSource`,
+   `configure`) is outside voxdroid's bound; the handset rows in [testing.md](testing.md#voice-message-processing)
+   cover this class, which the JVM cannot run.
+5. **Normalize** (`CaptionNormalizer`): PCM16, mono or stereo, at a multiple of 16 kHz, else
+   `Unsupported`; a format change mid-stream is `Unsupported`, samples before a format or half a
+   frame `Malformed`. Channels are averaged and each run of `rate / 16000` frames is averaged into
+   one sample (a box filter; a trailing partial run is dropped). Every decoded frame counts toward
+   five minutes (`CAPTION_MAX_SECONDS`) at the decoder's rate: frame 5 min + 1 is `TooLong`. The
+   output, at most 9.6 MB, is the 44-byte-header 16 kHz mono PCM16 WAV of `Recorder.kt` — `wav`. No
+   frame at all is `Malformed`.
+6. **Transcribe** (`captionTranscriber`): dictation's `Routed` over `SttClient`, the default
+   endpoint and the lanes, with `SttLanguage.Auto` over the whole *Your languages* list, whatever
+   the keyboard or the explicit flags say, and dictation's no-speech gate (`dictate`). Silence and a
+   blank transcript are `Silence`; a failure is `SttFailed`.
+7. **Clean up** (`captionPolisher`, `polish`): dictation's cleanup with its enabled switch, model,
+   prompt, glossary, *Minimum words*, capitalization and timeout. `PolishOutcome` maps to
+   `CaptionCleanup`: `Cleaned`, `SkippedShort`, `Fallback` (raw text kept) and `Off` (no pass
+   configured). The displayed text goes through `finish`, so the terminal-period rule applies.
+
+**Spool.** `filesDir/caption_spool/<random UUID>.ogg`, excluded whole from cloud backup and
+device transfer (`res/xml/data_extraction_rules.xml`). It exists because `MediaExtractor` needs a
+seekable source. It is deleted when decoding ends, before STT, and again in `process`'s `finally`.
+`CaptionSpools` keeps the names of this process's running requests, and the sweep at open deletes
+every other file: what a killed process left.
+
+**Cancellation and deadline.** `process` supersedes any earlier request on the processor;
+`cancel()` ends the running one. The check before every read, between decode buffers and after
+each network stage throws `Cancelled` or `TimedOut`; `Routed` and `SttClient` get the same test as
+`current`, so no resend or retry starts after it. A reply that comes back afterwards is dropped,
+never returned. An HTTP call already under way runs to its own timeout.
+
+**Profile** (`captionProfile`): `caption-profile-v2:` and a SHA-256 over a length-prefixed list of
+the normalization version, the STT address, model, glossary and no-speech threshold, the language
+list, each lane's code and address, the cleanup address, model, prompt, *Minimum words* and
+capitalization (or no cleanup), and the terminal-period switch. Tokens are left out; timeouts and the
+insecure-http switch are included because they can change a raw-text cleanup fallback into cleaned text. An address with user info, a
+query or a fragment returns `null`, and the caption comes back with no key: shown, never cached.
+A hidden change on the server's side is the later Re-transcribe action's to refresh.
+
 ## Network rules
 
 Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
@@ -269,7 +345,9 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 - **JVM unit tests** (`./gradlew testDebugUnitTest`, `app/src/test/`): `Take` behind a fake
   `TakeHost`, `admit`/`delivery`, `VolumeGesture`, placement, language and routing, and both HTTP
   clients against a loopback `com.sun.net.httpserver.HttpServer`; `ManifestTest` pins the
-  permissions, `PolishPromptTest` reads the prompt file.
+  permissions, `PolishPromptTest` reads the prompt file. The caption cache and the voice-message
+  pipeline run behind a fake decoder, STT and cleanup, on synthetic Ogg headers and PCM;
+  `CaptionPolicyTest` reads the backup rules and checks that nothing live calls either.
 - **On a handset:** the manual checklist in [testing.md](testing.md), against the debug APK,
   before a PR that touches the service.
 - **CI** ([.github/workflows/](../.github/workflows/)): `ci.yml` runs the gate
@@ -283,3 +361,5 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 
 - The Google Play listing.
 - Read-aloud, always-on transcription, and an opt-in capture log of takes.
+- Voice-message captions: a producer that hands a message to the processor, the panel that shows
+  it, cache lookup and write, and the *Remember voice-message transcripts* control.

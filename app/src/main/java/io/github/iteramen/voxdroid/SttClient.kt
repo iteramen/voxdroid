@@ -121,7 +121,7 @@ class SttClient(
 
         // Retry only when no response came back: once a status arrived, the audio reached the server.
         val first = post(contentType, body)
-        return if (first is Attempt.SendFailed) post(contentType, body) else first
+        return if (first is Attempt.SendFailed && current()) post(contentType, body) else first
     }
 
     private fun post(contentType: String, body: ByteArray): Attempt =

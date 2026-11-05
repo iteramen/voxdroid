@@ -85,14 +85,21 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 
 ## Privacy in brief
 
-voxdroid has no server, account, analytics, advertising or crash reporting. The audio goes only to
-the servers you configure, is held in memory and is never written to disk. Your bearer tokens stay
+voxdroid has no server, account, analytics, advertising or crash reporting. Your dictation's audio
+goes only to the servers you configure, is held in memory and is never written to disk. Your bearer tokens stay
 in app-private storage, out of Android's backups. Plain `http://` to anything but the phone itself
 is refused until you turn on *Allow insecure (http) endpoints*. The full statement is the
 [privacy policy](docs/privacy.md); the threat model and how to report a vulnerability are in
 [SECURITY.md](SECURITY.md).
 
 How it works: [docs/design.md](docs/design.md).
+
+## In development
+
+Private, readable captions of voice messages you receive, for people who are deaf or hard of
+hearing. The code that processes a message is in the app but unused: nothing in voxdroid receives,
+reads or transcribes a voice message yet, and there is no setting for it. What it will send and
+keep is in the [privacy policy](docs/privacy.md#voice-message-captions-in-development).
 
 ## License
 

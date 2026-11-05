@@ -1,6 +1,6 @@
 # Privacy policy — voxdroid
 
-**Effective: 2026-10-10.**
+**Effective: 2026-11-05.**
 
 voxdroid is an Android accessibility service that dictates into the text field you are typing in,
 with your own keyboard staying up. You hold volume-down or tap the accessibility button, speak,
@@ -41,11 +41,11 @@ begins during a recording does not stop it (`Delivery.kt` — `isCallMode`, `adm
 
 Tapping the pill's ✕ while recording, or the screen turning off at any stage, abandons the
 dictation: a recording in progress is dropped unsent and nothing is typed (`Take.kt` — `cancel`).
-An upload already under way is not cancelled, nor is its one retry when no response came back: it
-completes at your server and its reply is thrown away. No request the dictation had not yet
-started is sent afterwards — not the cleanup pass, not a resend to a language lane or without
-`vad`, and not a retry on your default server (`Routed.kt`, `SttClient.kt` — the `current`
-checks; `VoxdroidA11yService.kt` — `transcribe`).
+An upload already under way is not cancelled: it completes at your server and its reply is thrown
+away. No request the dictation had not yet started is sent afterwards — not the one retry when no
+response came back, not the cleanup pass, not a resend to a language lane or without `vad`, and
+not a retry on your default server (`Routed.kt`, `SttClient.kt` — the `current` checks;
+`VoxdroidA11yService.kt` — `transcribe`).
 
 Audio is captured straight into memory and never written to a file or a database
 (`Recorder.kt` — `AudioRecorder`). If a transcription fails, the audio stays in memory so that
@@ -102,9 +102,14 @@ settings, the glossary, the other options and how high above the keyboard you la
 pill (`Settings.kt`). The tokens are excluded from Android's cloud backup and from device-to-device
 transfer (`res/xml/data_extraction_rules.xml`); everything else is included in Android's normal
 backup, so it can follow you to a new phone, where the tokens are entered again. Uninstalling the
-app removes both files.
+app removes both files. The unused caption code's two directories (`captions`, `caption_spool`)
+are excluded from backup and transfer as well, and the app as it ships writes nothing to either.
 
 ## What is not collected
+
+This section describes the app as it ships, which dictates and does nothing else.
+[Voice-message captions](#voice-message-captions-in-development) will change it before they are
+turned on.
 
 - No recording is kept: it is dropped when a dictation finishes or is discarded, and is never
   written to disk.
@@ -114,6 +119,35 @@ app removes both files.
 - voxdroid has no analytics, telemetry, advertising or crash-reporting code. What ships is the
   app, the Kotlin standard library, AndroidX Preference and Material Components
   (`app/build.gradle.kts` — `dependencies`).
+
+## Voice-message captions (in development)
+
+voxdroid is gaining private, readable captions for voice messages you receive, so that people who
+are deaf or hard of hearing, or anyone who cannot listen just then, can read them. **Nothing in the
+app as it ships receives, reads or transcribes a voice message**: there is no share target, button,
+setting or panel for it. The code that will process one is present but unused
+(`CaptionProcessor.kt`), as is the caption cache (`CaptionCache.kt`).
+
+When a version turns captions on, this policy will describe that version's flow before it ships,
+including how you pick a message. The flow being built:
+
+- **You choose one message.** Only a voice message you explicitly hand to voxdroid is read, once,
+  while the other app's permission to read it lasts, up to 32 MiB and five minutes of audio.
+  voxdroid keeps no link to it, no file name, and nothing about who sent it or in which chat.
+- **Briefly on the device.** The message's bytes are written to a private file inside voxdroid's
+  storage while they are decoded, then deleted, before anything is sent. That directory is excluded
+  from Android's cloud backup and device transfer. The decoded audio stays in memory.
+- **Off the device.** The audio, as 16 kHz WAV, goes to the speech server and language lanes you
+  configured, under the same rules as [your dictation](#where-the-audio-goes), and the transcript to
+  the cleanup server if that pass is configured. A message is someone else's voice and words:
+  sending it to a server you do not run hands that person's speech to that server's operator.
+- **Shown to you.** The caption is for you to read in voxdroid.
+- **Remembered only if you turn it on.** An optional *Remember voice-message transcripts* setting,
+  off by default, keeps the transcript text (never the audio) on the device for 30 days, out of
+  backups, so the same message is not sent again. *Delete all* and turning the setting off erase
+  every remembered transcript at once.
+- **Your servers' retention is theirs.** What your speech and cleanup servers keep is decided by
+  them, as for dictation.
 
 ## Network security
 
