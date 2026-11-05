@@ -283,7 +283,7 @@ class CaptionCacheTest {
         assertEquals(CaptionWrite.Saved, cache.put(on(), key, "raw", "shown", CaptionCleanup.SkippedShort))
         val file = File(dir, key.digest + CaptionCache.ENTRY_SUFFIX)
         val json = JSONObject(file.readText())
-        assertEquals(setOf("v", "key", "raw", "displayed", "cleanup", "written_at"), json.keySet())
+        assertEquals(setOf("v", "key", "raw", "displayed", "cleanup", "written_at"), json.keys().asSequence().toSet())
         val bytes = dir.listFiles()!!.joinToString("") { it.readText() }
         assertFalse("profile on disk", bytes.contains("sentinel-profile-value"))
         assertFalse("audio hash on disk", bytes.contains(SHA_A))
