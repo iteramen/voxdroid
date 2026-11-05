@@ -5,6 +5,8 @@ build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+## 0.2.0 — 2026-11-05
+
 Added
 - Tones on start, done and error, matching byovox: on by default at 5 % volume, with their own
   switch and volume on the Triggers page, quiet on silent, vibrate and Do Not Disturb. The start
