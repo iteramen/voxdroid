@@ -10,3 +10,5 @@ Service keeps process alive; not a production/background capture flow.
 reports.jsonl app-private: timestamps, authority (no path), MIME/size/hash/duration/sample-rate,
 original intent flags and exception class names only. No audio/text/chat/filename/URI retained.
 No backups. No STT. Never replaces installed Voxdroid. Exact ADB commands approved per session.
+
+V2: MediaExtractor identifies the sole audio track; only audio/opus is decoded via platform MediaCodec to PCM16. Counts/discards output; records codec, rate, channels, frames and EOS. Decode loop deadline 30s, 8MiB per buffer, 8–48kHz, 1–2 channels, five-minute decoded-frame ceiling. These are probe engineering limits, not new product defaults. No resampling, PCM hashing, retention or playback. Native extractor setup is not process-isolated by this probe; this is not a proof of production malformed-input watchdog behavior. V2 panel scrolls metadata at a fixed 600px height, keeping Close visible.
