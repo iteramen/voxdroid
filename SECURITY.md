@@ -163,8 +163,18 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   Android 12 and later once `dataExtractionRules` is set
   ([behaviour changes](https://developer.android.com/about/versions/12/behavior-changes-12)), and
   voxdroid needs Android 13 (`app/build.gradle.kts` — `minSdk`).
+- The caption cache for a future voice-message feature is inactive: nothing in the app calls it,
+  and it is off until a producer turns it on (`CaptionCache.kt` — `CaptionCache`, `openCaptionCache`;
+  `CaptionPolicyTest`). Its directory, `filesDir/captions/`, is excluded whole from cloud backup
+  and device transfer, write sidecars included (`res/xml/data_extraction_rules.xml`). A record holds
+  the raw and displayed text, the cleanup outcome and the write time, under a SHA-256 digest of its
+  key; no audio, profile, credential, URI or chat identity. Records expire 30 days after the write
+  and nothing in the cache is logged. Turning it off or Delete all removes every record, and a
+  request begun before either cannot write afterwards (`CaptionCache.kt` — `begin`, `put`).
 
-**In scope:** a token in a log, an error string, a backup or a device transfer. **Out of scope:**
+**In scope:** a token in a log, an error string, a backup or a device transfer; a caption record
+in a backup or a device transfer, outliving 30 days, or written by a request begun before Delete
+all or turning off. **Out of scope:**
 the other preferences file, which holds the addresses, languages and glossary and is backed up; a
 rooted device or a debugger attached to the app's process.
 

@@ -42,6 +42,7 @@ Logic that needs no Android lives in plain functions and classes, so the JVM tes
 | `FieldAccess.kt`, `Delivery.kt`, `Commit.kt` | the focused field and insertion; `admit`, `delivery`; `sanitize`, `finish` |
 | `Pill.kt`, `PillPlacement.kt`, `Cue.kt`, `Tone.kt` | the overlay, its placement and drag, haptic cues; the cue tones, their mute policy (`audible`) and `TonePlayer` |
 | `Settings.kt`, `SettingsStore.kt` | the two preference files |
+| `CaptionCache.kt` | the voice-message caption cache; no producer, nothing in the app calls it yet ([below](#caption-cache-inactive)) |
 | `SettingsActivity.kt`, `Readiness.kt`, `EndpointProbe.kt` | the launcher: a status card whose button fixes the first problem (`problems`), the five page rows, the privacy row |
 | `SectionActivity.kt`, `SectionFragment.kt`, `TryActivity.kt` | one page per `res/xml/section_*.xml`, a language's filled in code (`languagePage`); a field for a first take |
 | `app/src/{debug,release}/…/SelfEnable.kt` | debug only: turning the service on with `WRITE_SECURE_SETTINGS` granted over adb |
@@ -209,6 +210,37 @@ to `secrets` (`storedAs`) and stores numbers typed. `res/xml/data_extraction_rul
 `secrets.xml` out of cloud backup and device transfer; `voxdroid` is backed up. Values are read
 when a take needs them. Defaults (`Settings.kt`, `res/xml/section_*.xml`): URLs blank, model
 `whisper-1`, timeouts 30 s (STT) and 20 s (cleanup), threshold 0.3, cleanup on, http off.
+
+### Caption cache (inactive)
+
+`CaptionCache.kt` is the storage for a future voice-message caption feature. Nothing calls it: no
+producer, share target, setting or screen exists, and dictation, the microphone and delivery do
+not reach it (`CaptionPolicyTest`). A producer opens it with `openCaptionCache(context)`.
+
+- **Where.** `filesDir/captions/`, excluded as a whole directory from cloud backup and device
+  transfer (`res/xml/data_extraction_rules.xml`), so the `.tmp` sidecar of an interrupted write is
+  covered too. It holds `state` and one `<key digest>.json` per caption; nothing else of the app's
+  is read or deleted.
+- **On and off.** "Remember voice-message transcripts" is `state` existing: absent, the default,
+  is off. Off deletes the directory's contents. A `state` that does not parse reads as off.
+- **Key** (`CaptionKey`): the producer's fingerprint algorithm and version, the audio's SHA-256
+  under it, and an opaque processing profile the producer derives without credentials. File
+  names, URIs, senders, chats and screen positions are not identity. Only a SHA-256 digest of the
+  key is stored.
+- **Record:** format version, key digest, raw STT text, displayed text, the cleanup outcome
+  (`CaptionCleanup`: `Cleaned`, `SkippedShort`, `Fallback`, `Off`) and the write time. No audio,
+  profile, credential, URI or chat identity. A record over 256 KiB of UTF-8
+  (`MAX_CAPTION_RECORD_BYTES`) is refused at write (`TooLarge`) and dropped at read, never cut.
+- **Expiry.** 30 days from the write (`CAPTION_TTL_MS`); reads do not renew it. A prune runs at
+  open, every `put` and every `get`, and drops expired, corrupt, foreign-key, future-format and
+  future-dated records and any other file in the directory.
+- **Fencing.** `begin()` issues a ticket naming the current epoch, a random UUID in `state`.
+  Delete all and turning off replace or remove it, so a request begun before either gets `Stale`
+  or `Disabled` from `put` and never writes, even after remembering is on again. A failed STT or
+  a cancelled request has no text to `put`, and a blank transcript is `Invalid`.
+- **Writes** go to a sidecar, are synced, then renamed over the record; a failure deletes the
+  sidecar, keeps the old record and returns `Failed`. One process-wide lock orders every
+  operation, so a ticket check and its write cannot interleave with Delete all.
 
 ## Network rules
 
