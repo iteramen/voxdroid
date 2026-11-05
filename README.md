@@ -94,12 +94,23 @@ is refused until you turn on *Allow insecure (http) endpoints*. The full stateme
 
 How it works: [docs/design.md](docs/design.md).
 
-## In development
+## Private voice-message captions
 
-Private, readable captions of voice messages you receive, for people who are deaf or hard of
-hearing. The code that processes a message is in the app but unused: nothing in voxdroid receives,
-reads or transcribes a voice message yet, and there is no setting for it. What it will send and
-keep is in the [privacy policy](docs/privacy.md#voice-message-captions-in-development).
+The unreleased feature build adds readable Telegram and WhatsApp voice notes for people who are
+deaf or hard of hearing. Enable **Voice messages → Enable voice-message captions**, open a
+conversation, long-press one downloaded voice note, and tap the Voxdroid accessibility button.
+Choose **Caption with Voxdroid** in Android's share chooser. A private, scrollable caption appears
+over the same conversation, with **Copy**, **Close**, and **Re-transcribe**. Nothing is sent or
+pasted into the chat. Microphone permission is not needed for captions.
+
+It uses your speech, language and cleanup settings. Ogg/Opus notes up to five minutes and 32 MiB
+are supported initially; native Share controls currently require the supported English app UI.
+**Remember voice-message transcripts** is a separate switch, off by default. It keeps text and an
+audio fingerprint for 30 days, never audio; **Delete all** erases the remembered text. Re-transcribe
+asks you to select and share the original note again because its temporary URI is not retained.
+See the [privacy policy](docs/privacy.md#voice-message-captions) and the
+[handset validation checklist](docs/testing.md#private-caption-integration). This feature is not
+in the installed 0.2.1 release; handset acceptance of the feature build is still pending.
 
 ## License
 

@@ -115,7 +115,7 @@
     <!-- docs/privacy.md on GitHub Pages; Play requires an in-app policy link. Blank hides the row. -->
     <string name="privacy_policy_url" translatable="false">https://iteramen.github.io/voxdroid/privacy</string>
     <string name="status_ready">Ready to dictate</string>
-    <string name="status_not_ready">Not ready</string>
+    <string name="status_not_ready">Not ready to dictate</string>
     <string name="status_label_endpoint">Endpoint</string>
     <string name="status_label_keyboard">Keyboard</string>
     <string name="status_label_triggers">Triggers</string>
@@ -171,7 +171,7 @@
     <string name="caption_enable_title">Enable voice-message captions</string>
     <string name="caption_enable">Enable</string>
     <string name="caption_enable_summary">Use selected voice notes with the Voxdroid accessibility button.</string>
-    <string name="caption_enable_disclosure">While a supported conversation is in front, Voxdroid reads its header and selected-message accessibility metadata to keep private captions in the correct chat. Headers stay in memory only. You choose the audio through native sharing. The selected audio goes to your configured speech server and its transcript to cleanup when enabled. Temporary audio is deleted; transcripts are remembered only if you separately enable remembering. No message is pasted or sent.</string>
+    <string name="caption_enable_disclosure">While a supported conversation is in front, Voxdroid reads its header and selected-message accessibility metadata to keep private captions in the correct chat. Headers stay in memory only. You choose the audio through native sharing. The selected audio goes to your configured speech server and its transcript to cleanup when enabled. This may be someone else’s voice: use servers you trust with their words. Temporary audio is deleted; transcripts are remembered only if you separately enable remembering. No message is pasted or sent. Microphone permission is not needed.</string>
     <string name="caption_usage_title">Read a voice message</string>
     <string name="caption_usage">Enable Voxdroid in Android Accessibility settings. Open a Telegram or WhatsApp conversation, select one downloaded voice note, tap the Voxdroid accessibility button, then choose Caption with Voxdroid in the share sheet. The private panel returns to this chat. Changing the conversation view closes it. Volume-down still dictates.</string>
     <string name="caption_remember">Remember voice-message transcripts</string>

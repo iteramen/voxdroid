@@ -48,7 +48,10 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
 
     private val button = object : AccessibilityButtonController.AccessibilityButtonCallback() {
         override fun onClicked(controller: AccessibilityButtonController) {
-            if (settings.triggerButton && captions?.trigger() != true) dispatch(TakeEvent.Trigger)
+            if (settings.triggerButton) {
+                if (machine.state == TakeState.Idle && captions?.trigger() == true) return
+                dispatch(TakeEvent.Trigger)
+            }
         }
     }
 

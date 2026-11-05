@@ -197,13 +197,15 @@ class CaptionProcessor internal constructor(
         budgetMs: Long,
         lookup: (CaptionKey) -> Caption? = { null },
         onAcquired: () -> Unit = {},
+        /** Owner lifetime also applies before this processor has started (for example while opening a provider stream). */
+        isCurrent: () -> Boolean = { true },
     ): CaptionOutcome {
         require(budgetMs > 0) { "budget must be positive" }
         val id = latest.incrementAndGet()
         val deadline = now() + budgetMs
-        val current = { latest.get() == id && now() < deadline }
+        val current = { latest.get() == id && isCurrent() && now() < deadline }
         val check = {
-            if (latest.get() != id) throw CaptionStop(CaptionOutcome.Cancelled)
+            if (latest.get() != id || !isCurrent()) throw CaptionStop(CaptionOutcome.Cancelled)
             if (now() >= deadline) throw CaptionStop(CaptionOutcome.TimedOut)
         }
         val spool = CaptionSpools.create(spoolDir)
@@ -252,6 +254,7 @@ class CaptionProcessor internal constructor(
         val (chosen, cleanup) = if (polisher == null) {
             raw to CaptionCleanup.Off
         } else {
+            check()
             when (val polished = polish(polisher, raw, settings.polishMinWords, !settings.capitalizeFirstWord)) {
                 is PolishOutcome.Text -> polished.text to CaptionCleanup.Cleaned
                 is PolishOutcome.SkippedShort -> polished.raw to CaptionCleanup.SkippedShort

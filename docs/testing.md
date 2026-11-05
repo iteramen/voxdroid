@@ -485,12 +485,12 @@ Not Disturb off unless a row says otherwise, and the notification volume up.
 
 ## Voice-message processing
 
-**Unrun.** Nothing in any current build calls `CaptionProcessor`, so none of these rows can run
-yet. They run with the first caption producer, or a debug-only harness written for them, before
-captions ship. The acquisition probes recorded in [design.md](design.md#voice-message-processing-inactive)
-are the codec baseline, not a run of these rows. Use prepared fixtures you recorded yourself,
-never someone else's voice message. List the spool with
-`adb shell run-as io.github.iteramen.voxdroid ls files/caption_spool` (debug build).
+The feature branch now wires `CaptionProcessor` through the private Share receiver/controller.
+The acquisition probes in [design.md](design.md#voice-message-processing) prove codec/grant behavior,
+not full caption acceptance. Rows below remain unrun unless explicitly marked with evidence.
+Use only owner-prepared non-sensitive fixtures. In an isolated feature build substitute
+`io.github.iteramen.voxdroid.captiontest` for the main package in diagnostic commands. Never export
+audio, transcript records, raw provider URIs or conversation headers to test reports.
 
 Platform decoder and normalizer (`CaptionMediaDecoder`, `CaptionNormalizer`):
 
@@ -527,3 +527,53 @@ The first enabled integration (each row is that pull request's to run):
       each end in a refusal, never a caption of another message
 - [ ] unrun: the in-app accessibility description, the listing text, `docs/privacy.md` and
       `docs/play/data-safety.md` match the shipped audio, panel and cache flow
+
+## Private caption integration
+
+**Acceptance pending.** The installed main app 0.2.1 does not include this feature. The isolated
+feature package is `io.github.iteramen.voxdroid.captiontest`, labelled **Voxdroid Caption Test**,
+built with `./gradlew lint testDebugUnitTest assembleDebug -PcaptionTest=true`. Check the APK's
+application ID before every install; a normal build overwrites the same Gradle output path.
+No release tag/version bump is part of these tests. Keep the main app and its data unchanged.
+
+`tools/caption_test_server.py` binds only loopback and never logs payloads/tokens. An owner-approved
+`adb reverse tcp:18881 tcp:18881` routes the isolated package to it; it counts STT/cleanup requests
+and validates 16 kHz mono PCM16 WAV. Its static test text proves transport/UI behavior, not real
+speech recognition. Delay/failure controls exercise stale callbacks and cleanup fallback.
+`tools/caption_test_device.py` restricts configuration/service changes to the isolated package;
+copy-settings is a separately approved RAM-only projection of speech/cleanup/language settings,
+never an automatic copying of the production app's data. Stop the server and remove the reverse
+when finished. Never grant microphone permission merely to get captions working.
+
+For both owner-prepared Telegram Cassandra and WhatsApp fixture conversations:
+
+- [ ] Caption enable disclosure is clear; Enable and Remember default off independently.
+- [ ] One received note selected → accessibility button → native Share chooser → Caption with
+      Voxdroid → private readable panel over the original chat. No composer change or Send.
+- [ ] First share reaches STT then configured cleanup; server validates normalized WAV. Real
+      configured STT also produces a readable result, separately from test-server static text.
+- [ ] Remember on: same note twice reuses saved text/time with no extra STT or cleanup; a distinct
+      note misses. Reading does not refresh the timestamp. Remember off continues fresh processing.
+- [ ] Re-transcribe prompts a fresh original share, then bypasses cache once; sharing a different
+      note does not label its result as a refresh of the original.
+- [ ] Copy is explicit and sensitive; Close clears the panel; long/RTL text scrolls and reads.
+- [ ] Delayed STT/cleanup + chat switch, app switch, scroll, Close or lock never resurrects a panel
+      or saves a result after cancellation. Returning later to the original chat does not revive it.
+- [ ] Same-header conversation/navigation mutations dismiss results rather than using header
+      equality as durable chat identity.
+- [ ] Multiple selection, selected non-voice content, unknown selection count, an undownloaded
+      note and unsolicited shares refuse locally; no accidental microphone/dictation start.
+- [ ] Cleanup failure shows the raw result with fallback notice; silence/unsupported media/errors
+      remain private and never enter the composer.
+- [ ] Delete all and off/on during a delayed request leave no late cache record; captions/spool
+      remain excluded from backup/transfer, and normal acquisition/cancel leaves no spool.
+- [ ] Volume-down dictation and stopping an active dictation with the button still work normally.
+- [ ] Privacy/security/accessibility/Data safety docs and in-app description match the proven flow.
+
+Build evidence so far: lint, 448 unit tests and isolated assemble passed before handset acceptance.
+The owner-invalidation race regression failed before the fix and passed with the session guard.
+Normal debug and unsigned release builds also passed before that final guard; normal CI must
+confirm the final source head. Three synthetic device-helper tests preserve unrelated services and
+limit settings projection; a synthetic WAV exercised the loopback server without handset data.
+Platform edge fixtures above and device transfer require separate evidence; they are not implied
+by a green unit suite or the earlier acquisition probes.

@@ -37,6 +37,12 @@ internal object CaptionAccessibility {
     fun selection(root: AccessibilityNodeInfo): Selection {
         val source = source(root) ?: return Selection(0, null, null, null)
         val chrome = nodes(root, skipLists = true)
+        val selectionMode = if (source == CaptionApp.WhatsApp) {
+            chrome.any { it.viewIdResourceName == "com.whatsapp:id/action_mode_close_button" }
+        } else {
+            chrome.any { it.contentDescription?.toString() == "Forward" } && chrome.any { it.contentDescription?.toString() == "Delete" }
+        }
+        if (!selectionMode) return Selection(0, null, null, null)
         val count = if (source == CaptionApp.WhatsApp) {
             chrome.firstOrNull { it.viewIdResourceName == "com.whatsapp:id/action_mode_title" }?.text?.toString()?.trim()?.toIntOrNull()
                 ?: if (chrome.any { it.viewIdResourceName == "com.whatsapp:id/action_mode_close_button" }) {
@@ -46,7 +52,7 @@ internal object CaptionAccessibility {
         } else {
             chrome.filter { it.className?.toString() == "android.widget.TextView" }
                 .mapNotNull { it.text?.toString()?.trim()?.toIntOrNull() }.singleOrNull()
-        } ?: 0
+        } ?: -1 // An unreadable selected-mode count must refuse, never fall through to microphone dictation.
         if (count != 1) return Selection(count, null, null, null)
         val selected = nodes(root).filter { it.isSelected && it.className?.toString() in setOf("android.view.ViewGroup", "android.widget.LinearLayout") }
         val voices = selected.filter { node ->

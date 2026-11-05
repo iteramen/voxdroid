@@ -149,7 +149,7 @@ internal class CaptionController(
                 var acquisitionSignalled = false
                 val outcome = try {
                     if (!session.current(id)) return@execute
-                    processor.process(open(), snapshot, REQUEST_BUDGET_MS, lookup = { key ->
+                    processor.process(open(), snapshot, REQUEST_BUDGET_MS, isCurrent = { session.current(id) }, lookup = { key ->
                         if (key.audioSha256 == bypass || !session.current(id) || requestTicket == null || cache.begin()?.epoch != requestTicket.epoch) null
                         else (cache.get(key) as? CaptionLookup.Hit)?.caption
                     }, onAcquired = {

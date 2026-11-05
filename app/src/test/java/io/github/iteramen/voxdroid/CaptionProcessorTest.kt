@@ -52,6 +52,27 @@ class CaptionProcessorTest {
         processor.process(audio, settings, BUDGET_MS)
 
     @Test
+    fun ownerInvalidatedBeforeProcessorStartCannotBecomeANewLiveRequest() {
+        var reads = 0
+        var closed = false
+        val source = object : ByteArrayInputStream(captionOgg()) {
+            override fun read(bytes: ByteArray, offset: Int, count: Int): Int {
+                reads++
+                return super.read(bytes, offset, count)
+            }
+            override fun close() { closed = true; super.close() }
+        }
+        processor.cancel() // The owner cancelled while the provider stream was opening.
+        val outcome = processor.process(source, settings(), BUDGET_MS, isCurrent = { false })
+        assertEquals(CaptionOutcome.Cancelled, outcome)
+        assertEquals(0, reads)
+        assertTrue(closed)
+        assertEquals(0, decoder.calls)
+        assertTrue(stt.calls.isEmpty())
+        assertSpoolEmpty()
+    }
+
+    @Test
     fun compatibleCacheHitReturnsBeforeDecoderOrInferenceAndDropsTheSpool() {
         var acquired = false
         val cached = Caption("saved raw", "Saved caption", CaptionCleanup.Cleaned, 123L)

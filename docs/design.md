@@ -42,9 +42,9 @@ Logic that needs no Android lives in plain functions and classes, so the JVM tes
 | `FieldAccess.kt`, `Delivery.kt`, `Commit.kt` | the focused field and insertion; `admit`, `delivery`; `sanitize`, `finish` |
 | `Pill.kt`, `PillPlacement.kt`, `Cue.kt`, `Tone.kt` | the overlay, its placement and drag, haptic cues; the cue tones, their mute policy (`audible`) and `TonePlayer` |
 | `Settings.kt`, `SettingsStore.kt` | the two preference files |
-| `CaptionCache.kt` | the voice-message caption cache; no producer, nothing in the app calls it yet ([below](#caption-cache-inactive)) |
-| `CaptionProcessor.kt`, `CaptionAudio.kt`, `CaptionMediaDecoder.kt` | voice-message processing: acquisition, fingerprint, Ogg/Opus decode, 16 kHz WAV, STT and cleanup; nothing in the app calls it yet ([below](#voice-message-processing-inactive)) |
-| `SettingsActivity.kt`, `Readiness.kt`, `EndpointProbe.kt` | the launcher: a status card whose button fixes the first problem (`problems`), the five page rows, the privacy row |
+| `CaptionCache.kt` | the opt-in, 30-day voice-message transcript cache ([below](#caption-cache)) |
+| `CaptionProcessor.kt`, `CaptionAudio.kt`, `CaptionMediaDecoder.kt` | voice-message processing: acquisition, fingerprint, Ogg/Opus decode, 16 kHz WAV, STT and cleanup; used by the private caption controller ([below](#voice-message-processing)) |
+| `SettingsActivity.kt`, `Readiness.kt`, `EndpointProbe.kt` | the launcher: a status card whose button fixes the first problem (`problems`), the settings page rows, the privacy row |
 | `SectionActivity.kt`, `SectionFragment.kt`, `TryActivity.kt` | one page per `res/xml/section_*.xml`, a language's filled in code (`languagePage`); a field for a first take |
 | `app/src/{debug,release}/…/SelfEnable.kt` | debug only: turning the service on with `WRITE_SECURE_SETTINGS` granted over adb |
 
@@ -212,11 +212,11 @@ to `secrets` (`storedAs`) and stores numbers typed. `res/xml/data_extraction_rul
 when a take needs them. Defaults (`Settings.kt`, `res/xml/section_*.xml`): URLs blank, model
 `whisper-1`, timeouts 30 s (STT) and 20 s (cleanup), threshold 0.3, cleanup on, http off.
 
-### Caption cache (inactive)
+### Caption cache
 
-`CaptionCache.kt` is the storage for a future voice-message caption feature. Nothing calls it: no
-producer, share target, setting or screen exists, and dictation, the microphone and delivery do
-not reach it (`CaptionPolicyTest`). A producer opens it with `openCaptionCache(context)`.
+`CaptionCache.kt` stores optional remembered voice-message transcripts. `CaptionController` opens
+it; the Voice messages settings page controls remembering independently of enabling captions.
+Dictation, its microphone and field delivery do not use it (`CaptionPolicyTest`).
 
 - **Where.** `filesDir/captions/`, excluded as a whole directory from cloud backup and device
   transfer (`res/xml/data_extraction_rules.xml`), so the `.tmp` sidecar of an interrupted write is
@@ -243,14 +243,41 @@ not reach it (`CaptionPolicyTest`). A producer opens it with `openCaptionCache(c
   sidecar, keeps the old record and returns `Failed`. One process-wide lock orders every
   operation, so a ticket check and its write cannot interleave with Delete all.
 
-### Voice-message processing (inactive)
+### Private caption integration
 
-`CaptionProcessor.kt` turns one received voice message into a typed `CaptionOutcome`. Nothing calls
-it: no producer, exported receiver, messaging adapter, setting or panel exists, it reads no
-keyboard or field and delivers nothing, and it does not touch the cache; cache lookup, write and
-the user's control over remembering come with the producer (`CaptionPolicyTest`). A producer
-opens it with `openCaptionProcessor(context)`, snapshots `captionSettings(settings, prompt)` at
-the request's start, and calls `process(stream, settings, budgetMs)` off the main thread.
+`CaptionController` owns one `CaptionSession` on the accessibility service's main thread and a
+single worker with one bounded queued job. **Enable voice-message captions** defaults off and asks
+before observing source metadata. With dictation idle, `CaptionAccessibility` inspects only the
+supported foreground header outside message lists, then selected-note metadata when selection
+chrome is present. Source package, window and header are RAM-only context, not cache identity.
+Native English Share controls are supported initially; an unknown or multi-selection is refused.
+
+Select one downloaded note, tap the accessibility button, and choose **Caption with Voxdroid** in
+Android's chooser. The controller invokes Telegram Share or WhatsApp's overflow → Share; it never
+chooses a recipient, taps Send, inserts into the composer or records the microphone. Normal
+volume-down dictation is unchanged, and the accessibility button still stops an active dictation.
+
+`CaptionReceiveActivity` accepts only one content URI/read grant from the selected source's known
+provider authority and owning package, within a 30-second selection/handoff session. It opens the
+stream on the worker, finishes after acquisition and drops the grant; the processor never reopens
+the URI. Receiver destruction before acquisition cancels. Direct unsolicited shares are refused.
+
+Return must match the original source window/header within three seconds. Only then can a private
+`TYPE_ACCESSIBILITY_OVERLAY` show processing/results. Header equality alone is not a durable chat
+identity, so source window-state/content/click/scroll changes invalidate visible or processing
+results even with an equal header. App switches, Close, lock, disable and starting dictation also
+invalidate; late callbacks cannot display or save. The panel supports scroll/RTL, explicit sensitive
+clipboard Copy, Close, saved-at text and raw-text cleanup fallback. Re-transcribe asks for a fresh
+selection/share and bypasses the original fingerprint once, retaining no audio or expired grant.
+
+The request snapshots settings and a cache epoch ticket. After acquisition and strict Ogg-header
+validation, a matching cache hit returns before decoder/STT/cleanup. A fresh result writes only
+after origin validation and with that request-start ticket. Delete all/off prevents late writes.
+
+### Voice-message processing
+
+`CaptionProcessor` converts one received stream into a typed `CaptionOutcome` off the main thread,
+using `captionSettings(settings, prompt)`. It has no microphone, keyboard or text-field access.
 
 **The input contract**, from controlled acquisition probes with prepared fixtures (no private
 audio is kept in the repository):
@@ -347,7 +374,8 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
   clients against a loopback `com.sun.net.httpserver.HttpServer`; `ManifestTest` pins the
   permissions, `PolishPromptTest` reads the prompt file. The caption cache and the voice-message
   pipeline run behind a fake decoder, STT and cleanup, on synthetic Ogg headers and PCM;
-  `CaptionPolicyTest` reads the backup rules and checks that nothing live calls either.
+  `CaptionPolicyTest` reads the backup rules and limits foundation callers to the explicit
+  caption integration; import code cannot record or deliver text to a field.
 - **On a handset:** the manual checklist in [testing.md](testing.md), against the debug APK,
   before a PR that touches the service.
 - **CI** ([.github/workflows/](../.github/workflows/)): `ci.yml` runs the gate
@@ -361,5 +389,5 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 
 - The Google Play listing.
 - Read-aloud, always-on transcription, and an opt-in capture log of takes.
-- Voice-message captions: a producer that hands a message to the processor, the panel that shows
-  it, cache lookup and write, and the *Remember voice-message transcripts* control.
+- Handset acceptance of the private caption integration, including app-version-specific selection,
+  cache reuse and origin invalidation; see [testing.md](testing.md#private-caption-integration).

@@ -11,3 +11,4 @@ keystore.properties
 .kotlin/
 .claude/ouro.local.toml
 .claude/worktrees/
+__pycache__/

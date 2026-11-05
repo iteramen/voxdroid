@@ -1,6 +1,6 @@
 # Privacy policy — voxdroid
 
-**Effective: 2026-11-05.**
+**Effective: 2026-11-06 (unreleased caption feature).**
 
 voxdroid is an Android accessibility service that dictates into the text field you are typing in,
 with your own keyboard staying up. You hold volume-down or tap the accessibility button, speak,
@@ -102,14 +102,12 @@ settings, the glossary, the other options and how high above the keyboard you la
 pill (`Settings.kt`). The tokens are excluded from Android's cloud backup and from device-to-device
 transfer (`res/xml/data_extraction_rules.xml`); everything else is included in Android's normal
 backup, so it can follow you to a new phone, where the tokens are entered again. Uninstalling the
-app removes both files. The unused caption code's two directories (`captions`, `caption_spool`)
-are excluded from backup and transfer as well, and the app as it ships writes nothing to either.
+app removes both files. Caption transcripts (`captions`) and temporary imported audio
+(`caption_spool`) are excluded from backup and transfer as well, including interrupted-write files.
 
 ## What is not collected
 
-This section describes the app as it ships, which dictates and does nothing else.
-[Voice-message captions](#voice-message-captions-in-development) will change it before they are
-turned on.
+For microphone dictation:
 
 - No recording is kept: it is dropped when a dictation finishes or is discarded, and is never
   written to disk.
@@ -120,20 +118,20 @@ turned on.
   app, the Kotlin standard library, AndroidX Preference and Material Components
   (`app/build.gradle.kts` — `dependencies`).
 
-## Voice-message captions (in development)
+## Voice-message captions
 
-voxdroid is gaining private, readable captions for voice messages you receive, so that people who
-are deaf or hard of hearing, or anyone who cannot listen just then, can read them. **Nothing in the
-app as it ships receives, reads or transcribes a voice message**: there is no share target, button,
-setting or panel for it. The code that will process one is present but unused
-(`CaptionProcessor.kt`), as is the caption cache (`CaptionCache.kt`).
-
-When a version turns captions on, this policy will describe that version's flow before it ships,
-including how you pick a message. The flow being built:
+The unreleased caption feature helps people who are deaf or hard of hearing read selected Telegram
+and WhatsApp voice notes. **Enable voice-message captions** is off by default and explains the
+extra access before enabling it. Open a supported conversation, select one downloaded voice note,
+tap Voxdroid's accessibility button, and choose **Caption with Voxdroid** in native sharing. This
+does not require microphone permission (`CaptionController`, `CaptionReceiveActivity`).
 
 - **You choose one message.** Only a voice message you explicitly hand to voxdroid is read, once,
   while the other app's permission to read it lasts, up to 32 MiB and five minutes of audio.
-  voxdroid keeps no link to it, no file name, and nothing about who sent it or in which chat.
+  voxdroid keeps no durable link to it or file name. While captions are enabled it reads the
+  foreground conversation header and selected-message accessibility metadata. The header and
+  window identity stay in memory to prevent a result appearing in a different conversation; they
+  are not logged, sent or saved. It does not read the composer or scan background conversations.
 - **Briefly on the device.** The message's bytes are written to a private file inside voxdroid's
   storage while they are decoded, then deleted, before anything is sent. That directory is excluded
   from Android's cloud backup and device transfer. The decoded audio stays in memory.
@@ -141,11 +139,19 @@ including how you pick a message. The flow being built:
   configured, under the same rules as [your dictation](#where-the-audio-goes), and the transcript to
   the cleanup server if that pass is configured. A message is someone else's voice and words:
   sending it to a server you do not run hands that person's speech to that server's operator.
-- **Shown to you.** The caption is for you to read in voxdroid.
+- **Shown to you.** A private floating panel appears over the verified original conversation.
+  **Copy** explicitly writes the caption to the clipboard, marked sensitive; clipboard managers
+  may still retain it. **Close**, screen lock, app switch or a source-view change dismisses it.
+  No caption is pasted or sent to the conversation. Cancellation discards a late reply, but cannot
+  retract audio already uploaded. **Re-transcribe** asks you to select and share the original note
+  again: the source's temporary permission and the audio are not retained.
 - **Remembered only if you turn it on.** An optional *Remember voice-message transcripts* setting,
   off by default, keeps the transcript text (never the audio) on the device for 30 days, out of
-  backups, so the same message is not sent again. *Delete all* and turning the setting off erase
-  every remembered transcript at once.
+  backups. Records contain raw and displayed text, cleanup outcome, write time and a digest of
+  the encoded-audio fingerprint plus non-secret processing settings; no sender, chat, URI or audio.
+  A matching share can reuse that text without another upload. Reading does not extend expiry.
+  *Delete all* and turning remembering off erase every record and prevent already-running requests
+  from repopulating them. Expired records are pruned when the cache is opened or accessed.
 - **Your servers' retention is theirs.** What your speech and cleanup servers keep is decided by
   them, as for dictation.
 
@@ -179,8 +185,11 @@ voxdroid's accessibility service reaches the following, and only when stated
 - **The volume-down key.** The service receives every hardware key event, acts on volume-down
   only, passes every other key on untouched and keeps none (`VoxdroidA11yService.kt` —
   `onKeyEvent`).
-- **The keyboard window's position**, to place the pill above it. The only accessibility event the
-  service subscribes to is a change in the windows on screen (`Pill.kt` — `keyboardTop`).
+- **The keyboard window's position**, to place the pill above it (`Pill.kt` — `keyboardTop`).
+- **Foreground caption context**, only with captions enabled and dictation idle: supported-app
+  conversation header, selected-note metadata and native Share controls. Window, window-state,
+  content, scroll, click and long-click events keep selection and result lifetimes bounded. No
+  ordinary message text or composer text is read (`CaptionAccessibility`, `CaptionController`).
 - **The keyboard's current language**, to choose the transcription language (`FieldAccess.kt` —
   `keyboardTag`; `TakeLanguage.kt` — `takeFor`).
 - **The audio mode**, at the start, to refuse a dictation during a call.
