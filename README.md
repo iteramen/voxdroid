@@ -110,7 +110,9 @@ audio fingerprint for 30 days, never audio; **Delete all** erases the remembered
 asks you to select and share the original note again because its temporary URI is not retained.
 See the [privacy policy](docs/privacy.md#voice-message-captions) and the
 [handset validation checklist](docs/testing.md#private-caption-integration). This feature is not
-in the installed 0.2.1 release; handset acceptance of the feature build is still pending.
+in the installed 0.2.1 release. The isolated feature build has produced private real-server captions
+in both WhatsApp and Telegram, including owner-confirmed results. Cache/refresh and several
+cancellation checks also passed; the checklist names the remaining handset cases.
 
 ## License
 

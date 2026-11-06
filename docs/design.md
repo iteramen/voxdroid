@@ -289,8 +289,11 @@ audio is kept in the repository):
 - A native share grant was readable inside the receiver, but reopening the URI 2 s after returning
   failed: the stream is read once, at once. A controlled cold-start handoff passed for one fixture
   per app, with matching encoded fingerprints.
-- These are codec and acquisition facts. Automatic selection, undownloaded notes, stale-origin
-  guards and end-to-end captions are unproven and stay with the producer's issue.
+- These probes establish codec and acquisition facts. Subsequent isolated WhatsApp tests verified
+  selection through native Share to a private caption, including an owner-confirmed real-server
+  result, caching and several cancellation paths. Telegram later passed the two-note real-server
+  flow, cache/refresh, several cancellation cases and multiple-selection refusal too. Undownloaded
+  notes and the other named handset cases remain pending; see [the evidence](testing.md#private-caption-integration).
 
 **The pipeline** (`process`), each stage able to end the whole request; there is no partial
 caption:
