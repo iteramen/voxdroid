@@ -38,6 +38,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        resValues = true
     }
 
     compileOptions {
@@ -68,6 +69,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Explicit local handset testing; normal debug/release identities never change.
+            if (providers.gradleProperty("captionTest").orNull == "true") {
+                applicationIdSuffix = ".captiontest"
+                versionNameSuffix = "-caption-test"
+                resValue("string", "app_name", "Voxdroid Caption Test")
+            }
+        }
         release {
             isMinifyEnabled = false
             if (keystorePropertiesPresent) {
@@ -108,6 +117,7 @@ tasks.withType<Test>().configureEach {
         "src/main/res/values/strings.xml",
         "src/main/res/xml/section_speech.xml",
         "src/main/res/xml/data_extraction_rules.xml",
+        "src/main/res/xml/a11y_entry.xml",
         "src/main/java",
     )
 }

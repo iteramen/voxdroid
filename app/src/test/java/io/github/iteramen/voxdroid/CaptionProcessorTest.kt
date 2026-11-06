@@ -52,6 +52,71 @@ class CaptionProcessorTest {
         processor.process(audio, settings, BUDGET_MS)
 
     @Test
+    fun ownerInvalidatedBeforeProcessorStartCannotBecomeANewLiveRequest() {
+        var reads = 0
+        var closed = false
+        val source = object : ByteArrayInputStream(captionOgg()) {
+            override fun read(bytes: ByteArray, offset: Int, count: Int): Int {
+                reads++
+                return super.read(bytes, offset, count)
+            }
+            override fun close() { closed = true; super.close() }
+        }
+        processor.cancel() // The owner cancelled while the provider stream was opening.
+        val outcome = processor.process(source, settings(), BUDGET_MS, isCurrent = { false })
+        assertEquals(CaptionOutcome.Cancelled, outcome)
+        assertEquals(0, reads)
+        assertTrue(closed)
+        assertEquals(0, decoder.calls)
+        assertTrue(stt.calls.isEmpty())
+        assertSpoolEmpty()
+    }
+
+    @Test
+    fun compatibleCacheHitReturnsBeforeDecoderOrInferenceAndDropsTheSpool() {
+        var acquired = false
+        val cached = Caption("saved raw", "Saved caption", CaptionCleanup.Cleaned, 123L)
+        val result = processor.process(ByteArrayInputStream(captionOgg()), settings(), BUDGET_MS,
+            lookup = { key ->
+                assertTrue("external grant can already be dropped", acquired)
+                assertEquals(CAPTION_FINGERPRINT, key.algorithm)
+                cached
+            }, onAcquired = { acquired = true }) as CaptionOutcome.Captioned
+        assertEquals(cached.displayed, result.displayed)
+        assertEquals(123L, result.savedAtMs)
+        assertEquals(0, decoder.calls)
+        assertTrue(stt.calls.isEmpty())
+        assertTrue(polisher.calls.isEmpty())
+        assertSpoolEmpty()
+    }
+
+    @Test
+    fun cancellationAtAcquisitionPreventsCacheLookupAndInference() {
+        var lookedUp = false
+        val outcome = processor.process(ByteArrayInputStream(captionOgg()), settings(), BUDGET_MS,
+            lookup = { lookedUp = true; null }, onAcquired = { processor.cancel() })
+        assertEquals(CaptionOutcome.Cancelled, outcome)
+        assertFalse(lookedUp)
+        assertEquals(0, decoder.calls)
+        assertTrue(stt.calls.isEmpty())
+        assertSpoolEmpty()
+    }
+
+    @Test
+    fun unsafeProfilesNeverReachTheLookupAndForcedMissUsesInference() {
+        var lookups = 0
+        val unsafe = settings(sttBaseUrl = "https://user:secret@stt.example/v1")
+        val outcome = processor.process(ByteArrayInputStream(captionOgg()), unsafe, BUDGET_MS,
+            lookup = { lookups++; null }) as CaptionOutcome.Captioned
+        assertNull(outcome.key)
+        assertEquals(0, lookups)
+        assertEquals(1, stt.calls.size)
+        processor.process(ByteArrayInputStream(captionOgg()), settings(), BUDGET_MS, lookup = { lookups++; null })
+        assertEquals(1, lookups)
+        assertEquals(2, stt.calls.size)
+    }
+
+    @Test
     fun aVoiceMessageBecomesACaptionKeyedByItsEncodedBytes() {
         val audio = captionOgg()
 

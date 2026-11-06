@@ -44,8 +44,10 @@ attacker who is not that user.
   accessibility node cache is off from the moment the service connects and is switched off again
   after every lookup, so no copy of another app's nodes is kept (`VoxdroidA11yService.kt` —
   `onServiceConnected`; `FieldAccess.kt` — `focused`).
-- The only event type subscribed to is `typeWindowsChanged`, and `onAccessibilityEvent` acts on
-  nothing else. While a take runs, a window change re-places the pill from the keyboard window's
+- The service subscribes to window, window-state, content, scroll, click and long-click events.
+  Caption observation uses these only when captions are enabled and dictation is idle in a
+  supported foreground app (`CaptionController.observe`). While a take runs, a window change
+  re-places the pill from the keyboard window's
   bounds; `keyboardTop` fetches every interactive window's info and uses the `TYPE_INPUT_METHOD`
   window's alone (`Pill.kt` — `keyboardTop`, `follow`).
 - At delivery the character before the cursor and any selection are read through the service's
@@ -57,11 +59,12 @@ attacker who is not that user.
   volume-down while its trigger is off; with the trigger on, volume-down is consumed and a short
   press while idle is re-applied as a volume step. The only state kept is two booleans
   (`VoxdroidA11yService.kt` — `onKeyEvent`; `VolumeGesture.kt`).
-- The service stores one thing: how high above the keyboard the pill was last dropped
-  (`Settings.kt` — `pillSaved`).
+- Dictation stores how high above the keyboard the pill was last dropped (`Settings.pillSaved`).
+  Captions add transient origin/selection state in memory and optional transcript records below.
 - `res/xml/a11y_entry.xml` declares `canRetrieveWindowContent`, `canRequestFilterKeyEvents`, the
-  flags `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`
-  and `flagRetrieveInteractiveWindows`, and `isAccessibilityTool="true"`, on Play's policy that
+  flags `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
+  `flagRetrieveInteractiveWindows` and `flagReportViewIds`, and `isAccessibilityTool="true"`, on
+  Play's policy that
   services "designed to help people with disabilities" may declare it
   ([Play policy](https://support.google.com/googleplay/android-developer/answer/10964491)). The
   reasoning is in [docs/play/accessibility-declaration.md](docs/play/accessibility-declaration.md).
@@ -87,20 +90,38 @@ read the screen; that is what the permission is.
   microphone indicator show while recording.
 - The recorder is released at stop. The WAV is held in memory for Retry until delivery, cancel or a
   new take, and is never written to disk (`Recorder.kt` — `AudioRecorder.stop`; `Take.kt` —
-  `audio`). This memory-only rule is dictation's; the inactive voice-message foundation below
+  `audio`). This memory-only rule is dictation's; voice-message processing below
   spools a received message's encoded bytes to a private file while it decodes them.
 
 **In scope:** the microphone capturing outside a take; dictation audio written to disk; a recording
 kept after delivery or cancel. **Out of scope:** what the platform's microphone arbitration does to
 a take.
 
-### Imported voice messages (inactive)
+### Imported voice messages
 
-The processing foundation for a future voice-message caption feature is in the code and inactive:
-no producer, share target, exported receiver, setting or panel exists, and nothing in the app calls
-it. It opens no microphone, reads no keyboard or field, and types or copies nothing
-(`CaptionProcessor.kt`, `CaptionAudio.kt`, `CaptionMediaDecoder.kt`; `CaptionPolicyTest`). What it
-does once a producer hands it one audio stream:
+Captions are a separate, off-by-default feature (`Settings.voiceCaptions`). On supported foreground
+Telegram and WhatsApp conversations, the enabled controller reads the header outside the message
+list and selected-note accessibility metadata, never the composer's text. The header and window
+identity stay in memory. One selected voice note and an explicit accessibility-button press invoke
+its native Share action; the user chooses the target in Android's chooser. Ambiguous selections
+are refused. There is no inbox scan, microphone recording, field insertion or Send action
+(`CaptionAccessibility`, `CaptionController`). Native Share controls initially require English UI.
+
+`CaptionReceiveActivity` is exported for single-audio SEND intents. It requires an active bounded
+selection session, one matching content URI with a read grant, and a provider whose authority and
+owning package match the selected source. An unsolicited SEND, forged source or multiple attachments
+is refused. The URI is consumed while the receiving activity owns the grant and never reopened
+after return. MIME is a chooser hint, not a format trust decision.
+
+The private overlay appears only after the original source window/header is verified again.
+Source-view changes, app switches, Close, screen-off, a new dictation or disabling captions invalidate
+the operation. Headers are not durable chat identifiers: source content, scroll, click and
+window-state mutations conservatively dismiss results even if the header stays equal. An upload
+already started can finish at the server, but its late reply is discarded. Copy is explicit and
+marked sensitive; it does not paste. Re-transcribe requires reacquiring the original audio and
+bypasses its fingerprint once. Handset acceptance is recorded separately in `docs/testing.md`.
+
+The processing pipeline (`CaptionProcessor`, `CaptionAudio`, `CaptionMediaDecoder`) enforces:
 
 - **Bounded acquisition.** The stream is read once, in 64 KiB chunks, while the caller's URI grant
   is valid, and closed on every path. At most 32 MiB is accepted, counted over the bytes actually
@@ -132,9 +153,12 @@ does once a producer hands it one audio stream:
 - **Identity.** A caption's key is the SHA-256 of the encoded bytes (`encoded-sha256-v1`) and a
   versioned SHA-256 profile of the non-secret settings that shape it. Tokens are never part of it,
   and an address with user info, a query or a fragment makes the caption uncacheable
-  (`captionProfile`). Nothing writes to the caption cache yet.
+  (`captionProfile`). The controller uses a request-start cache ticket for lookup before decoding
+  and network, and writes only after the result passes its origin fence. Turning remembering off
+  or Delete all invalidates old tickets, including after an off/on cycle (`CaptionCache`).
 
-**In scope:** imported audio in a backup, a device transfer or a log; a spool outliving its
+**In scope:** an unselected message accepted; a result shown after an invalidated origin; an
+automatically pasted or sent caption; imported audio in a backup, a device transfer or a log; a spool outliving its
 request beyond the next open; a request sent after cancel or the deadline; more than 32 MiB read or
 more than five minutes decoded; a token reaching the profile. **Out of scope:** vulnerabilities in
 the platform's own media extractor and codecs, which voxdroid cannot patch.
@@ -164,12 +188,15 @@ the pound and piastre marks (U+0600–U+0605, U+06DD, U+0890–U+0891, U+08E2) a
 
 ### Clipboard
 
-Clipboard mode is off by default (`Settings.kt` — `noFieldMode`). The clip is not marked sensitive,
+Dictation clipboard mode is off by default (`Settings.kt` — `noFieldMode`). The clip is not marked sensitive,
 so the system's preview shows it, and nothing clears it (`FieldAccess.kt` — `copy`). A take whose
 focused field is a password field is never copied (`Delivery.kt` — `delivery`).
 
 **In scope:** text reaching the clipboard in Refuse mode, or for a password field. **Out of
 scope:** clipboard managers and clipboard sync capturing the text once you chose clipboard mode.
+
+Caption Copy is a separate explicit action, marked sensitive (`CaptionPanel`). Android and any
+clipboard manager may still retain that text; closing the caption does not clear the clipboard.
 
 ### Network
 
@@ -209,16 +236,15 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   Android 12 and later once `dataExtractionRules` is set
   ([behaviour changes](https://developer.android.com/about/versions/12/behavior-changes-12)), and
   voxdroid needs Android 13 (`app/build.gradle.kts` — `minSdk`).
-- The caption cache for a future voice-message feature is inactive: nothing in the app calls it,
-  and it is off until a producer turns it on (`CaptionCache.kt` — `CaptionCache`, `openCaptionCache`;
-  `CaptionPolicyTest`). Its directory, `filesDir/captions/`, is excluded whole from cloud backup
+- The caption cache is off until the user enables **Remember voice-message transcripts**,
+  independently of enabling captions (`CaptionCache`, `SectionFragment`). Its directory, `filesDir/captions/`, is excluded whole from cloud backup
   and device transfer, write sidecars included (`res/xml/data_extraction_rules.xml`). A record holds
   the raw and displayed text, the cleanup outcome and the write time, under a SHA-256 digest of its
   key; no audio, profile, credential, URI or chat identity. Records expire 30 days after the write
   and nothing in the cache is logged. Turning it off or Delete all removes every record, and a
   request begun before either cannot write afterwards (`CaptionCache.kt` — `begin`, `put`).
 - The voice-message spool directory, `filesDir/caption_spool/`, is excluded whole the same way
-  ([Imported voice messages](#imported-voice-messages-inactive)).
+  ([Imported voice messages](#imported-voice-messages)).
 
 **In scope:** a token in a log, an error string, a backup or a device transfer; a caption record
 or spool file in a backup or a device transfer; a caption record outliving 30 days, or written by
@@ -251,8 +277,9 @@ scope:** Play Protect's behaviour, which voxdroid cannot see or change.
 
 ### Components
 
-The merged manifest of both build types declares six components: `SettingsActivity` (exported, the
-launcher); `SectionActivity` and `TryActivity` (not exported); `VoxdroidA11yService` (exported,
+The merged manifest of both build types declares seven components: `SettingsActivity` (exported, the
+launcher); `SectionActivity` and `TryActivity` (not exported); `CaptionReceiveActivity` (exported,
+single-audio SEND, guarded by the session/provider/grant checks above); `VoxdroidA11yService` (exported,
 guarded by `android.permission.BIND_ACCESSIBILITY_SERVICE`); and two that AndroidX adds,
 `androidx.startup.InitializationProvider` (not exported; voxdroid's manifest removes its
 `EmojiCompatInitializer` entry) and `androidx.profileinstaller.ProfileInstallReceiver` (exported,

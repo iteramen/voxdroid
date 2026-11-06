@@ -59,6 +59,9 @@ class Settings(context: Context) {
 
     val triggerButton: Boolean get() = prefs.getBoolean("trigger_button", true)
 
+    /** Explicit opt-in before observing foreground conversation metadata for private captions. */
+    val voiceCaptions: Boolean get() = prefs.getBoolean("voice_captions", false)
+
     val allowDuringCall: Boolean get() = prefs.getBoolean("allow_during_call", false)
 
     val hapticCues: Boolean get() = prefs.getBoolean("haptic_cues", HAPTIC_CUES_DEFAULT)

@@ -485,12 +485,12 @@ Not Disturb off unless a row says otherwise, and the notification volume up.
 
 ## Voice-message processing
 
-**Unrun.** Nothing in any current build calls `CaptionProcessor`, so none of these rows can run
-yet. They run with the first caption producer, or a debug-only harness written for them, before
-captions ship. The acquisition probes recorded in [design.md](design.md#voice-message-processing-inactive)
-are the codec baseline, not a run of these rows. Use prepared fixtures you recorded yourself,
-never someone else's voice message. List the spool with
-`adb shell run-as io.github.iteramen.voxdroid ls files/caption_spool` (debug build).
+The feature branch now wires `CaptionProcessor` through the private Share receiver/controller.
+The acquisition probes in [design.md](design.md#voice-message-processing) prove codec/grant behavior,
+not full caption acceptance. Rows below remain unrun unless explicitly marked with evidence.
+Use only owner-prepared non-sensitive fixtures. In an isolated feature build substitute
+`io.github.iteramen.voxdroid.captiontest` for the main package in diagnostic commands. Never export
+audio, transcript records, raw provider URIs or conversation headers to test reports.
 
 Platform decoder and normalizer (`CaptionMediaDecoder`, `CaptionNormalizer`):
 
@@ -527,3 +527,143 @@ The first enabled integration (each row is that pull request's to run):
       each end in a refusal, never a caption of another message
 - [ ] unrun: the in-app accessibility description, the listing text, `docs/privacy.md` and
       `docs/play/data-safety.md` match the shipped audio, panel and cache flow
+
+## Private caption integration
+
+**Acceptance incomplete.** WhatsApp and Telegram evidence is recorded below; remaining cases are
+named explicitly. The installed main app 0.2.1 does not include this feature. The isolated
+feature package is `io.github.iteramen.voxdroid.captiontest`, labelled **Voxdroid Caption Test**,
+built with `./gradlew lint testDebugUnitTest assembleDebug -PcaptionTest=true`. Check the APK's
+application ID before every install; a normal build overwrites the same Gradle output path.
+No release tag/version bump is part of these tests. Keep the main app and its data unchanged.
+
+Do not use the stock `uiautomator dump` between selection and caption delivery: its UiAutomation
+connection suppresses other accessibility services by default, invalidating the service being
+tested. Use fixture-only visual captures and request counters for the live flow. An instrumentation
+inspector must explicitly preserve services with
+[`FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES`](https://developer.android.com/reference/android/app/UiAutomation#FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES).
+Delete transient captures afterwards; never commit chat screenshots or raw hierarchy dumps.
+Recheck that the prepared fixture conversation is foreground and the keyboard is hidden before
+each gesture. Pause if the owner changes screens or disconnects USB. The floating accessibility
+menu can move: read its current OS touch region rather than reusing coordinates. An Android
+chooser hierarchy can include off-screen targets; visually verify the intended target.
+
+`tools/caption_test_server.py` binds only loopback and never logs payloads/tokens. An owner-approved
+`adb reverse tcp:18881 tcp:18881` routes the isolated package to it; it counts STT/cleanup requests
+and validates 16 kHz mono PCM16 WAV. Its static test text proves transport/UI behavior, not real
+speech recognition. Delay/failure controls exercise stale callbacks and cleanup fallback.
+`tools/caption_test_device.py` restricts configuration/service changes to the isolated package;
+copy-settings requires separate explicit approval for its RAM-only projection of speech, cleanup,
+language, glossary and lane settings plus the associated tokens. The owner approved that exact
+transfer for this session on 2026-11-06. Tokens remain in the test app's private storage until
+cleared or uninstalled; no values are logged or saved on the workstation. Builds and installs
+never copy production data automatically. Stop the server and remove the reverse
+when finished. Never grant microphone permission merely to get captions working.
+
+For both owner-prepared Telegram and WhatsApp fixture conversations (a combined row
+remains unchecked until all its cases have evidence for both apps):
+
+- [ ] Caption enable disclosure is clear; Enable and Remember default off independently.
+- [ ] One received note selected → accessibility button → native Share chooser → Caption with
+      Voxdroid → private readable panel over the original chat. No composer change or Send.
+- [ ] First share reaches STT then configured cleanup; server validates normalized WAV. Real
+      configured STT also produces a readable result, separately from test-server static text.
+- [ ] Remember on: same note twice reuses saved text/time with no extra STT or cleanup; a distinct
+      note misses. Reading does not refresh the timestamp. Remember off continues fresh processing.
+- [ ] Re-transcribe prompts a fresh original share, then bypasses cache once; sharing a different
+      note does not label its result as a refresh of the original.
+- [ ] Copy is explicit and sensitive; Close clears the panel; long/RTL text scrolls and reads.
+- [ ] Delayed STT/cleanup + chat switch, app switch, scroll, Close or lock never resurrects a panel
+      or saves a result after cancellation. Returning later to the original chat does not revive it.
+- [ ] Same-header conversation/navigation mutations dismiss results rather than using header
+      equality as durable chat identity.
+- [ ] Multiple selection, selected non-voice content, unknown selection count, an undownloaded
+      note and unsolicited shares refuse locally; no accidental microphone/dictation start.
+- [ ] Cleanup failure shows the raw result with fallback notice; silence/unsupported media/errors
+      remain private and never enter the composer.
+- [ ] Delete all and off/on during a delayed request leave no late cache record; captions/spool
+      remain excluded from backup/transfer, and normal acquisition/cancel leaves no spool.
+- [ ] Volume-down dictation and stopping an active dictation with the button still work normally.
+- [ ] Privacy/security/accessibility/Data safety docs and in-app description match the proven flow.
+
+Build evidence: lint, 454 unit tests, normal debug and unsigned release assembly passed with the
+handset fixes. Isolated debug assembly also passed.
+The owner-invalidation and cleared-selection regressions failed before their fixes and passed
+with the session guards. The missing view-ID flag regression also failed before its fix and passed
+afterwards. Normal CI must confirm the final source head.
+Three synthetic device-helper tests preserve unrelated services and
+limit settings projection; a synthetic WAV exercised the loopback server without handset data.
+Platform edge fixtures above and device transfer require separate evidence; they are not implied
+by a green unit suite or the earlier acquisition probes.
+
+### WhatsApp handset checkpoint: 2026-11-06
+
+Pixel 10, Android 17/API 37, WhatsApp 2.26.42.74; owner-prepared self-chat voice-note fixtures.
+The main app remains 0.2.1. All handset installs used the isolated package, without granting
+microphone permission. Findings corrected the missing view-ID service flag, selected-toolbar
+scope and clickable Share ancestor, excessive accessibility-tree scans, and wrapped panel actions.
+
+The following checks passed across the isolated handset candidates. The final installed candidate
+was v12, APK SHA-256
+`4eb3fbbe49fb4520508ec2c45f84dbcef8fbfb2736a08b6834fad226985b4ce6`.
+This is an APK checksum, not an audio fingerprint. The real-server confirmation and guarded
+multiple-selection check ran on v12; earlier rows were not all repeated on that exact binary.
+
+| Check | Observed result |
+| --- | --- |
+| One selected note → native Share → isolated target → private panel | Passed; composer unchanged visually, no outgoing message, microphone denied. Fixture server accepted 16 kHz mono PCM16 WAV; one STT and one cleanup request. |
+| Remember on, repeat same note | One stored entry; repeat made no additional inference requests and did not change the saved timestamp. |
+| Re-transcribe, then a distinct note | Fresh reacquisition bypassed cache; the distinct note missed and produced a separate entry. |
+| Delete all, then Remember off | UI erased both entries; remembering was left off. |
+| Cleanup failure | Raw transcript displayed with an explicit fallback notice. |
+| Close, app switch, or source scroll during delayed STT | Late reply discarded, no cleanup request, no resurrected panel; spool empty. |
+| Close during delayed cleanup | Already-started cleanup completed, but no late panel appeared; spool empty. |
+| Multiple selection | Local refusal, zero STT/cleanup requests; fixture and keyboard guards checked before input. |
+| Real configured speech server | Readable private caption for the selected four-second note; owner confirmed "Matches the note". Remembering remained off. |
+
+The mock server was stopped and its ADB reverse removed before the real-server run. The real
+caption and configured isolated app were left available for the owner. USB disconnected before
+the final read-only file/permission inventory; that inventory is not claimed as fresh evidence.
+No transcript, audio, provider URI or conversation identity is included in these reports.
+
+Still unverified at this WhatsApp checkpoint: Telegram; lock/unlock; long/RTL panel content;
+active dictation/volume-key coexistence; undownloaded or unsupported source fixtures; a same-title
+different-chat switch; Delete all/off during an in-flight request; and actual backup/device
+transfer. The pure tests cover several associated guards, but do not establish those phone rows.
+This checkpoint is not full acceptance, a release, or authority to merge/version/deploy.
+
+### Telegram handset checkpoint: 2026-11-06
+
+The owner supplied two distinct new native voice-note fixtures in the prepared bot conversation.
+The isolated v15 APK (SHA-256
+`05f2dd6671084022f7acb36480b9a86dd8bf0264a3847b15b69972000002fa74`) contains the source
+subsequently committed as `374bceea1cfeee7c3da97b2c1dc7651dfc00c0e1`. Documentation/changelog
+completion did not change that runtime source. All four PR checks passed for that commit.
+
+Phone testing exposed two bugs: the native toolbar says "1 Selected", and selected-mode text
+could replace the remembered conversation title. Separate regressions failed before the parser
+and header guards were corrected, then passed. The exact-origin comparison remains strict.
+
+| Check | Observed result |
+| --- | --- |
+| Real configured speech server, both new notes | Two distinct private captions; owner confirmed the second matches its note. Composer remained empty, no message sent, remembering off. |
+| Remembered first note, then repeat | One STT/cleanup request each, then no additional inference; saved timestamp unchanged. |
+| Re-transcribe, then distinct note | Fresh reacquisition bypassed cache, then the other note missed: request totals advanced to two and three respectively; two stored records. |
+| Remember off | Both temporary records deleted; state disabled. |
+| Delayed STT + Close, app switch, source scroll or screen lock | Each discarded the late result, made no cleanup request, left no spool or transcript record, and did not revive a panel. After wake/unlock, no active caption remained. |
+| Multiple selection | Local refusal, zero inference, dictation idle. |
+| Cleanup unavailable | Raw transcript and explicit fallback notice were readable. The cleanup-delay setup did not reach a running cleanup request, so Telegram Close-during-cleanup is not claimed. |
+
+Some earlier test-helper attempts did not complete the intended handoff or lost fixture eligibility;
+they are not passes. The helpers now stop when fixture or expected panel-state verification fails.
+An unrelated Telegram source-content update also conservatively dismissed a shown panel, as the
+current source-mutation guard requires; no weaker title-only identity check was substituted.
+
+After testing, the approved real-server configuration was restored through RAM, remembering was
+off with zero records, microphone permission remained denied, and the loopback reverse was removed.
+The main app remained 0.2.1. Transient captures are deleted after inspection and never published.
+
+Remaining handset cases: long/RTL text; active dictation/volume-key coexistence; unsupported and
+undownloaded source fixtures; same-title different-chat switch; off/Delete all during an in-flight
+request; actual backup/device transfer; and Telegram Close during already-running cleanup.
+WhatsApp lock/unlock was not repeated separately. These are not implied by the successful checks.

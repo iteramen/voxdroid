@@ -1,97 +1,72 @@
 # Play Data safety form — voxdroid
 
-The answers for the Play Console's Data safety form, matched to what the app does. The public
-policy the form links to is [`docs/privacy.md`](../privacy.md); where the two differ, the policy
-and the code are right and this sheet is wrong. The Console's wording changes between revisions:
-it is the source of truth for the labels, this sheet for the substance.
+Draft for the unreleased caption integration, reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
+on 2026-11-06. This records implementation behavior; no Console submission has been made. The owner
+must reconcile the actual form and all distributed versions before release. The public policy is
+[`docs/privacy.md`](../privacy.md).
 
-## Data collection and security
+## Collection and security
 
-| Question | Answer | Rests on |
+| Question | Draft answer | Implementation evidence |
 | --- | --- | --- |
-| Does your app collect or share any of the required user data types? | **Yes** | The recording is transmitted off the device for transcription (`SttClient.kt`). |
-| Is all user data encrypted in transit? | **No** | Plain `http://` to any host but the phone itself is refused while "Allow insecure (http) endpoints" is off, the default, but the user can turn it on (`Endpoints.kt` — `insecureBlocked`; `AndroidManifest.xml` — `usesCleartextTraffic="true"`). Encryption in transit depends on that switch and on the address the user sets. |
-| Do you provide a way for users to request that their data be deleted? | **No** (or "not applicable", where the Console offers it) | voxdroid and its developer hold nothing to delete: the audio is never stored (`Recorder.kt`, `Take.kt`). The only user data on the device is the settings in app-private storage, removed when the app is uninstalled (`Settings.kt`). |
-| Has your app undergone an independent security review? | **No** | No such review exists. |
+| Collect any required data types? | **Yes** | Dictated and explicitly shared received audio goes to configured speech servers; optional cleanup receives text. |
+| All user data encrypted in transit? | **No** | HTTPS uses Android verification, but the user can explicitly enable remote HTTP. Loopback HTTP is allowed. |
+| Deletion mechanism? | **Local transcript deletion exists; remote deletion is not provided** | Voice messages → Delete all and turning remembering off delete local records. Voxdroid cannot delete data retained by user-configured servers. Do not promise end-to-end deletion in the Console. |
+| Independent security review? | **No** | No independent certification is claimed. |
 
 ## Data types
 
-Every category not listed here is **Not collected**.
-
-| Category | Data type | Collected | Shared | Ephemeral | Required/Optional | Purpose |
+| Category | Type | Collected | Shared | Ephemeral | Required/Optional | Purpose |
 | --- | --- | --- | --- | --- | --- | --- |
-| Audio files | Voice or sound recordings | **Yes** | **No** | **Yes** | Required | App functionality |
-| App activity | Other user-generated content | **Yes** | **No** | **Yes** | Optional | App functionality |
+| Audio files | Voice or sound recordings | **Yes** | **No, under the user-initiated transfer exception below** | **No blanket claim** | Required for dictation | App functionality |
+| Messages | Other in-app messages | **Yes** | **Same exception** | **No** | Optional | App functionality |
+| App activity | Other user-generated content | **Yes** | **Same exception** | **No blanket claim** | Optional | App functionality |
 
-- **Voice recordings — collected.** The recording is transmitted to the speech server the user set,
-  and in the cases [`docs/privacy.md` § Where the audio goes](../privacy.md#where-the-audio-goes)
-  lists, again to that server, to a language lane or to the default server (`SttClient.kt`,
-  `Routed.kt`).
-- **Shared: No.** "Shared" means the developer transferring data to a third party. voxdroid's
-  developer runs no server and picks no third party: every destination is an address the user
-  configured.
-- **Ephemeral: Yes.** On the device the audio is used only to produce a transcript, held in memory
-  and dropped once the text is delivered, on cancel or when a new dictation starts (`Take.kt`;
-  `Recorder.kt`). The user's own server keeps or deletes what it receives under its own policy,
-  which voxdroid neither sets nor sees.
-- **Required:** dictation is the app's whole purpose.
-- **Other user-generated content: the transcript and the glossary.** With the optional cleanup
-  pass configured, the transcript text goes to the cleanup server the user set; the glossary the
-  user typed goes with every transcription request and every cleanup request (`Polish.kt` —
-  `PolishClient`; `SttClient.kt` — `send`). Not shared and ephemeral, for the same reasons;
-  **Optional**, because the pass does nothing until its address and model are set and the glossary
-  is empty by default.
-- A dictated transcript is not an in-app message: voxdroid has no messaging of its own, so
-  **Messages** is Not collected. voxdroid has no accounts, analytics, crash reporting or
-  third-party SDK that could collect any other category (`app/build.gradle.kts` —
-  `dependencies`).
+**Audio:** microphone dictation and selected received voice notes, including another person's
+speech. Only the selected note is imported; no background inbox collection occurs. Initial imports
+are Ogg/Opus, bounded to 32 MiB encoded and five decoded minutes. The encoded import briefly exists
+in a private, backup-excluded spool; it is deleted before an upload. Normalized WAV stays in memory
+(`CaptionAudio`, `CaptionMediaDecoder`, `CaptionProcessor`). Caption import is optional and does
+not need microphone permission; the audio category also covers the app's dictation purpose.
 
-## Planned: voice-message captions (not in the app)
+**Messages:** received chat voice-note content is explicitly being transcribed, so this draft
+includes Other in-app messages, even though Voxdroid has no messaging account or Send action.
+Optional cleanup transmits the received-message transcript. This is our application of Play's
+chat-content definition, not a Console determination. Headers, sender/chat identity, source URI
+and file names are not sent. Routine accessibility observation reads only bounded foreground
+header/selection metadata, held in memory (`CaptionAccessibility`, `CaptionController`).
 
-The answers above describe the app as it ships. The caption processing code is present and unused
-(`CaptionProcessor.kt`); nothing in the app receives a voice message, so the form does not change
-for this code. The pull request that turns on the first caption integration (a share target, a
-button or a panel) updates this sheet, [`docs/privacy.md`](../privacy.md), the
-[accessibility declaration](accessibility-declaration.md) and the in-app description together,
-before the release, to the flow it actually ships. Answers from this sheet must not be carried
-into it unchecked:
+**Other user-generated content:** the user's glossary and optional dictated-text cleanup input.
+It is separate from the received-message category (`SttClient`, `PolishClient`).
 
-- **New data: received voice messages and their transcripts.** The audio and the text are another
-  person's, chosen by the user. The audio goes to the user's speech server and lanes, and the
-  transcript to the cleanup server if configured, as for dictation. The data-type choice (Audio
-  for the recording; Messages, "Other in-app messages", or App activity, "Other user-generated
-  content", for the transcript of a received message) is checked against the Console's current
-  definitions when the integration lands. The **Messages: Not collected** answer above rests on
-  voxdroid having no messaging of its own, and is not carried over once received messages are
-  captioned.
-- **Not ephemeral on the device while it decodes.** The encoded message is written to a private,
-  backup-excluded file during decoding and deleted before any request
-  ([SECURITY.md](../../SECURITY.md#imported-voice-messages-inactive)). Whether that, and a transmission
-  to the user's own server, still answers "processed ephemerally" is checked against Play's
-  definition then, not assumed.
-- **Optional retention.** *Remember voice-message transcripts*, off by default, keeps transcript
-  text on the device for 30 days, excluded from backup and transfer, with *Delete all*
-  (`CaptionCache.kt`). The deletion answer ("nothing to delete") is revisited with it: on-device
-  deletion exists then, and the user's servers keep what they receive under their own policies.
-- **Purpose:** App functionality. The captions are the feature: readable voice messages for
-  people who are deaf or hard of hearing.
+**Shared:** the draft relies on the explicit user-initiated transfer exception, not merely on the
+developer running no server. The user configures destinations, enables captions with a data-flow
+disclosure, selects a note and chooses the native Share target. No developer-chosen third party,
+advertising recipient or analytics service receives the data. If this expected-transfer condition
+changes, reassess the answer rather than carrying it forward.
 
-No Play Console submission or change is made for this code.
+**Ephemeral:** do not carry forward the old blanket Yes. Imported encoded audio touches a file;
+optional remembered captions retain raw/displayed text for 30 days, and the user's speech/cleanup
+servers can retain requests under their own policies. Their behavior is not verified by the app.
+The final form must reflect those conditions, not infer server ephemerality from in-memory WAV.
 
-## Personal info and accounts
+**Local retention/deletion:** remembering is independently off by default. A cache hit avoids
+another decode/upload under the same audio fingerprint and processing profile. Records hold raw
+and displayed text, cleanup outcome, write time and key digest, with no audio or chat identity.
+They are excluded from backup/transfer. Reads never extend the 30-day expiry. Delete all and off
+invalidate writers already in flight; expiry is pruned when opened/accessed (`CaptionCache`).
+Re-transcribe requires a fresh share; expired source grants are not retained.
 
-**Not collected; no account.** voxdroid has no sign-in, no name or email field, and no profile.
+## Other data and accessibility
 
-## Data handled by the accessibility service
+No accounts, sign-in, personal-info fields, analytics, advertising, telemetry or crash-reporting SDKs
+are present. No contacts list, background conversations or installed-app inventory is scanned. The
+two manifest package queries resolve only Telegram/WhatsApp provider ownership; their names are
+not uploaded. Captions never paste or send into a conversation. Explicit Copy puts text on the
+system clipboard, marked sensitive; clipboard managers may still retain it (`CaptionPanel`).
 
-**Nothing beyond the data types above.** The service reads the focused field's editability,
-password state and identity, the character before the cursor and any selection, the volume-down
-key, the keyboard window's position and language, and the audio mode, as
-[`docs/privacy.md` § The accessibility service](../privacy.md#the-accessibility-service) lists.
-None of it leaves the device, except that the keyboard's language code goes to the speech server as
-the `language` field when the take's language is explicit (`TakeLanguage.kt`; `SttClient.kt`). See
-also [`accessibility-declaration.md`](accessibility-declaration.md).
-
-## Target audience
-
-voxdroid is not directed at children ([`docs/privacy.md` § Children](../privacy.md#children)).
+The accessibility service also reads dictation's focused-field properties, cursor-adjacent text
+for spacing, volume-down events, keyboard bounds/language and audio mode. Those stay on device
+except explicit dictation language sent with STT. Its changed event subscriptions and motor/hearing
+purposes are in [`accessibility-declaration.md`](accessibility-declaration.md). Google approval is
+not implied. Voxdroid is not directed at children.

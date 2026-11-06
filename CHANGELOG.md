@@ -5,6 +5,22 @@ build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+Added
+- Private voice-message captions for selected Telegram and WhatsApp Ogg/Opus notes: native Share,
+  a floating reading panel, explicit Copy/Close, and Re-transcribe through a fresh share. Separate
+  switches enable captions and remember transcripts for 30 days; both are off by default.
+- An isolated `-PcaptionTest=true` debug package and a local fixture server for handset validation.
+
+Changed
+- Telegram recognizes the native "1 Selected" toolbar format and keeps selected-mode labels out
+  of conversation identity, preserving the original chat context through native Share.
+- WhatsApp selection uses reported view IDs and the selected-message toolbar's own Share control;
+  routine header checks avoid walking the message list. Re-transcribe has its own full-width row
+  for readability at large font sizes.
+- Privacy, security and accessibility documentation describes the caption integration, its
+  temporary audio file, foreground selection metadata and hearing-accessibility purpose. Handset
+  acceptance remains tracked in `docs/testing.md`; this is not a released version.
+
 ## 0.2.1 — 2026-11-05
 
 Added

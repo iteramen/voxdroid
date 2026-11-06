@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 
+    <queries>
+        <package android:name="com.whatsapp" />
+        <package android:name="org.telegram.messenger" />
+    </queries>
+
     <!-- Plain http is gated by the Allow insecure (http) endpoints switch, not by the platform.
          fullBackupContent is not declared: dataExtractionRules replaces it from Android 12 and minSdk is 33. -->
     <application
@@ -35,6 +40,20 @@
             android:name=".TryActivity"
             android:exported="false"
             android:theme="@style/Theme.Voxdroid" />
+
+        <activity
+            android:name=".CaptionReceiveActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/caption_share_target"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="application/ogg" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".VoxdroidA11yService"

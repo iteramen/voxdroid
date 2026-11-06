@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreferenceCompat
+        android:key="voice_captions"
+        android:defaultValue="false"
+        android:title="@string/caption_enable_title"
+        android:summary="@string/caption_enable_summary" />
+    <Preference android:key="voice_message_help"
+        android:title="@string/caption_usage_title"
+        android:summary="@string/caption_usage" />
+    <SwitchPreferenceCompat android:key="remember_voice_messages"
+        android:persistent="false"
+        android:title="@string/caption_remember"
+        android:summary="@string/caption_remember_summary" />
+    <Preference android:key="delete_voice_messages"
+        android:title="@string/caption_delete_all"
+        android:summary="@string/caption_delete_summary" />
+</PreferenceScreen>

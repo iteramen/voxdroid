@@ -29,21 +29,30 @@ Two gestures reach the service (`res/xml/a11y_entry.xml`):
   work without a precise touch on a small target.
 - **Low vision.** Speaking is not a visual act.
 
-### In development: captions for people who are deaf or hard of hearing
+### Captions for people who are deaf or hard of hearing
 
-A second purpose is being built: private, readable captions of voice messages the user has
-received, so that people who are deaf or hard of hearing can read what they cannot hear. It is not
-in the app: no gesture, share target, setting or panel reaches it, and the service does nothing for
-it. Only the processing code exists, unused (`CaptionProcessor.kt`). Nothing in the service's
-declaration (`res/xml/a11y_entry.xml`), capabilities or flags is added or changed for it, and this
-page claims nothing for it before it ships.
+Private readable voice-message captions are the second accessibility purpose. With captions
+explicitly enabled, the user selects one downloaded Telegram or WhatsApp voice note and presses the
+accessibility button. The service reads the supported foreground conversation header and selected
+note's accessibility metadata, invokes native Share, and the user chooses **Caption with Voxdroid**.
+The received audio goes to the user's speech server and, when configured, its transcript to cleanup.
+A scrollable accessibility overlay shows the result privately over the verified original chat.
+There is no automatic paste, Send, inbox scan, microphone recording or background chat processing
+(`CaptionAccessibility`, `CaptionController`, `CaptionReceiveActivity`, `CaptionPanel`).
 
-The pull request that turns on the first caption integration updates this page with the
-accessibility API use that integration actually makes, if any, and why it is the least access that
-works. The in-app description, the listing text, [`docs/privacy.md`](../privacy.md) and
-[`data-safety.md`](data-safety.md) are made to match it in that same pull request, before the
-release. That this feature serves people with a disability does not by itself mean Play approves
-the API use; the Permission Declaration Form is filled in for what ships, as below.
+The additional events are window-state, content, scroll, click and long-click, alongside window
+changes. They identify selection and invalidate stale captions when the foreground context changes.
+Conversation headers/window identity stay in memory; selected audio alone goes off the device.
+The additional `flagReportViewIds` exposes resource names needed to identify WhatsApp header,
+selection and Share controls. No additional accessibility capabilities, gesture injection, storage
+permission or overlay permission is requested. The native Share action is a deterministic response
+to the user's selected-note button press, not autonomous conversation navigation.
+
+The first implementation's native Share controls require the supported English app UI. The in-app
+enable dialog describes this access and data flow. Remembering text is a separate off-by-default
+control, limited to 30 days with Delete all; no sender/chat identity or audio is stored there.
+Handset acceptance remains in [`testing.md`](../testing.md#private-caption-integration). This feature
+is unreleased. Its hearing-accessibility purpose does not establish Google approval.
 
 ## What the service does
 
@@ -63,7 +72,7 @@ the API use; the Permission Declaration Form is filled in for what ships, as bel
   volume-down starts a dictation, a press stops one, and a short press while idle is re-applied as
   a volume step. The only state kept is two booleans (`VoxdroidA11yService.kt` — `onKeyEvent`;
   `VolumeGesture.kt`).
-- **Places the pill above the keyboard.** It subscribes to window changes only and, while a
+- **Places the pill above the keyboard.** On window changes, while a
   dictation runs, uses the keyboard window's bounds alone; the call that fetches them returns every
   interactive window's info, filtered by type (`Pill.kt` — `keyboardTop`, `follow`).
 - **Reads the keyboard's current language**, to choose the transcription language
@@ -79,29 +88,28 @@ the API use; the Permission Declaration Form is filled in for what ships, as bel
 
 ## What the service does not access
 
-Declared in `res/xml/a11y_entry.xml` and enforced by the platform:
+The manifest capabilities and the code's narrower access rules:
 
-- **No events but window changes.** Only `typeWindowsChanged` is subscribed to, so the service
-  receives no clicks, focus changes, text changes or notifications through it. The service turns
-  the accessibility node cache off when it connects and again after every field lookup, so it keeps
-  no copy of another app's nodes (`VoxdroidA11yService.kt` — `onServiceConnected`;
-  `FieldAccess.kt` — `focused`).
-- **No standing read of the screen.** At a start and at delivery it fetches the active window's
-  root with `getRootInActiveWindow(0)`, no prefetch flag set, and asks that root for the focused
-  input field only. The start field's node is held until the dictation ends, or through a failure
-  until a retry delivers or the dictation is cancelled.
+- **Bounded event use.** Window, window-state, content, scroll, click and long-click events are
+  subscribed to. Caption observation acts only when enabled, dictation is idle and the supported
+  source is foreground. Routine header inspection skips the message list. Selected-message
+  metadata is inspected only in selected mode; no composer or unselected message text is read.
+- **No retained accessibility tree.** The node cache is disabled when the service connects and
+  after field lookup. Dictation holds its start field through delivery/cancel/retry. Captions keep
+  only RAM origin metadata and use temporary nodes synchronously, not a stored conversation tree.
 - **No gestures, screenshots, magnification, fingerprint gestures or touch exploration.** The
   capabilities are `canRetrieveWindowContent` and `canRequestFilterKeyEvents`, and the flags
-  `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor` and
-  `flagRetrieveInteractiveWindows`; nothing else is declared.
+  `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
+  `flagRetrieveInteractiveWindows` and `flagReportViewIds`; nothing else is declared.
 
 And by the code:
 
 - **No text read from another app is logged, written to a file or sent.** What leaves the device is
   the recording, the transcript and, for an explicit language, the keyboard's language code as the
-  `language` field, to the servers the user configured (`SttClient.kt`; `Routed.kt`). The only thing
-  the service stores is how high above the keyboard the user last dropped the pill
-  (`Settings.kt` — `pillSaved`).
+  `language` field, to the servers the user configured (`SttClient.kt`; `Routed.kt`). Conversation
+  headers/selection metadata are never logged, saved or sent. Optional remembered
+  captions store only the raw/displayed transcript, outcome, write time and a key digest; no audio
+  or chat identity (`CaptionCache`).
 
 ## Why an accessibility service
 
@@ -111,11 +119,12 @@ whether it is a password field; the **hardware volume key** before the foregroun
 (`canRequestFilterKeyEvents`); and an **input connection into that field** without being the
 keyboard (`flagInputMethodEditor`). The pill is an accessibility overlay
 (`TYPE_ACCESSIBILITY_OVERLAY`, `Pill.kt`), placed by the keyboard window's bounds
-(`flagRetrieveInteractiveWindows`).
+(`flagRetrieveInteractiveWindows`). Caption selection additionally needs WhatsApp control resource
+names (`flagReportViewIds`).
 
 voxdroid does not claim to be used only by people with disabilities; anyone may install it. It
 claims that the service is built to assist users with disabilities, and that it asks the platform
-for the least access that does that one thing.
+for access needed by dictation and private selected-note captions.
 
 ## The `isAccessibilityTool` declaration
 
@@ -127,7 +136,9 @@ examples ([Use of the AccessibilityService
 API](https://support.google.com/googleplay/android-developer/answer/10964491)).
 
 The same page says: "Apps declaring isAccessibilityTool are exempt from the prominent disclosure
-and consent requirement described below." voxdroid therefore has no consent screen. The privacy
+and consent requirement described below." voxdroid retains that declaration and additionally asks before enabling voice-message captions.
+This is a feature disclosure, not evidence of a Play approval or a substitute for the non-tool
+disclosure route below. The privacy
 policy is a separate requirement ("a privacy policy link or text within the app itself", Play's
 [User Data policy](https://support.google.com/googleplay/android-developer/answer/9888076)): the
 main screen's **Privacy policy** row opens it (`strings.xml` — `privacy_policy_url`).
@@ -149,9 +160,13 @@ On the phone, the attribute also decides:
 Play's policy says "all apps targeting Android 12 using AccessibilityService API will need to
 complete the Permission Declaration Form and receive approval from Google Play" ([Use of the AccessibilityService
 API](https://support.google.com/googleplay/android-developer/answer/10964491)). voxdroid targets
-API 36 (`app/build.gradle.kts` — `targetSdk`), so it completes the form, with "a link to a short
+API 36 (`app/build.gradle.kts` — `targetSdk`), so the owner must complete and update the form for both motor and hearing purposes, with "a link to a short
 video which shows your app being opened, the accessibility services being enabled, and the
 accessibility services being used."
+
+No Console submission is performed by this implementation. The caption access and demonstration
+video must be included in the owner's next declaration review; the existing declaration is not
+assumed to cover changed behavior.
 
 If Play declines the `true` declaration, the policy's other route is `false` with an in-app
 disclosure and consent that immediately precede enabling the service

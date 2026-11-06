@@ -17,7 +17,10 @@ private const val MILLIS_PER_SECOND = 1000
 
 sealed interface CaptionOutcome {
     /** [key] is `null` when no safe processing profile could be formed ([captionProfile]): show the caption, never cache it. */
-    data class Captioned(val key: CaptionKey?, val raw: String, val displayed: String, val cleanup: CaptionCleanup) : CaptionOutcome
+    data class Captioned(
+        val key: CaptionKey?, val raw: String, val displayed: String, val cleanup: CaptionCleanup,
+        val savedAtMs: Long? = null,
+    ) : CaptionOutcome
 
     data object Silence : CaptionOutcome
 
@@ -75,7 +78,7 @@ class CaptionSettings(
     val polishPrompt: String,
 )
 
-/** For a future producer, at the start of each request. Nothing in the app calls it yet. */
+/** Snapshot the configured processing choices at the start of each explicit caption request. */
 fun captionSettings(settings: Settings, polishPrompt: String): CaptionSettings = CaptionSettings(
     sttBaseUrl = settings.sttBaseUrl,
     sttModel = settings.sttModel,
@@ -188,20 +191,39 @@ class CaptionProcessor internal constructor(
      * closes it. Past [budgetMs] the request is [CaptionOutcome.TimedOut]: no request is started after it, and a reply that
      * arrives after it is dropped. A caption comes back only while the request is still current and inside its budget.
      */
-    fun process(source: InputStream, settings: CaptionSettings, budgetMs: Long): CaptionOutcome {
+    fun process(
+        source: InputStream,
+        settings: CaptionSettings,
+        budgetMs: Long,
+        lookup: (CaptionKey) -> Caption? = { null },
+        onAcquired: () -> Unit = {},
+        /** Owner lifetime also applies before this processor has started (for example while opening a provider stream). */
+        isCurrent: () -> Boolean = { true },
+    ): CaptionOutcome {
         require(budgetMs > 0) { "budget must be positive" }
         val id = latest.incrementAndGet()
         val deadline = now() + budgetMs
-        val current = { latest.get() == id && now() < deadline }
+        val current = { latest.get() == id && isCurrent() && now() < deadline }
         val check = {
-            if (latest.get() != id) throw CaptionStop(CaptionOutcome.Cancelled)
+            if (latest.get() != id || !isCurrent()) throw CaptionStop(CaptionOutcome.Cancelled)
             if (now() >= deadline) throw CaptionStop(CaptionOutcome.TimedOut)
         }
         val spool = CaptionSpools.create(spoolDir)
         return try {
             val sha256 = captionAcquire(source, spool, check)
+            // The provider stream is now closed. The receiving Activity can return to its caller;
+            // decoding uses only our private spool, never the expired external URI.
+            onAcquired()
             val head = spool.inputStream().use { it.readNBytes(CAPTION_HEAD_BYTES) }
             if (!captionIsOggOpus(head)) return CaptionOutcome.Unsupported
+            val key = captionProfile(settings)?.let { CaptionKey(CAPTION_FINGERPRINT, sha256, it) }
+            check()
+            val cached = key?.let(lookup)
+            check()
+            if (cached != null) {
+                if (!CaptionSpools.release(spool)) return CaptionOutcome.ReadFailed
+                return CaptionOutcome.Captioned(key, cached.raw, cached.displayed, cached.cleanup, cached.writtenAtMs)
+            }
             val normalizer = CaptionNormalizer()
             decoder.decode(spool, normalizer, check)
             val wav = normalizer.toWav()
@@ -232,6 +254,7 @@ class CaptionProcessor internal constructor(
         val (chosen, cleanup) = if (polisher == null) {
             raw to CaptionCleanup.Off
         } else {
+            check()
             when (val polished = polish(polisher, raw, settings.polishMinWords, !settings.capitalizeFirstWord)) {
                 is PolishOutcome.Text -> polished.text to CaptionCleanup.Cleaned
                 is PolishOutcome.SkippedShort -> polished.raw to CaptionCleanup.SkippedShort
@@ -254,7 +277,7 @@ internal fun openCaptionProcessor(
     now: () -> Long = { System.nanoTime() / NANOS_PER_MILLI },
 ): CaptionProcessor = CaptionProcessor(captionSpoolDir(filesDir), decoder, transcriber, polisher, now).also { it.sweep() }
 
-/** For a future producer: sweeps the spools a dead process left. Nothing in the app calls it yet. */
+/** Opens the processing component and sweeps spools abandoned by a dead process. */
 fun openCaptionProcessor(context: Context): CaptionProcessor = openCaptionProcessor(context.filesDir, CaptionMediaDecoder())
 
 private const val NANOS_PER_MILLI = 1_000_000L

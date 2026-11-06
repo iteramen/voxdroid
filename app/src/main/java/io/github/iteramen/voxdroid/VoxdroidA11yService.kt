@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
@@ -19,6 +20,8 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import java.io.FileDescriptor
+import java.io.PrintWriter
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -40,10 +43,19 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private var startField: Field? = null
     private var takeKeyboardTag: String? = null
     private var polishNotice: String? = null
+    private var captions: CaptionController? = null
+    private var buttonClicks = 0
+    private val captionPrefs = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "voice_captions") captions?.preferencesChanged()
+    }
 
     private val button = object : AccessibilityButtonController.AccessibilityButtonCallback() {
         override fun onClicked(controller: AccessibilityButtonController) {
-            if (settings.triggerButton) dispatch(TakeEvent.Trigger)
+            if (BuildConfig.DEBUG) buttonClicks++
+            if (settings.triggerButton) {
+                if (machine.state == TakeState.Idle && captions?.trigger() == true) return
+                dispatch(TakeEvent.Trigger)
+            }
         }
     }
 
@@ -58,6 +70,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
 
     private val screenOff = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            captions?.cancel()
             if (machine.state != TakeState.Idle) dispatch(TakeEvent.Cancel)
         }
     }
@@ -70,6 +83,8 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             onRetry = { dispatch(TakeEvent.Retry) },
             onCancel = { dispatch(TakeEvent.Cancel) })
         tones = TonePlayer(this, settings, main)
+        captions = CaptionController(this, settings) { machine.state == TakeState.Idle }.also { CaptionServiceBridge.controller = it }
+        getSharedPreferences("voxdroid", MODE_PRIVATE).registerOnSharedPreferenceChangeListener(captionPrefs)
         accessibilityButtonController.registerAccessibilityButtonCallback(button)
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
     }
@@ -96,12 +111,23 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        captions?.observe(event)
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED && machine.state != TakeState.Idle) pill.follow()
     }
 
     override fun onInterrupt() = Unit
 
+    override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
+        if (BuildConfig.DEBUG && packageName.endsWith(".captiontest")) {
+            writer.println("caption-test buttonClicks=$buttonClicks dictationIdle=${machine.state == TakeState.Idle}")
+            writer.println(captions?.diagnostics() ?: "controller=not-connected")
+        }
+    }
+
     override fun onDestroy() {
+        CaptionServiceBridge.controller = null
+        captions?.destroy()
+        getSharedPreferences("voxdroid", MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(captionPrefs)
         // onServiceConnected may never have run: then there is nothing to undo.
         if (::pill.isInitialized) {
             if (machine.state != TakeState.Idle) machine.on(TakeEvent.Cancel)
@@ -115,6 +141,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     }
 
     private fun dispatch(event: TakeEvent) {
+        if (event == TakeEvent.Trigger) captions?.cancel()
         if (event == TakeEvent.Trigger && (machine.state == TakeState.Idle || machine.state is TakeState.Error)) {
             val field = fields.focused()
             val inCall = isCallMode(getSystemService(AudioManager::class.java).mode) && !settings.allowDuringCall

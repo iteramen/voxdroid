@@ -55,7 +55,7 @@ enum class CaptionCleanup {
 
 data class Caption(val raw: String, val displayed: String, val cleanup: CaptionCleanup, val writtenAtMs: Long)
 
-/** Issued by [CaptionCache.begin]; Delete all or turning remembering off makes every earlier ticket [CaptionWrite.Stale]. */
+/** Issued by [CaptionCache.begin]; Delete all or turning remembering off invalidates every earlier ticket. */
 class CaptionTicket internal constructor(internal val epoch: String)
 
 sealed interface CaptionLookup {
@@ -76,7 +76,7 @@ enum class CaptionWrite {
 }
 
 /**
- * The private caption cache behind "Remember voice-message transcripts", off until [setEnabled]. No producer calls it yet.
+ * The private caption cache behind "Remember voice-message transcripts", off until explicitly enabled in settings.
  * Every entry lives [CAPTION_TTL_MS] from its write; reads do not renew it. The directory holds `state` (present while on:
  * the current ticket epoch) and one `<key digest>.json` per caption; anything else in it is pruned.
  */
@@ -89,7 +89,7 @@ class CaptionCache internal constructor(
 
     val enabled: Boolean get() = begin() != null
 
-    /** Off deletes every caption and the epoch with them; on starts a new epoch, so no earlier ticket can write. */
+    /** Off deletes every caption and epoch; turning on from off starts a new epoch, invalidating earlier tickets. */
     fun setEnabled(on: Boolean): Boolean = synchronized(LOCK) {
         try {
             when {
