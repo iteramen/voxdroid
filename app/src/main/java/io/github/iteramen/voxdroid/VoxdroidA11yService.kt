@@ -121,6 +121,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         if (BuildConfig.DEBUG && packageName.endsWith(".captiontest")) {
             writer.println("caption-test buttonClicks=$buttonClicks dictationIdle=${machine.state == TakeState.Idle}")
             writer.println(captions?.diagnostics() ?: "controller=not-connected")
+            if (args.firstOrNull() == "controls") HandsetTestControls.dump(this, writer)
         }
     }
 

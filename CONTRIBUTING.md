@@ -19,6 +19,10 @@ That is the gate every pull request must pass, and what CI runs. Two more CI job
 `release.yml`: a signed APK on GitHub Releases, with `SHA256SUMS` and an attestation. It signs with
 the GitHub-release key held in the repository's secrets, never the Play upload key.
 
+The CI gates job also runs the handset-helper tests with synthetic data only:
+`python3 -m unittest discover -s tools -p 'test_caption_test_*.py'`. These use loopback HTTP and
+mocked device operations; they do not access a phone or production credentials.
+
 On Windows, build in WSL Ubuntu against the Windows checkout (`/mnt/c/...`):
 
 ```sh

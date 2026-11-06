@@ -530,8 +530,9 @@ The first enabled integration (each row is that pull request's to run):
 
 ## Private caption integration
 
-**Acceptance incomplete.** WhatsApp and Telegram evidence is recorded below; remaining cases are
-named explicitly. The installed main app 0.2.1 does not include this feature. The isolated
+**Supported flows and core regressions verified.** WhatsApp and Telegram evidence is recorded
+below; additional fixture/platform qualifications are named explicitly. The installed main app
+0.2.1 does not include this feature. The isolated
 feature package is `io.github.iteramen.voxdroid.captiontest`, labelled **Voxdroid Caption Test**,
 built with `./gradlew lint testDebugUnitTest assembleDebug -PcaptionTest=true`. Check the APK's
 application ID before every install; a normal build overwrites the same Gradle output path.
@@ -663,7 +664,67 @@ After testing, the approved real-server configuration was restored through RAM, 
 off with zero records, microphone permission remained denied, and the loopback reverse was removed.
 The main app remained 0.2.1. Transient captures are deleted after inspection and never published.
 
-Remaining handset cases: long/RTL text; active dictation/volume-key coexistence; unsupported and
+Remaining at that checkpoint (follow-up results below): long/RTL text; active dictation/volume-key coexistence; unsupported and
 undownloaded source fixtures; same-title different-chat switch; off/Delete all during an in-flight
 request; actual backup/device transfer; and Telegram Close during already-running cleanup.
 WhatsApp lock/unlock was not repeated separately. These are not implied by the successful checks.
+
+### Caption regression follow-up: 2026-11-06
+
+The owner requested the remaining dictation, chat and cache safety checks after PR #40 merged.
+The new control inspector was tested in isolated candidate v16, APK SHA-256
+`40edb03cae9a136ca3ee38ca13213b8ccc37d3b07675f36038eef5b4e29940a2`.
+It adds no production feature behavior, permissions or components. The release implementation
+does nothing. Runtime results span v15/v16 as recorded, rather than implying every earlier case
+was repeated on v16.
+
+`adb shell dumpsys activity service
+io.github.iteramen.voxdroid.captiontest/io.github.iteramen.voxdroid.VoxdroidA11yService controls`
+reports only names/bounds of known own-app controls. Wait for settled, on-screen bounds before
+clicking. Do not use `uiautomator` during a live caption: it can suppress/reconnect the service
+and mask a lifecycle defect. Fixture setup inspection is done before the request; control dumps
+do not reconnect the service. Refresh the current verified Telegram task rather than reusing an
+old task ID. Verify voice rows are wholly below the toolbar and above the composer; Telegram
+can expose off-screen virtual rows with misleading bounds.
+
+The fixture server now has fixed `short`, `long` and `rtl` synthetic text cases, plus separate
+request-start/completion counters. It accepts no arbitrary transcript as a text-case control.
+Completion counters distinguish a real in-flight race from an operation done after the reply.
+Five synthetic Python helper tests pass locally and now run in the CI gates job. Normal and
+isolated lint/454 JVM tests/debug assembly, plus normal unsigned release assembly, passed.
+
+| Check | Evidence |
+| --- | --- |
+| Accessibility-button dictation with captions enabled | A short actual microphone take produced valid 16 kHz mono PCM16 WAV and landed the fixture server's synthetic result in Voxdroid's own Try field. No chat field was used. This verifies recording/delivery, not recognition quality. |
+| Physical Volume Down | Owner manually confirmed hold/start and tap/stop work as intended. Injected-key attempts and a timed-out watch window are not substitutes for that manual confirmation. |
+| Actual chat switch and return during STT | Switched between the two approved bot conversations through verified native links held only in RAM. Late reply made no panel, cleanup request, transcript record or leftover audio; returning to the first chat did not resurrect it. |
+| Delete all during STT | Remembering was on, Delete all changed its epoch before the server completed STT, and remained on for the late reply. No late record, cleanup request or spool remained. |
+| Remember off then on during STT | Re-enabled with a new epoch before the reply. The old request did not repopulate the cache. Remembering was switched off afterwards. |
+| Long and RTL panels | Synthetic 80-paragraph Latin and 40-paragraph Hebrew results wrapped and scrolled inside the panel. The panel stayed shown, and Copy/Close/Re-transcribe remained accessible at the owner's large font size. Transient captures were inspected and deleted. |
+| Close during running cleanup | Server counters confirmed cleanup had started and not completed at Close. The finished reply produced no panel, transcript record or spool. |
+| Selected non-voice message | Count one/voice false refused locally, with no STT/cleanup or microphone start even though microphone permission was granted. |
+| Unsolicited invalid shares | Missing stream, file URI, missing read grant and SEND_MULTIPLE intents all refused; zero inference and dictation remained idle. |
+| Built release backup policy | The actual release manifest's `dataExtractionRules` reference resolved to packaged XML excluding `secrets.xml`, `captions` and `caption_spool` from both cloud backup and device transfer. Optimized resource paths were resolved with `aapt2 dump resources`, then inspected with `dump xmltree`; the source filename is not assumed to survive optimization. |
+
+Opening settings for Delete all/off-on also cancels the source-bound caption, as designed. The
+phone checks prove that real user flow and epoch changes before an outstanding server reply;
+the independent JVM cache-ticket tests prove that an old ticket itself cannot write after an
+off/delete generation change. No stronger isolation claim is made for the phone test.
+
+An invalid-share cleanup step returned to a different foreground task; its post-check was not
+counted as a pass until the prepared chat was restored and its empty composer verified. Other
+failed setup/coordinate attempts likewise remain excluded from the passing evidence.
+
+After the session: real-server settings/tokens were restored using the already approved RAM-only
+projection, remembering was off with zero records, the prepared composer was empty, the fixture
+server stopped and its reverse removed. Temporary microphone grants were revoked by the test
+helpers; the owner later granted microphone permission manually and confirmed Volume Down.
+That final user-set permission was preserved. The main 0.2.1 app and its data were unchanged.
+
+These checks close the previously named dictation, actual chat-switch, cache-race, long/RTL and
+running-cleanup regression gaps. Additional fixture/platform qualification remains unrun: two
+different native chats with identical display names; an undownloaded voice note; stereo/near-limit
+and unsupported media on the platform decoder; actual transfer to a second handset; and a separate
+WhatsApp lock rerun. Equal-header mutation, format/size/duration and backup-policy guards have JVM
+coverage; actual source scrolling with an unchanged chat header and the shared lock handler have
+handset evidence. Those are stated separately from the unrun exact fixture cases.

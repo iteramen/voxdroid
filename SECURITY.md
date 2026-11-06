@@ -121,6 +121,13 @@ already started can finish at the server, but its late reply is discarded. Copy 
 marked sensitive; it does not paste. Re-transcribe requires reacquiring the original audio and
 bypasses its fingerprint once. Handset acceptance is recorded separately in `docs/testing.md`.
 
+The opt-in `.captiontest` debug APK has shell diagnostics for controlled handset checks. Its
+`controls` dump returns only known control names and bounds from Voxdroid's own windows, helping
+tests operate settings and panel buttons without disrupting accessibility. It prints no field,
+caption, token, URI or conversation text and does not inspect other apps' controls. Normal debug
+packages cannot use it; the release implementation is a no-op. No extra component or permission
+is added (`HandsetTestControls`, `VoxdroidA11yService.dump`).
+
 The processing pipeline (`CaptionProcessor`, `CaptionAudio`, `CaptionMediaDecoder`) enforces:
 
 - **Bounded acquisition.** The stream is read once, in 64 KiB chunks, while the caller's URI grant
