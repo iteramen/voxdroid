@@ -12,6 +12,8 @@ Added
 - An isolated `-PcaptionTest=true` debug package and a local fixture server for handset validation.
 
 Changed
+- Telegram recognizes the native "1 Selected" toolbar format and keeps selected-mode labels out
+  of conversation identity, preserving the original chat context through native Share.
 - WhatsApp selection uses reported view IDs and the selected-message toolbar's own Share control;
   routine header checks avoid walking the message list. Re-transcribe has its own full-width row
   for readability at large font sizes.

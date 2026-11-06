@@ -93,7 +93,11 @@ internal class CaptionController(
             if (eventPackage == source.packageName && event.eventType in setOf(AccessibilityEvent.TYPE_VIEW_CLICKED, AccessibilityEvent.TYPE_VIEW_SCROLLED)) {
                 cancel(reason = "source_interaction"); return
             }
-            if (origin != null && !session.currentOrigin!!.same(origin)) { cancel(reason = "origin_changed"); return }
+            if (origin != null && !session.currentOrigin!!.same(origin)) {
+                val previous = session.currentOrigin!!
+                cancel(reason = "origin_changed_window_${previous.window == origin.window}_header_${previous.header == origin.header}")
+                return
+            }
             if (session.phase == CaptionPhase.Returning) scheduleReturn(session.id())
             return
         }
@@ -270,7 +274,7 @@ internal class CaptionController(
     }
 
     fun cancel(clearOrigin: Boolean = true, clearRefresh: Boolean = true, reason: String = "cancelled") {
-        diagnosticNote = reason
+        if (session.active) diagnosticNote = reason
         processor.cancel()
         session.invalidate()
         worker.queue.clear()

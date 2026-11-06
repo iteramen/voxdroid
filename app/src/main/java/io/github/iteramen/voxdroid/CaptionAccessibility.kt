@@ -22,7 +22,10 @@ internal object CaptionAccessibility {
             if (title.isBlank() || title.length > 512) return null
             return CaptionOrigin(source, root.windowId, title)
         }
-        val nodes = nodes(root, skipLists = true)
+        val nodes = nodes(root, skipLists = true).filter { it.isVisibleToUser }
+        // Selection replaces Telegram's conversation title; preserve only the prior validated origin.
+        if (nodes.any { it.contentDescription?.toString() == "Forward" } &&
+            nodes.any { it.contentDescription?.toString() == "Delete" }) return null
         val editors = nodes.filter { it.className?.toString() == "android.widget.EditText" }
         if (editors.isEmpty()) return null
         val title = run {
@@ -33,8 +36,7 @@ internal object CaptionAccessibility {
             if (editors.none { top(it) > headingBottom }) return null
             heading.text?.toString()
         }?.trim().orEmpty()
-        if (title.isBlank() || title.length > 512 || title.matches(Regex("\\d+(?:\\s+selected)?"))) return null
-        return CaptionOrigin(source, root.windowId, title)
+        return CaptionOrigin(source, root.windowId, captionTelegramHeader(title) ?: return null)
     }
 
     /** The toolbar is checked before visiting selected message metadata. Unselected message text is never read. */
@@ -46,7 +48,7 @@ internal object CaptionAccessibility {
             chrome.any { it.contentDescription?.toString() == "Delete" }
         if (!selectionMode) return Selection(0, null, null, null)
         val count = chrome.filter { it.className?.toString() == "android.widget.TextView" }
-            .mapNotNull { it.text?.toString()?.trim()?.toIntOrNull() }.singleOrNull()
+            .mapNotNull { captionTelegramSelectionCount(it.text) }.singleOrNull()
             ?: -1 // An unreadable selected-mode count must refuse, never fall through to microphone dictation.
         if (count != 1) return Selection(count, null, null, null)
         val selected = nodes(root).filter { it.isSelected && it.className?.toString() in setOf("android.view.ViewGroup", "android.widget.LinearLayout") }

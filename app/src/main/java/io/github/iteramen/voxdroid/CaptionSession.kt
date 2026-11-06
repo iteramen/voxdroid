@@ -96,3 +96,14 @@ internal class CaptionSession(private val now: () -> Long) {
 /** Intent metadata only: no raw URI, filename, sender or chat is needed to decide this boundary. */
 internal fun captionShareAllowed(send: Boolean, content: Boolean, grant: Boolean, clipCount: Int?, clipMatches: Boolean, dataMatches: Boolean): Boolean =
     send && content && grant && (clipCount == null || clipCount == 1) && clipMatches && dataMatches
+
+/** Measured English selection chrome: accept the whole label, never a number embedded in other text. */
+internal fun captionTelegramSelectionCount(label: CharSequence?): Int? {
+    val match = Regex("([1-9][0-9]*)(?: Selected)?", RegexOption.IGNORE_CASE)
+        .matchEntire(label?.toString()?.trim() ?: return null) ?: return null
+    return match.groupValues[1].toIntOrNull()
+}
+
+internal fun captionTelegramHeader(label: CharSequence?): String? = label?.toString()?.trim()?.takeIf {
+    it.isNotBlank() && it.length <= 512 && !it.matches(Regex("\\d+(?:\\s+selected)?", RegexOption.IGNORE_CASE))
+}
