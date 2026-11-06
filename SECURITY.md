@@ -62,8 +62,9 @@ attacker who is not that user.
 - Dictation stores how high above the keyboard the pill was last dropped (`Settings.pillSaved`).
   Captions add transient origin/selection state in memory and optional transcript records below.
 - `res/xml/a11y_entry.xml` declares `canRetrieveWindowContent`, `canRequestFilterKeyEvents`, the
-  flags `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`
-  and `flagRetrieveInteractiveWindows`, and `isAccessibilityTool="true"`, on Play's policy that
+  flags `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
+  `flagRetrieveInteractiveWindows` and `flagReportViewIds`, and `isAccessibilityTool="true"`, on
+  Play's policy that
   services "designed to help people with disabilities" may declare it
   ([Play policy](https://support.google.com/googleplay/android-developer/answer/10964491)). The
   reasoning is in [docs/play/accessibility-declaration.md](docs/play/accessibility-declaration.md).

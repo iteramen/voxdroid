@@ -43,9 +43,10 @@ There is no automatic paste, Send, inbox scan, microphone recording or backgroun
 The additional events are window-state, content, scroll, click and long-click, alongside window
 changes. They identify selection and invalidate stale captions when the foreground context changes.
 Conversation headers/window identity stay in memory; selected audio alone goes off the device.
-No additional accessibility capabilities, gesture injection, storage permission or overlay permission
-is requested. The native Share action is a deterministic response to the user's selected-note
-button press, not autonomous conversation navigation.
+The additional `flagReportViewIds` exposes resource names needed to identify WhatsApp header,
+selection and Share controls. No additional accessibility capabilities, gesture injection, storage
+permission or overlay permission is requested. The native Share action is a deterministic response
+to the user's selected-note button press, not autonomous conversation navigation.
 
 The first implementation's native Share controls require the supported English app UI. The in-app
 enable dialog describes this access and data flow. Remembering text is a separate off-by-default
@@ -98,8 +99,8 @@ The manifest capabilities and the code's narrower access rules:
   only RAM origin metadata and use temporary nodes synchronously, not a stored conversation tree.
 - **No gestures, screenshots, magnification, fingerprint gestures or touch exploration.** The
   capabilities are `canRetrieveWindowContent` and `canRequestFilterKeyEvents`, and the flags
-  `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor` and
-  `flagRetrieveInteractiveWindows`; nothing else is declared.
+  `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
+  `flagRetrieveInteractiveWindows` and `flagReportViewIds`; nothing else is declared.
 
 And by the code:
 
@@ -118,7 +119,8 @@ whether it is a password field; the **hardware volume key** before the foregroun
 (`canRequestFilterKeyEvents`); and an **input connection into that field** without being the
 keyboard (`flagInputMethodEditor`). The pill is an accessibility overlay
 (`TYPE_ACCESSIBILITY_OVERLAY`, `Pill.kt`), placed by the keyboard window's bounds
-(`flagRetrieveInteractiveWindows`).
+(`flagRetrieveInteractiveWindows`). Caption selection additionally needs WhatsApp control resource
+names (`flagReportViewIds`).
 
 voxdroid does not claim to be used only by people with disabilities; anyone may install it. It
 claims that the service is built to assist users with disabilities, and that it asks the platform

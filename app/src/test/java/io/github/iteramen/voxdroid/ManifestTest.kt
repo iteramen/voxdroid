@@ -1,6 +1,7 @@
 package io.github.iteramen.voxdroid
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.w3c.dom.Element
 import java.io.File
@@ -8,6 +9,16 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 /** Reads the source manifest: `android.jar`'s `PackageManager` is a stub under unit tests. */
 class ManifestTest {
+
+    @Test
+    fun whatsappCaptionSelectorsReceiveTheViewIdsTheyNeed() {
+        val file = sequenceOf("src/main/res/xml/a11y_entry.xml", "app/src/main/res/xml/a11y_entry.xml")
+            .map(::File).first(File::exists)
+        val service = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(file).documentElement
+        assertTrue("Without view-ID reporting WhatsApp header, selection and Share selectors cannot match",
+            "flagReportViewIds" in service.getAttributeNS(ANDROID_NS, "accessibilityFlags").split('|'))
+    }
 
     @Test
     fun theCaptionReceiverIsAnExplicitSingleAudioShareSurface() {

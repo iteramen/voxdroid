@@ -110,9 +110,14 @@ internal class CaptionPanel(
                 service.getSystemService(ClipboardManager::class.java).setPrimaryClip(clip)
             }
         }
-        refresh = button(R.string.caption_retranscribe, onRefresh)
         button(R.string.caption_close, onClose)
         box.addView(buttons)
+        // Keep the long action readable at large accessibility font sizes.
+        refresh = Button(service).apply {
+            setText(R.string.caption_retranscribe)
+            isAllCaps = false
+            setOnClickListener { onRefresh() }
+        }.also { box.addView(it, LinearLayout.LayoutParams(-1, -2)) }
         val params = WindowManager.LayoutParams(
             minOf(windows.currentWindowMetrics.bounds.width() - dp(24), dp(540)), -2,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,

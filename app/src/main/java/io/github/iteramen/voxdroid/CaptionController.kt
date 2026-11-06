@@ -31,6 +31,30 @@ internal class CaptionController(
     private var currentCaption: CaptionOutcome.Captioned? = null
     private var forceFingerprint: String? = null
     private var returnPending: Long? = null
+    private var diagnosticNote = "initial"
+    private var observedSelection = 0
+    private var observedVoice = false
+    private var observedOverflow = false
+
+    /** Isolated debug handset inspection only: no text, headers, URIs, fingerprints or credentials. */
+    fun diagnostics(): String {
+        if (!enabled()) return "captionsEnabled=false"
+        if (!dictationIdle()) return "captionsEnabled=true dictationBusy=true"
+        val root = service.getRootInActiveWindow(0)
+        val liveSource = CaptionAccessibility.source(root)
+        val keyboard = service.windows.any { it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+        val visibleOrigin = if (liveSource == CaptionApp.WhatsApp && !keyboard) {
+            CaptionAccessibility.origin(root, service.resources.displayMetrics.density)
+        } else null
+        val handoff = session.currentOrigin?.takeIf {
+            (liveSource == CaptionApp.WhatsApp && session.phase == CaptionPhase.Selected) ||
+                (root?.packageName?.toString() in CHOOSERS && session.phase == CaptionPhase.Sharing)
+        }
+        val fixture = (visibleOrigin ?: handoff)?.let { it.source == CaptionApp.WhatsApp && it.header.trim().endsWith("(You)") } == true
+        return "captionsEnabled=true phase=${session.phase} source=$liveSource fixtureSelfChat=$fixture keyboardVisible=$keyboard " +
+            "originKnown=${lastOrigin != null} originAgeMs=${SystemClock.elapsedRealtime() - lastOriginAt} " +
+            "selected=$observedSelection voice=$observedVoice overflow=$observedOverflow note=$diagnosticNote"
+    }
 
     fun enabled(): Boolean = settings.voiceCaptions
 
@@ -53,7 +77,7 @@ internal class CaptionController(
                 if (chooser && session.phase == CaptionPhase.Selected) session.share(session.id())
                 return
             }
-            cancel()
+            cancel(reason = "source_departed")
             return
         }
         root ?: return
@@ -62,14 +86,14 @@ internal class CaptionController(
             // Header equality is not a durable chat identity: two contacts can have the same name.
             // Any source-view mutation or interaction invalidates the visible result conservatively.
             if (!session.stableSource(origin, eventPackage == source.packageName && event.eventType in INVALIDATING_EVENTS)) {
-                cancel(clearOrigin = false)
+                cancel(clearOrigin = false, reason = "source_mutated_${event.eventType}")
             } else return
         }
         if (session.phase == CaptionPhase.Returning || session.phase == CaptionPhase.Reading) {
             if (eventPackage == source.packageName && event.eventType in setOf(AccessibilityEvent.TYPE_VIEW_CLICKED, AccessibilityEvent.TYPE_VIEW_SCROLLED)) {
-                cancel(); return
+                cancel(reason = "source_interaction"); return
             }
-            if (origin != null && !session.currentOrigin!!.same(origin)) { cancel(); return }
+            if (origin != null && !session.currentOrigin!!.same(origin)) { cancel(reason = "origin_changed"); return }
             if (session.phase == CaptionPhase.Returning) scheduleReturn(session.id())
             return
         }
@@ -79,6 +103,9 @@ internal class CaptionController(
             lastOriginAt = SystemClock.elapsedRealtime()
         }
         val selected = CaptionAccessibility.selection(root)
+        observedSelection = selected.count
+        observedVoice = selected.voice != null
+        observedOverflow = selected.overflow != null
         if (selected.count == 1 && selected.voice != null) {
             val known = lastOrigin
             if (known != null && known.source == source && known.window == root.windowId && SystemClock.elapsedRealtime() - lastOriginAt < ORIGIN_MS) {
@@ -124,7 +151,7 @@ internal class CaptionController(
         if (root != null && CaptionAccessibility.source(root) == CaptionApp.WhatsApp) {
             val share = CaptionAccessibility.whatsappShare(root)
             if (share != null) {
-                if (!share.performAction(AccessibilityNodeInfo.ACTION_CLICK)) cancel()
+                if (!share.performAction(AccessibilityNodeInfo.ACTION_CLICK)) cancel(reason = "share_action_failed")
                 return
             }
         }
@@ -196,7 +223,7 @@ internal class CaptionController(
                     (CaptionAccessibility.source(root) == session.currentOrigin?.source && origin == null))) {
                 scheduleReturn(id)
             } else {
-                cancel()
+                cancel(reason = "return_unverified")
             }
         }, 300)
     }
@@ -204,7 +231,7 @@ internal class CaptionController(
     private fun showResult(id: Long, requestTicket: CaptionTicket?) {
         if (!session.current(id)) return
         val root = service.getRootInActiveWindow(0)
-        if (!session.currentOrigin!!.same(CaptionAccessibility.origin(root, service.resources.displayMetrics.density))) { cancel(); return }
+        if (!session.currentOrigin!!.same(CaptionAccessibility.origin(root, service.resources.displayMetrics.density))) { cancel(reason = "result_origin_mismatch"); return }
         val result = pendingResult ?: return
         pendingResult = null
         if (!session.shown(id)) return
@@ -242,7 +269,8 @@ internal class CaptionController(
         notice(R.string.caption_select_refresh)
     }
 
-    fun cancel(clearOrigin: Boolean = true, clearRefresh: Boolean = true) {
+    fun cancel(clearOrigin: Boolean = true, clearRefresh: Boolean = true, reason: String = "cancelled") {
+        diagnosticNote = reason
         processor.cancel()
         session.invalidate()
         worker.queue.clear()
@@ -257,7 +285,10 @@ internal class CaptionController(
 
     fun destroy() { cancel(); worker.shutdownNow() }
     fun preferencesChanged() { if (!enabled()) cancel() }
-    private fun notice(text: Int) = Toast.makeText(service, text, Toast.LENGTH_LONG).show()
+    private fun notice(text: Int) {
+        diagnosticNote = service.resources.getResourceEntryName(text)
+        Toast.makeText(service, text, Toast.LENGTH_LONG).show()
+    }
 
     companion object {
         private const val ORIGIN_MS = 120_000L

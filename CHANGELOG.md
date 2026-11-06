@@ -12,6 +12,9 @@ Added
 - An isolated `-PcaptionTest=true` debug package and a local fixture server for handset validation.
 
 Changed
+- WhatsApp selection uses reported view IDs and the selected-message toolbar's own Share control;
+  routine header checks avoid walking the message list. Re-transcribe has its own full-width row
+  for readability at large font sizes.
 - Privacy, security and accessibility documentation describes the caption integration, its
   temporary audio file, foreground selection metadata and hearing-accessibility purpose. Handset
   acceptance remains tracked in `docs/testing.md`; this is not a released version.

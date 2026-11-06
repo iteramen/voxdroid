@@ -20,6 +20,8 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import java.io.FileDescriptor
+import java.io.PrintWriter
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -42,12 +44,14 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private var takeKeyboardTag: String? = null
     private var polishNotice: String? = null
     private var captions: CaptionController? = null
+    private var buttonClicks = 0
     private val captionPrefs = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "voice_captions") captions?.preferencesChanged()
     }
 
     private val button = object : AccessibilityButtonController.AccessibilityButtonCallback() {
         override fun onClicked(controller: AccessibilityButtonController) {
+            if (BuildConfig.DEBUG) buttonClicks++
             if (settings.triggerButton) {
                 if (machine.state == TakeState.Idle && captions?.trigger() == true) return
                 dispatch(TakeEvent.Trigger)
@@ -112,6 +116,13 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     }
 
     override fun onInterrupt() = Unit
+
+    override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
+        if (BuildConfig.DEBUG && packageName.endsWith(".captiontest")) {
+            writer.println("caption-test buttonClicks=$buttonClicks dictationIdle=${machine.state == TakeState.Idle}")
+            writer.println(captions?.diagnostics() ?: "controller=not-connected")
+        }
+    }
 
     override fun onDestroy() {
         CaptionServiceBridge.controller = null

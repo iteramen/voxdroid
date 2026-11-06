@@ -187,8 +187,8 @@ voxdroid's accessibility service reaches the following, and only when stated
   `onKeyEvent`).
 - **The keyboard window's position**, to place the pill above it (`Pill.kt` — `keyboardTop`).
 - **Foreground caption context**, only with captions enabled and dictation idle: supported-app
-  conversation header, selected-note metadata and native Share controls. Window, window-state,
-  content, scroll, click and long-click events keep selection and result lifetimes bounded. No
+  conversation header, selected-note metadata, control resource IDs and native Share controls.
+  Window, window-state, content, scroll, click and long-click events keep selection and result lifetimes bounded. No
   ordinary message text or composer text is read (`CaptionAccessibility`, `CaptionController`).
 - **The keyboard's current language**, to choose the transcription language (`FieldAccess.kt` —
   `keyboardTag`; `TakeLanguage.kt` — `takeFor`).
