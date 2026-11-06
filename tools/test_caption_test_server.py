@@ -2,6 +2,7 @@
 import json
 import struct
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -53,6 +54,31 @@ class SyntheticCaptionCasesTest(unittest.TestCase):
         self.assertEqual(400, failure.exception.code)
         self.assertEqual("short", fixture.state["text_case"])
         self.assertEqual(0, fixture.state["stt_delay_ms"])
+
+    def test_old_delayed_response_cannot_change_counters_after_reset(self):
+        pcm = bytes(64)
+        wav = struct.pack("<4sI4s4sIHHIIHH4sI", b"RIFF", 36 + len(pcm), b"WAVE", b"fmt ",
+                          16, 1, 1, 16000, 32000, 2, 16, b"data", len(pcm)) + pcm
+        self.post("/_test/control", b'{"stt_delay_ms":600}')
+        errors = []
+        def delayed_request():
+            try:
+                self.post("/v1/audio/transcriptions", wav)
+            except Exception as error:
+                errors.append(type(error).__name__)
+        caller = threading.Thread(target=delayed_request)
+        caller.start()
+        deadline = time.monotonic() + 2
+        while fixture.state["stt_calls"] != 1 and time.monotonic() < deadline:
+            time.sleep(.01)
+        self.assertEqual(1, fixture.state["stt_calls"])
+        self.assertEqual(0, fixture.state["stt_completed"])
+        self.post("/_test/control", b'{"reset":true,"stt_delay_ms":0}')
+        caller.join(3)
+        self.assertFalse(caller.is_alive())
+        self.assertEqual([], errors)
+        self.assertEqual(0, fixture.state["stt_calls"])
+        self.assertEqual(0, fixture.state["stt_completed"])
 
 
 if __name__ == "__main__":

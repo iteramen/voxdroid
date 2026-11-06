@@ -690,7 +690,8 @@ can expose off-screen virtual rows with misleading bounds.
 The fixture server now has fixed `short`, `long` and `rtl` synthetic text cases, plus separate
 request-start/completion counters. It accepts no arbitrary transcript as a text-case control.
 Completion counters distinguish a real in-flight race from an operation done after the reply.
-Five synthetic Python helper tests pass locally and now run in the CI gates job. Normal and
+Six synthetic Python helper tests pass locally and now run in the CI gates job. Counter resets
+also invalidate older delayed completions, so one attempt cannot contaminate the next. Normal and
 isolated lint/454 JVM tests/debug assembly, plus normal unsigned release assembly, passed.
 
 | Check | Evidence |

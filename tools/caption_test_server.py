@@ -13,6 +13,7 @@ TEXT_CASES = {
 }
 state = {"stt_calls": 0, "cleanup_calls": 0, "stt_completed": 0, "cleanup_completed": 0, "wav_valid": None, "stt_delay_ms": 0, "cleanup_delay_ms": 0, "cleanup_fail": False, "text_case": "short"}
 lock = threading.Lock()
+generation = 0
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -39,6 +40,7 @@ class Handler(BaseHTTPRequestHandler):
             self.answer(200, {"test_server": True})
 
     def do_POST(self):
+        global generation
         length = int(self.headers.get("Content-Length", "0"))
         if not 0 <= length <= 11 * 1024 * 1024:
             self.answer(413, {"error": "test request limit"})
@@ -53,7 +55,7 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 self.answer(400, {"error": "invalid control"})
                 return
-            if not isinstance(values, dict) or values.get("text_case", "short") not in TEXT_CASES:
+            if not isinstance(values, dict) or not isinstance(values.get("text_case", "short"), str) or values.get("text_case", "short") not in TEXT_CASES:
                 self.answer(400, {"error": "unknown synthetic text case"})
                 return
             with lock:
@@ -65,6 +67,7 @@ class Handler(BaseHTTPRequestHandler):
                 if "cleanup_fail" in values:
                     state["cleanup_fail"] = bool(values["cleanup_fail"])
                 if values.get("reset"):
+                    generation += 1
                     state.update(stt_calls=0, cleanup_calls=0, stt_completed=0, cleanup_completed=0, wav_valid=None)
             self.answer(200, {"ok": True})
             return
@@ -83,9 +86,11 @@ class Handler(BaseHTTPRequestHandler):
                 state["wav_valid"] = valid
                 delay = state["stt_delay_ms"]
                 raw = TEXT_CASES[state["text_case"]][0]
+                request_generation = generation
             time.sleep(delay / 1000)
             with lock:
-                state["stt_completed"] += 1
+                if request_generation == generation:
+                    state["stt_completed"] += 1
             if not valid:
                 self.answer(422, {"error": "expected normalized WAV"})
             else:
@@ -96,9 +101,11 @@ class Handler(BaseHTTPRequestHandler):
                 state["cleanup_calls"] += 1
                 delay, fail = state["cleanup_delay_ms"], state["cleanup_fail"]
                 cleaned = TEXT_CASES[state["text_case"]][1]
+                request_generation = generation
             time.sleep(delay / 1000)
             with lock:
-                state["cleanup_completed"] += 1
+                if request_generation == generation:
+                    state["cleanup_completed"] += 1
             self.answer(503 if fail else 200, {"error": "test cleanup failure"} if fail else {"choices": [{"message": {"content": cleaned}}]})
         else:
             del body
