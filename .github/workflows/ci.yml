@@ -1,6 +1,6 @@
 name: CI
 
-# Runs every [[gate]] from .claude/ouro.toml (its `ci` command) through ouro's gates action.
+# Runs every [[gate]] from .claude/ouro.toml, then the synthetic handset-helper checks.
 on:
   pull_request:
     branches: [main]
@@ -22,3 +22,6 @@ jobs:
 
       - name: Gates from the binding
         uses: iteramen/ouro/actions/gates@d0d9accad1d360be97992322f8be23cda7297b7b # v1.11.0
+
+      - name: Handset test-helper checks (synthetic data only)
+        run: python3 -m unittest discover -s tools -p 'test_caption_test_*.py'
