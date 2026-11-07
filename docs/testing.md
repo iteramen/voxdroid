@@ -601,6 +601,10 @@ remains unchecked until all its cases have evidence for both apps):
       equality as durable chat identity.
 - [ ] Multiple selection, selected non-voice content, unknown selection count, an undownloaded
       note and unsolicited shares refuse locally; no accidental microphone/dictation start.
+- [ ] Undownloaded Telegram note: after selecting it and tapping Voxdroid, a native Share action
+      that opens neither chooser nor receiver shows download/retry guidance within four seconds.
+      Download manually, select again and retry: normal captioning works. An already-open chooser,
+      started receiver, chat/app switch, lock or replacement request produces no stale notice.
 - [ ] Cleanup failure shows the raw result with fallback notice; silence/unsupported media/errors
       remain private and never enter the composer.
 - [ ] Delete all and off/on during a delayed request leave no late cache record; captions/spool
@@ -750,3 +754,20 @@ and unsupported media on the platform decoder; actual transfer to a second hands
 WhatsApp lock rerun. Equal-header mutation, format/size/duration and backup-policy guards have JVM
 coverage; actual source scrolling with an unchanged chat header and the shared lock handler have
 handset evidence. Those are stated separately from the unrun exact fixture cases.
+
+### Telegram undownloaded-note feedback: issue #44 (2026-11-08)
+
+On the installed 0.3.0 release, scrolled the owner's explicitly prepared Telegram test conversation
+to older voice notes. Selected one wholly visible voice row and inspected only voice/control
+metadata. The selected toolbar exposed an enabled, clickable Share action. Tapping that native
+Share control left Telegram foreground with no Android share chooser. No Play, Download,
+recipient or transcription target was selected. The source's accessibility labels did not expose
+an explicit download-state marker, so the fix treats this as failed sharing and advises checking
+download availability instead of claiming it measured file state.
+
+The stalled-share session regression failed first (12 focused tests, one failure), then passed
+after the deadline/invalidation implementation. Added cases cover time actually spent in an open
+chooser, an already-started receiver, cancellation/supersession, the deadline starting at Share
+rather than selection, and stale chooser events. This is source/logic validation; the new notice
+has not yet been checked on a signed handset build. The installed app remains 0.3.0. A signed
+candidate still needs the checklist row above, including the manually downloaded retry.
