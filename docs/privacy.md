@@ -1,6 +1,6 @@
 # Privacy policy — voxdroid
 
-**Effective: 2026-11-06 (unreleased caption feature).**
+**Effective: 2026-11-07 (version 0.3.0).**
 
 voxdroid is an Android accessibility service that dictates into the text field you are typing in,
 with your own keyboard staying up. You hold volume-down or tap the accessibility button, speak,
@@ -105,6 +105,16 @@ backup, so it can follow you to a new phone, where the tokens are entered again.
 app removes both files. Caption transcripts (`captions`) and temporary imported audio
 (`caption_spool`) are excluded from backup and transfer as well, including interrupted-write files.
 
+**Backup and restore** lets you explicitly save a password-protected configuration file, including
+your API tokens, using Android's document picker. It includes speech/cleanup, language/lane,
+trigger, cue and delivery settings, but no audio, transcripts, caption consent or Android grants.
+The file is encrypted on your device before it reaches the destination you choose. A cloud-backed
+document provider may retain the encrypted file under its own policy. Voxdroid does not send this
+backup to a developer server, save the passphrase or offer recovery. Anyone with both the backup
+and its passphrase can recover the tokens; keep both safe (`ConfigBackup`, `ConfigBackupActivity`).
+Restore replaces the saved configuration and API tokens. Existing local caption history is left
+alone; after a reinstall you must grant Android permissions and caption consent again.
+
 ## What is not collected
 
 For microphone dictation:
@@ -120,7 +130,7 @@ For microphone dictation:
 
 ## Voice-message captions
 
-The unreleased caption feature helps people who are deaf or hard of hearing read selected Telegram
+The caption feature helps people who are deaf or hard of hearing read selected Telegram
 and WhatsApp voice notes. **Enable voice-message captions** is off by default and explains the
 extra access before enabling it. Open a supported conversation, select one downloaded voice note,
 tap Voxdroid's accessibility button, and choose **Caption with Voxdroid** in native sharing. This

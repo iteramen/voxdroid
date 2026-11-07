@@ -27,6 +27,15 @@ stop, a cancel or the 5-minute cap).
 
 ## Architecture
 
+Configuration migration is explicit: `ConfigBackupActivity` uses the Android document picker to
+write/read a password-protected `.vdxb` file. `ConfigBackup` defines the allowed typed settings and
+tokens, bounded binary format, PBKDF2 key derivation and authenticated AES-GCM envelope.
+`ConfigBackupStore` validates before mutation, clears credentials before changing endpoints, then
+commits credentials and verifies the applied snapshot; failures attempt rollback, and an
+interrupted restore can be retried from the encrypted file. It exports no audio, caption records,
+caption consent or Android grants. It adds no runtime dependency or exported component. Normal
+same-signer upgrades retain preferences without this path.
+
 Three activities and one accessibility service ([AndroidManifest.xml](../app/src/main/AndroidManifest.xml)).
 Logic that needs no Android lives in plain functions and classes, so the JVM tests reach it.
 

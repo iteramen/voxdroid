@@ -233,6 +233,27 @@ token cross it in clear, and anyone on the path can replace the reply with text 
 
 ### Secrets and backup
 
+- **Explicit encrypted configuration export:** `ConfigBackupActivity` is non-exported and uses
+  Android's document picker, without storage permissions or a permanent URI grant. It exports
+  only allowed configuration keys and API tokens, with a user-entered 12–1024-character passphrase.
+  Format v1 uses PBKDF2-HMAC-SHA256 (600,000 iterations, random 16-byte salt), AES-256-GCM (random
+  12-byte nonce, 128-bit tag), and authenticates its versioned header. Files are limited to 2 MiB.
+  Unknown versions, keys, types, corrupt files and wrong passwords are refused before preference
+  writes. Export decrypts its result in memory and reads back the saved encrypted document before
+  reporting success (`ConfigBackup`, `ConfigBackupActivity`).
+- Export/restore never logs values or writes a plaintext staging file. Password inputs are not
+  saved or autofilled; the activity and dialogs block screenshots. Mutable password/key buffers
+  are cleared where possible; managed runtime strings cannot be reliably erased. The passphrase
+  is not retained. Anyone possessing both the file and passphrase can recover its API tokens.
+  The chosen document provider can retain the encrypted file, including in cloud storage.
+- Restore validates the entire payload and refuses while dictation/caption is active. Across the
+  two preference files it clears credentials first, replaces configuration, then restores the new
+  credentials and checks the applied snapshot. Failures attempt rollback; interruption can leave
+  tokens empty, requiring another restore, rather than exposing old tokens to new endpoints
+  (`ConfigBackupStore`, `restoreConfig`). No audio, transcript cache, caption consent, Android
+  permission or accessibility grant is exported or imported. Existing local caption state is not
+  changed by a configuration restore.
+
 - The tokens live in the `secrets` preferences file alone and are never logged (`Settings.kt`;
   `SettingsStore.kt` — `storedAs`). The request's own token is replaced with `[redacted]` in every
   failure text derived from a reply or an exception, before the 200-character cut (`Http.kt` —
@@ -253,7 +274,8 @@ token cross it in clear, and anyone on the path can replace the reply with text 
 - The voice-message spool directory, `filesDir/caption_spool/`, is excluded whole the same way
   ([Imported voice messages](#imported-voice-messages)).
 
-**In scope:** a token in a log, an error string, a backup or a device transfer; a caption record
+**In scope:** a token in a log, an error string, an automatic backup or a device transfer, or in
+plaintext in an explicit configuration export; a caption record
 or spool file in a backup or a device transfer; a caption record outliving 30 days, or written by
 a request begun before Delete all or turning off. **Out of scope:**
 the other preferences file, which holds the addresses, languages and glossary and is backed up; a

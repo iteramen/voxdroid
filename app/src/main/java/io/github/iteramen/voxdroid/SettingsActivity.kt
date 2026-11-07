@@ -67,6 +67,9 @@ class SettingsActivity : AppCompatActivity() {
         row(R.id.row_languages, R.xml.section_languages, R.string.section_languages)
         row(R.id.row_voice_messages, R.xml.section_voice_messages, R.string.caption_section)
         privacyRow()
+        findViewById<View>(R.id.row_backup).setOnClickListener {
+            startActivity(Intent(this, ConfigBackupActivity::class.java))
+        }
         worker.execute { openCaptionCache(applicationContext) }
     }
 

@@ -40,8 +40,11 @@ class CaptionPolicyTest {
         assertTrue("the source walk must find the foundation itself", sources.map { it.name }.containsAll(FOUNDATION))
         val users = sources.filter { it.name !in FOUNDATION && CAPTION_NAMES.containsMatchIn(it.readText()) }
         val allowed = setOf("CaptionController.kt", "CaptionReceiveActivity.kt", "CaptionSession.kt", "CaptionAccessibility.kt",
-            "CaptionPanel.kt", "VoxdroidA11yService.kt", "Settings.kt", "SettingsActivity.kt", "SectionFragment.kt")
+            "CaptionPanel.kt", "VoxdroidA11yService.kt", "Settings.kt", "SettingsActivity.kt", "SectionFragment.kt", "ConfigBackupActivity.kt")
         assertTrue("unexpected caption callers: ${users.map { it.name }.filter { it !in allowed }}", users.all { it.name in allowed })
+        assertEquals("backup only checks whether a request is busy; it never reads caption data",
+            setOf("CaptionServiceBridge"), CAPTION_NAMES.findAll(sources.single { it.name == "ConfigBackupActivity.kt" }.readText())
+                .map { it.value }.toSet())
         assertTrue("positive control: receiver/controller/settings are wired", users.map { it.name }.containsAll(
             setOf("CaptionReceiveActivity.kt", "CaptionController.kt", "SectionFragment.kt", "VoxdroidA11yService.kt")))
 

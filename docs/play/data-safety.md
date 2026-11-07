@@ -1,8 +1,8 @@
 # Play Data safety form — voxdroid
 
-Draft for the unreleased caption integration, reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
+Draft for version 0.3.0, reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
 on 2026-11-06. This records implementation behavior; no Console submission has been made. The owner
-must reconcile the actual form and all distributed versions before release. The public policy is
+must reconcile the actual form and all distributed versions before a Play release. The public policy is
 [`docs/privacy.md`](../privacy.md).
 
 ## Collection and security
@@ -58,6 +58,12 @@ invalidate writers already in flight; expiry is pruned when opened/accessed (`Ca
 Re-transcribe requires a fresh share; expired source grants are not retained.
 
 ## Other data and accessibility
+
+Version 0.3.0 also offers explicit encrypted configuration export, including API tokens. The user
+chooses a document provider through Android's picker; it can be cloud-backed. The file contains
+configuration only, never caption/audio history. Assess the final form against this user-initiated
+flow and the selected provider rather than describing tokens as impossible to export. The
+passphrase stays on device and Voxdroid has no backup server (`ConfigBackupActivity`, `ConfigBackup`).
 
 No accounts, sign-in, personal-info fields, analytics, advertising, telemetry or crash-reporting SDKs
 are present. No contacts list, background conversations or installed-app inventory is scanned. The

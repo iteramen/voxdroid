@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:fitsSystemWindows="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/backup_back"
+            android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/backup_back" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/backup_title" android:textAppearance="?attr/textAppearanceHeadlineSmall" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginVertical="16dp" android:text="@string/backup_help" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/backup_export"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/backup_export" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/backup_import"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/backup_import" />
+        <TextView android:id="@+id/backup_status" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:accessibilityLiveRegion="polite" />
+    </LinearLayout>
+</ScrollView>

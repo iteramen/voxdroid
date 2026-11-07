@@ -11,6 +11,16 @@ import javax.xml.parsers.DocumentBuilderFactory
 class ManifestTest {
 
     @Test
+    fun configurationBackupHasNoExternalEntryPoint() {
+        val activities = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(manifestFile()).getElementsByTagName("activity")
+        val backup = (0 until activities.length).map { activities.item(it) as Element }
+            .single { it.getAttributeNS(ANDROID_NS, "name") == ".ConfigBackupActivity" }
+        assertEquals("false", backup.getAttributeNS(ANDROID_NS, "exported"))
+        assertEquals(0, backup.getElementsByTagName("intent-filter").length)
+    }
+
+    @Test
     fun whatsappCaptionSelectorsReceiveTheViewIdsTheyNeed() {
         val file = sequenceOf("src/main/res/xml/a11y_entry.xml", "app/src/main/res/xml/a11y_entry.xml")
             .map(::File).first(File::exists)

@@ -3,9 +3,12 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
-## Unreleased
+## 0.3.0 — 2026-11-07
 
 Added
+- Password-protected settings export/restore, including API tokens and language lanes, for a
+  reinstall or new phone. Audio, transcript history, caption consent and Android permissions are
+  excluded. The backup is verified before reporting success; restore verifies the applied settings.
 - Private voice-message captions for selected Telegram and WhatsApp Ogg/Opus notes: native Share,
   a floating reading panel, explicit Copy/Close, and Re-transcribe through a fresh share. Separate
   switches enable captions and remember transcripts for 30 days; both are off by default.
@@ -21,7 +24,7 @@ Changed
   for readability at large font sizes.
 - Privacy, security and accessibility documentation describes the caption integration, its
   temporary audio file, foreground selection metadata and hearing-accessibility purpose. Handset
-  acceptance remains tracked in `docs/testing.md`; this is not a released version.
+  acceptance and remaining platform/fixture qualification are tracked in `docs/testing.md`.
 
 ## 0.2.1 — 2026-11-05
 
