@@ -77,6 +77,7 @@ internal class CaptionController(
             val receiver = packageName == service.packageName && (CaptionReceiveActivity.active || session.phase == CaptionPhase.Returning)
             if (session.active && (chooser || receiver) && session.phase in HANDOFF_PHASES) {
                 if (chooser && session.phase == CaptionPhase.Selected) session.share(session.id())
+                if (chooser) session.chooserOpened(session.id())
                 return
             }
             cancel(reason = "source_departed")
@@ -145,10 +146,25 @@ internal class CaptionController(
         session.share(id)
         val action = selection.share ?: selection.overflow
         if (action?.performAction(AccessibilityNodeInfo.ACTION_CLICK) != true) {
-            cancel(clearOrigin = false); notice(R.string.caption_share_unavailable); return true
+            cancel(clearOrigin = false)
+            notice(if (source == CaptionApp.Telegram) R.string.caption_download_first else R.string.caption_share_unavailable)
+            return true
         }
         if (source == CaptionApp.WhatsApp) awaitWhatsAppShare(id, 0)
+        else main.postDelayed({ checkTelegramShare(id) }, CaptionSession.SHARE_START_MS)
         return true
+    }
+
+    private fun checkTelegramShare(id: Long) {
+        if (!session.current(id) || session.phase != CaptionPhase.Sharing) return
+        val root = service.getRootInActiveWindow(0)
+        // Also check the live root: an already-open chooser may precede its accessibility event.
+        if (root?.packageName?.toString() in CHOOSERS) { session.chooserOpened(id); return }
+        val origin = session.currentOrigin
+        val sameSource = origin != null && CaptionAccessibility.source(root) == origin.source && root?.windowId == origin.window
+        if (!session.expireStalledShare(id)) return
+        cancel(reason = "native_share_not_started")
+        if (sameSource) notice(R.string.caption_download_first)
     }
 
     private fun awaitWhatsAppShare(id: Long, attempt: Int) {
@@ -257,6 +273,7 @@ internal class CaptionController(
                 CaptionOutcome.Unsupported, CaptionOutcome.Malformed -> R.string.caption_unsupported
                 CaptionOutcome.TimedOut -> R.string.caption_timeout
                 CaptionOutcome.Cancelled -> R.string.caption_cancelled
+                CaptionOutcome.ReadFailed -> R.string.caption_read_failed
                 else -> R.string.caption_failed
             }))
         }

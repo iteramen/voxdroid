@@ -266,6 +266,14 @@ Android's chooser. The controller invokes Telegram Share or WhatsApp's overflow 
 chooses a recipient, taps Send, inserts into the composer or records the microphone. Normal
 volume-down dictation is unchanged, and the accessibility button still stops an active dictation.
 
+A Telegram Share click is not proof that sharing opened: an undownloaded note can expose an
+enabled Share control and then stay in Telegram. A four-second start check invalidates a request
+that reaches neither the native chooser nor the receiver. It shows download/retry guidance only
+while the original source window is still foreground. A chooser event or live chooser root
+suppresses that check, so the user can choose a target within the normal handoff deadline. Stale,
+cancelled, superseded and already-reading requests are untouched (`CaptionSession`,
+`CaptionController.checkTelegramShare`). No download control is clicked automatically.
+
 `CaptionReceiveActivity` accepts only one content URI/read grant from the selected source's known
 provider authority and owning package, within a 30-second selection/handoff session. It opens the
 stream on the worker, finishes after acquisition and drops the grant; the processor never reopens

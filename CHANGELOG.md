@@ -3,6 +3,13 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Fixed
+- A Telegram voice note whose Share tap never opens sharing now shows download/retry guidance
+  after four seconds, rather than silently waiting. Missing Share and unreadable audio also have
+  actionable notices. Waiting in an open chooser is unaffected; no audio is auto-downloaded.
+
 ## 0.3.0 — 2026-11-07
 
 Added
