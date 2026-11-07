@@ -51,8 +51,8 @@ to the user's selected-note button press, not autonomous conversation navigation
 The first implementation's native Share controls require the supported English app UI. The in-app
 enable dialog describes this access and data flow. Remembering text is a separate off-by-default
 control, limited to 30 days with Delete all; no sender/chat identity or audio is stored there.
-Handset acceptance remains in [`testing.md`](../testing.md#private-caption-integration). This feature
-is unreleased. Its hearing-accessibility purpose does not establish Google approval.
+Handset acceptance and remaining qualification are in [`testing.md`](../testing.md#private-caption-integration).
+The feature ships in 0.3.0. Its hearing-accessibility purpose does not establish Google approval.
 
 ## What the service does
 

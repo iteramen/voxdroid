@@ -96,7 +96,7 @@ How it works: [docs/design.md](docs/design.md).
 
 ## Private voice-message captions
 
-The unreleased feature build adds readable Telegram and WhatsApp voice notes for people who are
+Version 0.3.0 adds readable Telegram and WhatsApp voice notes for people who are
 deaf or hard of hearing. Enable **Voice messages → Enable voice-message captions**, open a
 conversation, long-press one downloaded voice note, and tap the Voxdroid accessibility button.
 Choose **Caption with Voxdroid** in Android's share chooser. A private, scrollable caption appears
@@ -109,10 +109,18 @@ are supported initially; native Share controls currently require the supported E
 audio fingerprint for 30 days, never audio; **Delete all** erases the remembered text. Re-transcribe
 asks you to select and share the original note again because its temporary URI is not retained.
 See the [privacy policy](docs/privacy.md#voice-message-captions) and the
-[handset validation checklist](docs/testing.md#private-caption-integration). This feature is not
-in the installed 0.2.1 release. The isolated feature build has produced private real-server captions
+[handset validation checklist](docs/testing.md#private-caption-integration). The feature has produced private real-server captions
 in both WhatsApp and Telegram, including owner-confirmed results. Cache/refresh and several
 cancellation checks also passed; the checklist names the remaining handset cases.
+
+## Keep your configuration
+
+Open **Backup and restore → Export encrypted settings** before reinstalling or changing phones.
+The password-protected file includes API tokens, endpoints, languages, cleanup, triggers and cues.
+Keep the file and its passphrase safe; there is no passphrase recovery. Use **Restore encrypted
+settings** on the new installation. Audio and caption history are excluded; accessibility,
+microphone access and caption consent need enabling separately. Normal updates signed with the
+same key preserve configuration automatically. See [installation and migration](docs/sideload.md#configuration-and-signing-key-changes).
 
 ## License
 

@@ -58,6 +58,8 @@ internal class CaptionController(
 
     fun enabled(): Boolean = settings.voiceCaptions
 
+    fun configurationBusy(): Boolean = !dictationIdle() || session.active
+
     fun observe(event: AccessibilityEvent?) {
         if (!enabled() || !dictationIdle()) { cancel(); return }
         event ?: return

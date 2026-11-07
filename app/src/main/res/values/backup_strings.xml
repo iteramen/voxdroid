@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_title">Backup and restore</string>
+    <string name="backup_back">Back to settings</string>
+    <string name="backup_help">Save your endpoints, API tokens, speech and cleanup settings, languages, lane tokens, triggers and cues in a password-protected file. Choose where to keep it.\n\nAudio, transcripts, caption consent and Android permissions are excluded. After a reinstall, enable accessibility and microphone access again, and opt into captions separately.\n\nRestoring replaces saved configuration. Keep the backup and its passphrase safe: anyone with both can use your API tokens. There is no passphrase recovery.</string>
+    <string name="backup_export">Export encrypted settings</string>
+    <string name="backup_import">Restore encrypted settings</string>
+    <string name="backup_passphrase">Passphrase (at least 12 characters)</string>
+    <string name="backup_confirm_passphrase">Confirm passphrase</string>
+    <string name="backup_password_help">Use a long, unique passphrase. You will need it to restore this file on a new installation.</string>
+    <string name="backup_replace_help">Enter this backup’s passphrase. Restoring replaces your endpoints, API tokens and configuration. Finish any dictation or caption first.</string>
+    <string name="backup_password_invalid">Use 12–1024 characters; both entries must match.</string>
+    <string name="backup_working">Working…</string>
+    <string name="backup_choose_destination">Choose where to save the encrypted backup.</string>
+    <string name="backup_saved">Backup saved and verified.</string>
+    <string name="backup_cancelled">Backup cancelled; settings unchanged.</string>
+    <string name="backup_restored">Settings restored, including API tokens.</string>
+    <string name="backup_busy">Finish or cancel the current dictation or caption, then restore again.</string>
+    <string name="backup_restore_failed">Restore could not be completed. Retry from your backup before dictating.</string>
+    <string name="backup_failed">Could not read or write this backup. Check the passphrase, file and destination, then try again. An unreadable backup does not change settings.</string>
+</resources>

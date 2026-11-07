@@ -1,5 +1,26 @@
 # Manual checklist
 
+## Encrypted configuration migration (0.3.0)
+
+JVM coverage (`ConfigBackupTest`) checks a typed Unicode/token/lane round-trip, per-export salt and
+nonce, wrong passphrase, header/ciphertext/tag tampering, truncation and size bounds, allowlisted
+keys/types/ranges, consent exclusion, password bounds, endpoint/credential write order, rollback,
+retry and validation before mutation. Synthetic tokens only. Export also decrypts its generated
+payload in memory and reads back the actual encrypted document before reporting success;
+restore compares the applied configuration with its decrypted snapshot.
+
+Handset checklist (record actual results below; these rows alone are not passes):
+
+| Check | Expected |
+| --- | --- |
+| Debug migration update | Same application ID and signer; version increases; existing settings/tokens retained. |
+| Export to Downloads | Password/confirmation entered on phone, saved file survives uninstall, saved-and-verified status. No values or password in workstation logs. |
+| Incorrect passphrase/corrupt file | Error, no preference mutation and no crash; a valid retry works. |
+| Restore | Endpoints, tokens, cleanup, language lanes, triggers, cues and delivery settings match; confirmation follows snapshot comparison. |
+| Busy restore | Refused while a dictation or caption is active; active configuration untouched. |
+| Cancel/recreate picker | Cancelling/rotating/leaving does not write plaintext or change settings; retry available. |
+| Signed reinstall | Public APK hash/certificate checked; encrypted backup recovered before old signer removed; restore succeeds. Android grants/caption consent separately enabled. |
+
 Everything here needs a handset; the JVM tests (`./gradlew testDebugUnitTest`) cover the logic
 that runs without one. Run this against the debug APK (`./gradlew assembleDebug`) before a PR that
 touches the service. The boxes stay unticked: this is the template for each run, not a record of
