@@ -8,6 +8,7 @@ import java.net.URL
 internal enum class EndpointKind(val path: String) {
     Stt("/audio/transcriptions"),
     Polish("/chat/completions"),
+    Tts("/audio/speech"),
 }
 
 internal enum class BaseUrlProblem {

@@ -1,7 +1,7 @@
 # voxdroid design
 
 voxdroid is push-to-talk dictation for Android 13 and later. Hold volume-down or tap the
-accessibility button, speak, stop: the audio goes to a speech-to-text endpoint you run, the
+floating 🎤 control, speak, stop: the audio goes to a speech-to-text endpoint you run, the
 transcript optionally goes through a cleanup model you run, and the result lands at the cursor of
 the field focused at the start. It is an accessibility service, not a keyboard, so the user's own
 keyboard stays up. Its desktop sibling is [byovox](https://github.com/iteramen/byovox).
@@ -108,7 +108,7 @@ The start field is kept through an Error, so a Retry delivers into it.
   event is consumed and every other key returns `false`. A hold of `volume_hold_ms` (default 500,
   floor 300) starts a take; a press while recording stops it on key-down; a short press otherwise
   is re-applied as one volume step (`adjustSuggestedStreamVolume`); key repeats are swallowed.
-- **Accessibility button** (`AccessibilityButtonCallback.onClicked`): a tap is a Trigger.
+- **Floating 🎤 control** (`ReadAloudController`, retaining the legacy `AccessibilityButtonCallback.onClicked` callback): a tap is a Trigger.
 - Both can be switched off (`trigger_volume`, `trigger_button`); the status card lists the ones on.
 
 The pill (`Pill.kt`) is a `TYPE_ACCESSIBILITY_OVERLAY` that never takes focus. Recording: red
@@ -261,10 +261,10 @@ supported foreground header outside message lists, then selected-note metadata w
 chrome is present. Source package, window and header are RAM-only context, not cache identity.
 Native English Share controls are supported initially; an unknown or multi-selection is refused.
 
-Select one downloaded note, tap the accessibility button, and choose **Caption with Voxdroid** in
+Select one downloaded note, tap the floating 🎤 control, and choose **Caption with Voxdroid** in
 Android's chooser. The controller invokes Telegram Share or WhatsApp's overflow → Share; it never
 chooses a recipient, taps Send, inserts into the composer or records the microphone. Normal
-volume-down dictation is unchanged, and the accessibility button still stops an active dictation.
+volume-down dictation is unchanged, and the floating 🎤 control still stops an active dictation.
 
 `CaptionReceiveActivity` accepts only one content URI/read grant from the selected source's known
 provider authority and owning package, within a 30-second selection/handoff session. It opens the
@@ -403,3 +403,17 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 - Read-aloud, always-on transcription, and an opt-in capture log of takes.
 - Handset acceptance of the private caption integration, including app-version-specific selection,
   cache reuse and origin invalidation; see [testing.md](testing.md#private-caption-integration).
+
+## Read-aloud control and pipeline
+
+`ReadAloudController` owns the draggable 🎤/🔊 overlay. Read-only blocks are discovered only on a
+speaker press, bounded to 600 foreground nodes; a second tap selects one refreshed block. Picker
+and playback are mutually exclusive with dictation/caption processing. Source/window changes
+invalidate them. One serial bounded worker requests speech through `ReadAloud.kt`, then plays
+validated PCM16 via `AudioTrack` under audio focus and a mediaPlayback foreground service. A
+generation fence discards late work after cancellation; no text/audio history is created.
+
+Settings and encrypted portable backup scaffold en/he/ru endpoints/voices and explicit TTS-token
+inheritance. English/default is configured first; HE/RU require real supported voices. Detection
+is dominant script per ≤500-code-point chunk, with a 20,000-code-point total limit. All routes
+must resolve before network begins. See SECURITY.md for byte, duration and format limits.

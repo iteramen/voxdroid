@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">voxdroid</string>
-    <string name="a11y_description">Dictate into the field you are typing in, with your keyboard staying up. Voxdroid reads the focused field at start and delivery, receives hardware keys (acting on volume-down only), reads keyboard position and language, and checks audio mode before recording. Optional private voice-message captions help people who are deaf or hard of hearing read selected Telegram and WhatsApp voice notes. When you enable captions, the service observes the supported foreground conversation header and selected-note accessibility metadata, uses its native Share action, and places a private caption over the same conversation. Conversation metadata stays in memory. Only explicitly shared audio goes to your configured speech and cleanup servers. Captions never paste or send a message. Remembering transcripts is a separate, off-by-default setting.</string>
+    <string name="a11y_description">Dictate into the field you are typing in, with your keyboard staying up. Voxdroid reads the focused field at start and delivery, receives hardware keys (acting on volume-down only), reads keyboard position and language, and checks audio mode before recording. Optional private voice-message captions help people who are deaf or hard of hearing read selected Telegram and WhatsApp voice notes. When you enable captions, the service observes the supported foreground conversation header and selected-note accessibility metadata, uses its native Share action, and places a private caption over the same conversation. Conversation metadata stays in memory. Only explicitly shared audio goes to your configured speech and cleanup servers. Captions never paste or send a message. Remembering transcripts is a separate, off-by-default setting. Optional Read aloud outlines visible read-only text after you tap 🔊; only the block you choose is sent to your configured TTS server. Text and generated speech stay in memory. Password fields are excluded; Stop, leaving the source view or locking the phone cancels playback.</string>
     <string name="settings_trigger_volume">Hold volume-down</string>
     <string name="settings_trigger_volume_summary">A hold starts dictation, a press stops it. While on, holding volume-down no longer lowers the volume continuously.</string>
-    <string name="settings_trigger_button">Accessibility button</string>
+    <string name="settings_trigger_button">Floating 🎤 control</string>
     <string name="settings_trigger_button_summary">A tap starts and stops dictation.</string>
     <string name="settings_allow_during_call">Dictate during a call</string>
     <string name="settings_allow_during_call_summary">While off, a take is refused during a call.</string>
@@ -99,7 +99,7 @@
     <string name="section_cleanup">Cleanup</string>
     <string name="section_languages">Languages</string>
     <string name="section_speech_summary">Endpoint, token, model</string>
-    <string name="section_triggers_summary">Volume-down hold, accessibility button</string>
+    <string name="section_triggers_summary">Volume-down hold, floating 🎤 control</string>
     <string name="section_delivery_summary">No text field, or the field changed</string>
     <string name="section_cleanup_summary">The cleanup pass and its endpoint</string>
     <string name="section_languages_summary">Your languages, Gboard\'s language, lanes</string>
@@ -141,7 +141,7 @@
     <string name="status_route_lane">%1$s → %2$s lane</string>
     <string name="status_route_explicit">%1$s → sent as %2$s</string>
     <string name="status_route_auto">%1$s → auto %2$s</string>
-    <string name="try_hint">Hold volume-down or tap the accessibility button, speak, stop</string>
+    <string name="try_hint">Hold volume-down, speak, then press volume-down to stop</string>
     <string name="caption_section">Voice messages</string>
     <string name="caption_section_summary">Private captions from Telegram and WhatsApp</string>
     <string name="caption_share_target">Caption with Voxdroid</string>
@@ -170,10 +170,10 @@
     <string name="caption_failed">The voice message could not be processed. Check your speech and cleanup settings.</string>
     <string name="caption_enable_title">Enable voice-message captions</string>
     <string name="caption_enable">Enable</string>
-    <string name="caption_enable_summary">Use selected voice notes with the Voxdroid accessibility button.</string>
+    <string name="caption_enable_summary">Use selected voice notes with the Voxdroid floating 🎤 control.</string>
     <string name="caption_enable_disclosure">While a supported conversation is in front, Voxdroid reads its header and selected-message accessibility metadata to keep private captions in the correct chat. Headers stay in memory only. You choose the audio through native sharing. The selected audio goes to your configured speech server and its transcript to cleanup when enabled. This may be someone else’s voice: use servers you trust with their words. Temporary audio is deleted; transcripts are remembered only if you separately enable remembering. No message is pasted or sent. Microphone permission is not needed.</string>
     <string name="caption_usage_title">Read a voice message</string>
-    <string name="caption_usage">Enable Voxdroid in Android Accessibility settings. Open a Telegram or WhatsApp conversation, select one downloaded voice note, tap the Voxdroid accessibility button, then choose Caption with Voxdroid in the share sheet. The private panel returns to this chat. Changing the conversation view closes it. Volume-down still dictates.</string>
+    <string name="caption_usage">Enable Voxdroid in Android Accessibility settings. Open a Telegram or WhatsApp conversation, select one downloaded voice note, tap the Voxdroid floating 🎤 control, then choose Caption with Voxdroid in the share sheet. The private panel returns to this chat. Changing the conversation view closes it. Volume-down still dictates.</string>
     <string name="caption_remember">Remember voice-message transcripts</string>
     <string name="caption_remember_summary">Off by default. Keeps raw and displayed text for 30 days, excluded from backup and transfer. Turning off deletes remembered captions.</string>
     <string name="caption_delete_all">Delete all remembered captions</string>

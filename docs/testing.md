@@ -750,3 +750,31 @@ and unsupported media on the platform decoder; actual transfer to a second hands
 WhatsApp lock rerun. Equal-header mutation, format/size/duration and backup-policy guards have JVM
 coverage; actual source scrolling with an unchanged chat header and the shared lock handler have
 handset evidence. Those are stated separately from the unrun exact fixture cases.
+
+## Read-aloud qualification (2026-11-08)
+
+English first; Hebrew/Russian routing/settings are scaffolded, with missing-voice refusals covered
+by unit tests. No HE/RU backend or audible qualification is claimed. `ReadAloudTest` covers script
+routing, no implicit voice fallback, Unicode/size limits, credential projection, portable backup
+with enable consent excluded, real loopback HTTP payload/status behavior, cancellation and bounded
+PCM16 decoding, including Kokoro streaming WAV length sentinels.
+
+Pixel 10 / Android 17, isolated `.readaloudtest` debug APK, synthetic English paragraph in a local
+static page and the owner's actual TTS endpoint: selection → real generated PCM → `AudioTrack`
+passed; the second speaker tap stopped with no late restart; another read completed; switching
+to Home stopped active playback. A separate live-read lock test also passed: screen-off stopped
+playback and removed the glyph with no late restart. Microphone permission remained ungranted throughout. No production
+configuration or credentials were copied. The temporary package was removed and original
+accessibility/USB wake settings restored. The signed production app and backup stayed unchanged.
+
+Failed fixture setup attempts are excluded: a locked device correctly hid controls; initial debug
+control coordinates were window-relative and were corrected to screen coordinates. The passing
+run used screen coordinates. No generic conversation or document was inspected.
+
+The consent bit was subsequently moved to the backup-excluded private preferences file; portable
+export tests pin its exclusion from both preference namespaces. Audio/controller behavior was unchanged.
+
+Remaining manual coverage: actual audio-focus interruption, password and
+editable-block refusal in external controls, long/mixed-script real speech, new glyph contextual
+voice-caption/dictation regression, notification Stop, and additional Android/device versions.
+These are checklist items, not implied by unit or build success.

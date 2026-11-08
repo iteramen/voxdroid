@@ -76,6 +76,12 @@ android {
                 versionNameSuffix = "-caption-test"
                 resValue("string", "app_name", "Voxdroid Caption Test")
             }
+            if (providers.gradleProperty("readAloudTest").orNull == "true") {
+                check(providers.gradleProperty("captionTest").orNull != "true") { "Choose one isolated handset package" }
+                applicationIdSuffix = ".readaloudtest"
+                versionNameSuffix = "-read-aloud-test"
+                resValue("string", "app_name", "Voxdroid Read Aloud Test")
+            }
         }
         release {
             isMinifyEnabled = false

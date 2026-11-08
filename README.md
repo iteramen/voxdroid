@@ -2,7 +2,7 @@
 
 voxdroid is an Android dictation app, made first for people whose hands hurt or do not obey (RSI,
 motor impairment) and for anyone who would rather talk than type. It runs as an accessibility
-service, so your own keyboard stays up: hold volume-down or tap the accessibility button, speak,
+service, so your own keyboard stays up: hold volume-down or tap the floating 🎤 control, speak,
 stop, and the text lands at the cursor. Your speech goes to a speech-to-text server you run, never
 to one voxdroid runs. Its desktop sibling is [byovox](https://github.com/iteramen/byovox).
 
@@ -42,7 +42,7 @@ Open voxdroid. The status card at the top lists what is still missing, and its b
 first item:
 
 1. **Turn on the service.** The button opens Android's Accessibility settings; turn voxdroid on
-   there. To use the accessibility button, turn on voxdroid's shortcut there as well.
+   there. The floating 🎤 control appears outside Voxdroid settings; its trigger can be disabled separately.
 2. **Grant the microphone.**
 3. **Speech:** the STT endpoint (the base URL; voxdroid appends `/audio/transcriptions` itself),
    a bearer token if your server needs one, the model name (sent as `model`; whisper.cpp ignores
@@ -65,9 +65,9 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 ## Dictate
 
 - **Start:** hold volume-down (500 ms by default, at least 300; Triggers page) or tap the
-  accessibility button. Recording starts once the start tone has played (at once with tones off)
+  floating 🎤 control. Recording starts once the start tone has played (at once with tones off)
   and the pill appears above the keyboard with a red dot and a timer. A quick volume-down press while idle still lowers the volume.
-- **Stop:** press volume-down, tap the accessibility button again, or tap **■ Stop** on the pill.
+- **Stop:** press volume-down, tap the floating 🎤 control again, or tap **■ Stop** on the pill.
   There is no silence timeout: pause to think as long as you like. A take stops itself at five
   minutes and is transcribed.
 - **Discard:** tap **✕** while recording. Turning the screen off abandons the take at any stage.
@@ -98,7 +98,7 @@ How it works: [docs/design.md](docs/design.md).
 
 Version 0.3.0 adds readable Telegram and WhatsApp voice notes for people who are
 deaf or hard of hearing. Enable **Voice messages → Enable voice-message captions**, open a
-conversation, long-press one downloaded voice note, and tap the Voxdroid accessibility button.
+conversation, long-press one downloaded voice note, and tap the Voxdroid floating 🎤 control.
 Choose **Caption with Voxdroid** in Android's share chooser. A private, scrollable caption appears
 over the same conversation, with **Copy**, **Close**, and **Re-transcribe**. Nothing is sent or
 pasted into the chat. Microphone permission is not needed for captions.
@@ -128,3 +128,17 @@ same key preserve configuration automatically. See [installation and migration](
 byovox.licensing@gmail.com. Bug reports and ideas are welcome as
 [issues](https://github.com/iteramen/voxdroid/issues); code contributions are not accepted
 ([CONTRIBUTING.md](CONTRIBUTING.md)).
+
+## Read aloud
+
+Open **Read aloud**, configure your TTS base URL (for example `http://<tailnet-host>:8770/v1`),
+model and voice, then enable it after reviewing the disclosure. With Kokoro, English can use
+`kokoro` and `af_bella`. Enable remote HTTP explicitly only when appropriate for your connection.
+Tap 🔊 on the floating control, then tap an outlined read-only text block. Tap 🔊 again to stop;
+leaving the source view or locking the phone also cancels. Drag ⋮ to move the control. 🎤 retains
+dictation and selected voice-note captions; volume-down still dictates. Read aloud needs no mic
+permission. Text and generated speech stay in memory on the phone; your server has its own policy.
+
+English is the first target. Hebrew and Russian settings are scaffolded, require supported voices,
+and refuse unconfigured language requests. Chunk routing uses dominant script, not language
+understanding; Latin-script text uses the English/default endpoint.

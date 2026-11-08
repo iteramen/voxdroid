@@ -76,3 +76,16 @@ for spacing, volume-down events, keyboard bounds/language and audio mode. Those 
 except explicit dictation language sent with STT. Its changed event subscriptions and motor/hearing
 purposes are in [`accessibility-declaration.md`](accessibility-declaration.md). Google approval is
 not implied. Voxdroid is not directed at children.
+
+## Read-aloud change (implementation draft)
+
+Optional read aloud adds explicitly selected foreground text sent to a user-configured TTS server.
+That can include message text and other user-generated content: include it in the corresponding
+existing data-type rows rather than treating it as local-only screen access. The user configures
+the destination, enables the data-flow disclosure, presses 🔊 and chooses a block. Reassess the
+user-initiated transfer exception against the actual Console form. No blanket ephemerality claim
+is made for the server. Candidate/selected text and generated speech stay in phone memory and
+are not logged, cached or exported. Only TTS configuration/tokens join explicit encrypted settings
+export; read-aloud consent is excluded. The manifest now has five permissions, adding media
+playback foreground service for its Stop notification; this feature does not require microphone
+permission. The owner must update the accessibility declaration/video before a Play submission.

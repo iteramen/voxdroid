@@ -66,6 +66,7 @@ class SettingsActivity : AppCompatActivity() {
         row(R.id.row_cleanup, R.xml.section_cleanup, R.string.section_cleanup)
         row(R.id.row_languages, R.xml.section_languages, R.string.section_languages)
         row(R.id.row_voice_messages, R.xml.section_voice_messages, R.string.caption_section)
+        row(R.id.row_read_aloud, R.xml.section_read_aloud, R.string.read_title)
         privacyRow()
         findViewById<View>(R.id.row_backup).setOnClickListener {
             startActivity(Intent(this, ConfigBackupActivity::class.java))

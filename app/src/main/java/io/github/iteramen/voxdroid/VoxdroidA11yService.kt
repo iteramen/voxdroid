@@ -44,18 +44,17 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private var takeKeyboardTag: String? = null
     private var polishNotice: String? = null
     private var captions: CaptionController? = null
+    private var readAloud: ReadAloudController? = null
     private var buttonClicks = 0
     private val captionPrefs = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "voice_captions") captions?.preferencesChanged()
+        if (key?.startsWith("tts_") == true || key == "trigger_button") readAloud?.preferencesChanged()
     }
 
     private val button = object : AccessibilityButtonController.AccessibilityButtonCallback() {
         override fun onClicked(controller: AccessibilityButtonController) {
             if (BuildConfig.DEBUG) buttonClicks++
-            if (settings.triggerButton) {
-                if (machine.state == TakeState.Idle && captions?.trigger() == true) return
-                dispatch(TakeEvent.Trigger)
-            }
+            buttonAction()
         }
     }
 
@@ -71,6 +70,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private val screenOff = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             captions?.cancel()
+            readAloud?.screenOff()
             if (machine.state != TakeState.Idle) dispatch(TakeEvent.Cancel)
         }
     }
@@ -83,10 +83,15 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             onRetry = { dispatch(TakeEvent.Retry) },
             onCancel = { dispatch(TakeEvent.Cancel) })
         tones = TonePlayer(this, settings, main)
-        captions = CaptionController(this, settings) { machine.state == TakeState.Idle }.also { CaptionServiceBridge.controller = it }
+        captions = CaptionController(this, settings) { machine.state == TakeState.Idle && readAloud?.busy != true }.also { CaptionServiceBridge.controller = it }
+        readAloud = ReadAloudController(this,
+            { machine.state == TakeState.Idle && captions?.configurationBusy() != true },
+            ::buttonAction, ::beginReadAloudMedia, { stopForeground(STOP_FOREGROUND_REMOVE) })
         getSharedPreferences("voxdroid", MODE_PRIVATE).registerOnSharedPreferenceChangeListener(captionPrefs)
+        getSharedPreferences("secrets", MODE_PRIVATE).registerOnSharedPreferenceChangeListener(captionPrefs)
         accessibilityButtonController.registerAccessibilityButtonCallback(button)
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
+        readAloud?.observe(null)
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
@@ -111,6 +116,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        readAloud?.observe(event)
         captions?.observe(event)
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED && machine.state != TakeState.Idle) pill.follow()
     }
@@ -118,6 +124,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     override fun onInterrupt() = Unit
 
     override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
+        if (BuildConfig.DEBUG && packageName.endsWith(".readaloudtest")) readAloud?.diagnostics(writer)
         if (BuildConfig.DEBUG && packageName.endsWith(".captiontest")) {
             writer.println("caption-test buttonClicks=$buttonClicks dictationIdle=${machine.state == TakeState.Idle}")
             writer.println(captions?.diagnostics() ?: "controller=not-connected")
@@ -126,9 +133,11 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     }
 
     override fun onDestroy() {
+        readAloud?.destroy()
         CaptionServiceBridge.controller = null
         captions?.destroy()
         getSharedPreferences("voxdroid", MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(captionPrefs)
+        getSharedPreferences("secrets", MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(captionPrefs)
         // onServiceConnected may never have run: then there is nothing to undo.
         if (::pill.isInitialized) {
             if (machine.state != TakeState.Idle) machine.on(TakeEvent.Cancel)
@@ -142,6 +151,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     }
 
     private fun dispatch(event: TakeEvent) {
+        if (event == TakeEvent.Trigger) readAloud?.cancel()
         if (event == TakeEvent.Trigger) captions?.cancel()
         if (event == TakeEvent.Trigger && (machine.state == TakeState.Idle || machine.state is TakeState.Error)) {
             val field = fields.focused()
@@ -379,6 +389,31 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         startForeground(NOTIFICATION_ID, note, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
     }
 
+    private fun buttonAction() {
+        if (!settings.triggerButton) return
+        readAloud?.cancel()
+        if (machine.state == TakeState.Idle && captions?.trigger() == true) return
+        dispatch(TakeEvent.Trigger)
+    }
+
+    private fun beginReadAloudMedia() {
+        check(machine.state == TakeState.Idle)
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(NotificationChannel("read-aloud", getString(R.string.read_channel), NotificationManager.IMPORTANCE_LOW))
+        val stop = android.app.PendingIntent.getService(this, 44,
+            Intent(this, VoxdroidA11yService::class.java).setAction(READ_STOP),
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
+        val note = Notification.Builder(this, "read-aloud").setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
+            .setContentTitle(getString(R.string.read_notification)).setOngoing(true)
+            .addAction(Notification.Action.Builder(null, getString(R.string.read_stop), stop).build()).build()
+        startForeground(2, note, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == READ_STOP) readAloud?.cancel()
+        return START_NOT_STICKY
+    }
+
     private fun pillString(text: PillText): Int = when (text) {
         PillText.NoFieldNotRecorded -> R.string.pill_no_field
         PillText.PasswordNotRecorded -> R.string.pill_password_field
@@ -392,6 +427,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
 
     private companion object {
         const val TAG = "voxdroid"
+        const val READ_STOP = "io.github.iteramen.voxdroid.STOP_READ_ALOUD"
         const val CHANNEL = "recording"
         const val NOTIFICATION_ID = 1
         const val TICK_MS = 500L

@@ -13,15 +13,14 @@ General hands-free dictation for anyone else is a use of the same service, not a
 
 Two gestures reach the service (`res/xml/a11y_entry.xml`):
 
-- the **accessibility button** (`flagRequestAccessibilityButton`), assigned by the user in
-  Settings → Accessibility;
+- the **floating 🎤 control** (`ReadAloudController`), with the original contextual dictation/caption action;
 - a **hold of volume-down**, which the service sees through key filtering
   (`flagRequestFilterKeyEvents`; `VoxdroidA11yService.kt` — `onKeyEvent`).
 
 ## Who it is for
 
 - **RSI, tendinitis, arthritis — anything that makes typing hurt.** One hold of a hardware key or
-  one tap of the accessibility button starts dictation, with no keyboard to switch and no field to
+  one tap of the floating 🎤 control starts dictation, with no keyboard to switch and no field to
   leave.
 - **Motor impairment.** Play's policy names the class: "Voice-based input systems which support
   people with motor impairments" ([Use of the AccessibilityService
@@ -33,7 +32,7 @@ Two gestures reach the service (`res/xml/a11y_entry.xml`):
 
 Private readable voice-message captions are the second accessibility purpose. With captions
 explicitly enabled, the user selects one downloaded Telegram or WhatsApp voice note and presses the
-accessibility button. The service reads the supported foreground conversation header and selected
+floating 🎤 control. The service reads the supported foreground conversation header and selected
 note's accessibility metadata, invokes native Share, and the user chooses **Caption with Voxdroid**.
 The received audio goes to the user's speech server and, when configured, its transcript to cleanup.
 A scrollable accessibility overlay shows the result privately over the verified original chat.
@@ -96,15 +95,16 @@ The manifest capabilities and the code's narrower access rules:
   metadata is inspected only in selected mode; no composer or unselected message text is read.
 - **No retained accessibility tree.** The node cache is disabled when the service connects and
   after field lookup. Dictation holds its start field through delivery/cancel/retry. Captions keep
-  only RAM origin metadata and use temporary nodes synchronously, not a stored conversation tree.
+  only RAM origin metadata and temporary nodes. Read aloud holds bounded candidate nodes only during explicit selection; no tree is persisted.
 - **No gestures, screenshots, magnification, fingerprint gestures or touch exploration.** The
   capabilities are `canRetrieveWindowContent` and `canRequestFilterKeyEvents`, and the flags
-  `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
+  `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
   `flagRetrieveInteractiveWindows` and `flagReportViewIds`; nothing else is declared.
 
 And by the code:
 
-- **No text read from another app is logged, written to a file or sent.** What leaves the device is
+- **No text read from another app is logged or written to a file.** Only explicitly selected
+  read-aloud text is sent to the configured TTS server. What leaves the device is
   the recording, the transcript and, for an explicit language, the keyboard's language code as the
   `language` field, to the servers the user configured (`SttClient.kt`; `Routed.kt`). Conversation
   headers/selection metadata are never logged, saved or sent. Optional remembered
@@ -124,7 +124,7 @@ names (`flagReportViewIds`).
 
 voxdroid does not claim to be used only by people with disabilities; anyone may install it. It
 claims that the service is built to assist users with disabilities, and that it asks the platform
-for access needed by dictation and private selected-note captions.
+for access needed by dictation and private selected-note captions, plus explicit read aloud.
 
 ## The `isAccessibilityTool` declaration
 
@@ -160,7 +160,7 @@ On the phone, the attribute also decides:
 Play's policy says "all apps targeting Android 12 using AccessibilityService API will need to
 complete the Permission Declaration Form and receive approval from Google Play" ([Use of the AccessibilityService
 API](https://support.google.com/googleplay/android-developer/answer/10964491)). voxdroid targets
-API 36 (`app/build.gradle.kts` — `targetSdk`), so the owner must complete and update the form for both motor and hearing purposes, with "a link to a short
+API 36 (`app/build.gradle.kts` — `targetSdk`), so the owner must complete and update the form for motor, hearing and read-aloud purposes, with "a link to a short
 video which shows your app being opened, the accessibility services being enabled, and the
 accessibility services being used."
 
@@ -172,3 +172,15 @@ If Play declines the `true` declaration, the policy's other route is `false` wit
 disclosure and consent that immediately precede enabling the service
 ([User Data policy](https://support.google.com/googleplay/android-developer/answer/9888076)).
 voxdroid does not implement that route.
+
+## Read aloud for access to written text
+
+An additional off-by-default accommodation reads a user-chosen visible text block aloud through
+their configured TTS server. This supports people who have difficulty seeing or reading text.
+The speaker press outlines visible read-only blocks; the subsequent block tap authorizes its
+transfer. Password subtrees and editable blocks are excluded. Candidate access is bounded to
+600 foreground nodes, no background scan. Selected text and generated speech stay in memory;
+Stop, source-view changes, lock, dictation or audio-focus loss cancel it (`ReadAloudController`).
+The new mediaPlayback foreground-service permission supports the Stop notification without mic
+access. The enable dialog, privacy policy and next Console declaration/video must cover this
+text-to-TTS data flow. No Google approval is claimed by adding this accessibility purpose.

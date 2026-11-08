@@ -53,6 +53,21 @@ class SectionFragment : PreferenceFragmentCompat() {
         number(KEY_VOLUME_HOLD)
         noFieldRows()
         captionRows()
+        readAloudRows()
+    }
+
+    private fun readAloudRows() {
+        number("tts_speed"); number("tts_timeout_s")
+        TTS_LANGUAGES.forEach { code -> baseUrl("tts_url_$code", EndpointKind.Tts); token("tts_token_$code") }
+        val enable = findPreference<SwitchPreferenceCompat>("tts_enabled") ?: return
+        enable.setOnPreferenceChangeListener { _, value ->
+            if (value != true) true else {
+                MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.read_enable)
+                    .setMessage(R.string.read_disclosure).setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.caption_enable) { _, _ -> enable.isChecked = true }.show()
+                false
+            }
+        }
     }
 
     private fun captionRows() {
@@ -180,6 +195,7 @@ class SectionFragment : PreferenceFragmentCompat() {
                     null -> null
                     NumberProblem.NotANumber -> getString(R.string.settings_number_not_a_number)
                     NumberProblem.BelowMinimum -> getString(R.string.settings_hold_minimum, MIN_HOLD_MS)
+                    NumberProblem.TtsRange -> getString(if (key == "tts_speed") R.string.read_speed_range else R.string.read_timeout_range)
                     NumberProblem.Negative, NumberProblem.NotAFraction ->
                         getString(if (fraction) R.string.settings_number_fraction else R.string.settings_number_whole)
                 },

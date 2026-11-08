@@ -62,14 +62,15 @@ attacker who is not that user.
 - Dictation stores how high above the keyboard the pill was last dropped (`Settings.pillSaved`).
   Captions add transient origin/selection state in memory and optional transcript records below.
 - `res/xml/a11y_entry.xml` declares `canRetrieveWindowContent`, `canRequestFilterKeyEvents`, the
-  flags `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
+  flags `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
   `flagRetrieveInteractiveWindows` and `flagReportViewIds`, and `isAccessibilityTool="true"`, on
   Play's policy that
   services "designed to help people with disabilities" may declare it
   ([Play policy](https://support.google.com/googleplay/android-developer/answer/10964491)). The
   reasoning is in [docs/play/accessibility-declaration.md](docs/play/accessibility-declaration.md).
 
-**In scope:** text read from another app reaching a log, a file or the network; any key but
+**In scope:** text read from another app reaching a log or file, or reaching the network except
+through the explicit read-aloud selection described below; any key but
 volume-down consumed or kept; a take typing into a field other than the one captured at its start;
 a take recording into, typing into or copying for a password field; the service subscribing to or
 reading more than the declared set. **Out of scope:** that an enabled accessibility service can
@@ -384,3 +385,43 @@ already compromised when its checksum was recorded, or one with no published adv
   text, and a connected computer can read the log.
 - Remember the cleanup endpoint sees every non-blank transcript of at least *Minimum words* words
   while the pass is configured.
+
+## Explicit read aloud
+
+`ReadAloudController` provides a draggable accessibility overlay with contextual 🎤 and optional 🔊.
+It replaces the requested system accessibility button; the legacy callback remains compatible.
+Read aloud is off by default and enabling it explains screen access and the TTS data flow. On a
+speaker press it examines at most 600 nodes from the active foreground tree, skips password
+subtrees and editable text, and outlines visible read-only blocks of at least 15 characters. Those
+candidate nodes/text stay in memory only until selection or cancellation. Only the block explicitly
+tapped, revalidated against its original package/window and refreshed node, is sent to TTS.
+
+The selected block is limited to 20,000 Unicode code points, split into chunks of at most 500.
+Dominant Latin, Hebrew or Cyrillic script selects en/he/ru. This is script routing, not semantic
+language detection. Hebrew/Russian require their own configured supported voice; no English voice
+is substituted. All chunks are prepared before any request. Credentials are TTS-specific; a lane
+inherits the default TTS credential only by an explicit switch. STT/cleanup credentials are unused.
+`ReadAloud.kt` uses the existing HTTP consent gate, rejects URL credentials/query/fragment, follows
+no redirects and never displays server bodies. Replies are bounded to 12 MiB, PCM16 WAV,
+mono/stereo, 8–48 kHz and 120 seconds per chunk. Kokoro's streaming RIFF/data length sentinels are
+completed only from the already bounded body; arbitrary truncation/oversize is rejected.
+
+One worker and one pending slot bound queued text. Stop, dictation start, source-view/app change,
+password focus, screen-off, audio-focus loss, settings change or destruction invalidates the
+request, disconnects transport and stops playback. Late replies cannot play. A request already
+received by the server may still finish there. Playback uses a mediaPlayback foreground service
+and notification with Stop, not a microphone service; no microphone permission is needed. Text and
+generated audio never enter files, caption history, the clipboard or dictation logs. TTS
+configuration/tokens are included in explicit encrypted settings export; enable consent is not.
+The consent bit lives in backup-excluded `secrets.xml`, so Android cloud/device restore cannot
+re-enable screen-text access without a new opt-in.
+
+The opt-in `.readaloudtest` debug package adds metadata-only service diagnostics: own control
+bounds, candidate lengths/bounds, active/picker/playback flags and fixed failure classes. It emits
+no selected text, endpoint, token or conversation identity. No diagnostic output is enabled in the
+normal debug or release package.
+
+**In scope:** another block sent without selection; password/editable content selected; text or
+speech retained locally; a token forwarded by a redirect or without lane consent; late playback
+after invalidation. **Out of scope:** server retention policies and platform accessibility metadata
+that falsely identifies an unmarked password as ordinary text.
