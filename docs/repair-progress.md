@@ -1,4 +1,4 @@
-# Reliability review repair queue — 2026-11-10
+# Reliability review repair queue â€” 2026-11-10
 
 Owner direction: repair one item at a time, preserve Git history and validation evidence.
 Each item uses an isolated branch and PR. Merge and installation are separate milestones;
@@ -41,3 +41,12 @@ The existing output token cap and cleanup prompt remain unchanged.
 
 - Regression cases added for incomplete and normal stop responses using loopback servers.
 - Red/green results and PR links will be recorded before handoff.
+
+Tracking: https://github.com/iteramen/voxdroid/issues/48; paired app: https://github.com/iteramen/byovox/issues/35.
+
+- RED: loopback returned partial content with finish_reason=length; old parser accepted it.
+- Regression commit precedes implementation in this branch.
+
+- GREEN (Android): lint, full JVM suite (468 tests, 0 failures), debug APK assembly and 6 handset-helper tests passed.
+- Implementation complete locally; CI and PR review pending. Production phone is unchanged.
+- Desktop counterpart PR: https://github.com/iteramen/byovox/pull/36
