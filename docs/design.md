@@ -403,3 +403,12 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 - Read-aloud, always-on transcription, and an opt-in capture log of takes.
 - Handset acceptance of the private caption integration, including app-version-specific selection,
   cache reuse and origin invalidation; see [testing.md](testing.md#private-caption-integration).
+
+### Incomplete cleanup responses
+
+A nonempty cleanup reply is rejected when its first choice explicitly reports a
+finish_reason other than the string stop, including length, filtering, tool calls,
+null or malformed values. Existing failure handling retains the complete raw transcript
+and reports cleanup failure. Servers omitting finish_reason remain compatible; the client
+cannot detect truncation that a server does not report. The failure message contains no
+response text. The output token limit and prompt are unchanged.
