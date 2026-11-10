@@ -41,8 +41,9 @@ begins during a recording does not stop it (`Delivery.kt` — `isCallMode`, `adm
 
 Tapping the pill's ✕ while recording, or the screen turning off at any stage, abandons the
 dictation: a recording in progress is dropped unsent and nothing is typed (`Take.kt` — `cancel`).
-An upload already under way is not cancelled: it completes at your server and its reply is thrown
-away. No request the dictation had not yet started is sent afterwards — not the one retry when no
+The active dictation STT or cleanup connection is disconnected by a background watchdog
+that checks cancellation every 50 ms; the main thread does not wait for network I/O. Data
+already received by the server cannot be recalled, and any late reply is thrown away. No request the dictation had not yet started is sent afterwards — not the one retry when no
 response came back, not the cleanup pass, not a resend to a language lane or without `vad`, and
 not a retry on your default server (`Routed.kt`, `SttClient.kt` — the `current` checks;
 `VoxdroidA11yService.kt` — `transcribe`).

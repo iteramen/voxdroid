@@ -65,3 +65,12 @@ without blocking the main thread, free the serial worker for the next take, and
 suppress retry/late results. Keep the existing total request timeout. Test both
 waiting for response headers and blocked response-body reads with a real loopback
 server. Already-transmitted requests cannot be recalled from the remote server.
+
+- Item 2 tracking: https://github.com/iteramen/voxdroid/issues/50
+- RED: stalled STT request retained the worker; next-request regression timed out.
+- Platform distinction: desktop JVM disconnect can block during body reads; this behavior
+  is not Android's. JVM tests retain real stalled-header coverage for both STT and cleanup.
+- Android production-transport probe passed headers (52 ms) and body (53 ms), including
+  completion of the next serial request. No APK installation or settings change was needed.
+- Full local gates passed: lint, 471 JVM tests, debug assembly, and 6 helper tests.
+- Final committed-APK native probe and CI checkpoint will be attached to the PR.

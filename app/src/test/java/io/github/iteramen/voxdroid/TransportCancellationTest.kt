@@ -11,10 +11,27 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+// JVM HttpURLConnection.disconnect can block behind its body reader. Android has a different
+// implementation; tools/TransportCancellationProbe.java tests both phases on the handset.
 class TransportCancellationTest {
     @Test
-    fun cancellingSttFreesTheSerialWorkerDuringHeadersAndBody() {
-        for (bodyStarted in listOf(false, true)) {
+    fun cancellingCleanupFreesTheSerialWorkerDuringHeaders() {
+        for (bodyStarted in listOf(false)) {
+            stalledRequest(bodyStarted, """{"choices":[{"message":{"content":"fresh"},"finish_reason":"stop"}]}""") { url, current ->
+                PolishClient(url, true, "test", "", 30_000, "test", current).polish("synthetic text")
+            }
+        }
+    }
+
+    @Test
+    fun alreadyCancelledTransportDoesNotOpenAConnection() {
+        val result = boundedPost("http://127.0.0.1:1", true, "text/plain", "", ByteArray(0), 30_000, "test") { false }
+        assertEquals("request cancelled", (result as Attempt.SendFailed).cause)
+    }
+
+    @Test
+    fun cancellingSttFreesTheSerialWorkerDuringHeaders() {
+        for (bodyStarted in listOf(false)) {
             stalledRequest(bodyStarted, """{"text":"fresh"}""") { url, current ->
                 SttClient(url, true, "test", "", 30_000, false, current, {})
                     .transcribe(ByteArray(44), SttLanguage.Auto(emptyList()), null)
