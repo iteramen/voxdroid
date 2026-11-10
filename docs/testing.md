@@ -778,3 +778,23 @@ Remaining manual coverage: actual audio-focus interruption, password and
 editable-block refusal in external controls, long/mixed-script real speech, new glyph contextual
 voice-caption/dictation regression, notification Stop, and additional Android/device versions.
 These are checklist items, not implied by unit or build success.
+
+## Dictation transport cancellation regression (2026-11-10)
+
+Issue #50. JVM TransportCancellationTest first timed out waiting for the obsolete STT
+request to release the serial worker. After the fix, STT and cleanup stalled-header cases
+must release it within 3 seconds despite a 30-second configured timeout; the next request
+must complete and the old one must not retry. Pre-cancelled transport must never connect.
+
+Android uses a different HTTP implementation. tools/TransportCancellationProbe.java loads
+boundedPost from the built APK via app_process, sends synthetic bytes only to phone loopback,
+and checks both stalled headers and stalled bodies. It needs no installation, microphone,
+settings, credentials or ordinary app data. Compile the probe with javac --release 8, dex it
+with SDK d8 --lib android.jar, and push the probe jar plus the debug APK to named temporary
+paths under /data/local/tmp. Set CLASSPATH to jar:apk and run app_process /system/bin
+TransportCancellationProbe. Remove those two files afterwards. Both cases must report PASS;
+the installed production app is unaffected. Initial Pixel run: headers 52 ms, body 53 ms
+for cancellation plus the next request. Recheck the final committed artifact before handoff.
+
+This proves transport recovery, not the full handset lock/record/insert interaction. That
+end-to-end behavior remains a separate owner smoke test after a feature build is installed.

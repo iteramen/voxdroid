@@ -14,6 +14,27 @@ import java.util.Collections
 
 class PolishClientTest {
 
+    @Test
+    fun incompleteCompletionsPreserveTheEntireRawTranscript() {
+        for (reason in listOf("length", "content_filter", "tool_calls", "unknown", JSONObject.NULL, 42)) {
+            val reply = JSONObject(content("partial secret text"))
+            reply.getJSONArray("choices").getJSONObject(0).put("finish_reason", reason)
+            val server = start(reply = reply.toString())
+            val outcome = fallback(polish(client(server.url), RAW, 0))
+            assertEquals(RAW, outcome.raw)
+            assertEquals("polish returned incomplete content", outcome.detail)
+            server.stop()
+        }
+    }
+
+    @Test
+    fun normallyStoppedCompletionIsAccepted() {
+        val reply = JSONObject(content("Complete text."))
+        reply.getJSONArray("choices").getJSONObject(0).put("finish_reason", "stop")
+        val server = start(reply = reply.toString())
+        assertEquals(PolishOutcome.Text("Complete text."), polish(client(server.url), RAW, 0))
+    }
+
     private var endpoint: Completions? = null
 
     @After

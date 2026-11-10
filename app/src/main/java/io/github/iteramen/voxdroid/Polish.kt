@@ -72,6 +72,7 @@ class PolishClient(
     private val token: String,
     private val timeoutMs: Int,
     private val systemPrompt: String,
+    private val current: () -> Boolean = { true },
 ) : Polisher {
 
     private val endpoint = baseUrl.trim().trimEnd('/')
@@ -89,7 +90,7 @@ class PolishClient(
             .toString()
             .toByteArray(Charsets.UTF_8)
 
-        val attempt = boundedPost(endpoint + PATH, allowInsecureHttp, CONTENT_TYPE, token, request, timeoutMs, WATCHDOG_THREAD)
+        val attempt = boundedPost(endpoint + PATH, allowInsecureHttp, CONTENT_TYPE, token, request, timeoutMs, WATCHDOG_THREAD, current)
         val answered = when (attempt) {
             is Attempt.Answered -> attempt
             is Attempt.Unreadable ->
@@ -109,6 +110,11 @@ class PolishClient(
         }
         val choice = (fields.opt("choices") as? JSONArray)?.opt(0) as? JSONObject
             ?: return fail(NO_CONTENT, bodyPrefix(answered.body, token))
+        // Older compatible servers may omit this field. Explicit incomplete or malformed
+        // reasons must preserve the complete raw transcript through the normal fallback.
+        if (choice.has("finish_reason") && choice.opt("finish_reason") != "stop") {
+            return fail("polish returned incomplete content")
+        }
         val content = (choice.opt("message") as? JSONObject)?.opt("content") as? String
             ?: return fail(NO_CONTENT, bodyPrefix(answered.body, token))
         val trimmed = content.trim()

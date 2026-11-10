@@ -125,7 +125,7 @@ class SttClient(
     }
 
     private fun post(contentType: String, body: ByteArray): Attempt =
-        boundedPost(endpoint + PATH, allowInsecureHttp, contentType, token, body, timeoutMs, WATCHDOG_THREAD)
+        boundedPost(endpoint + PATH, allowInsecureHttp, contentType, token, body, timeoutMs, WATCHDOG_THREAD, current)
 
     private fun <T> fail(head: String, detail: String? = null, bar: String = head): Result<T> =
         Result.failure(SttError(bar, if (detail.isNullOrEmpty()) head else "$head: $detail"))

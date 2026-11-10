@@ -247,7 +247,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
                 main.post { answer(outcome, take) }
                 return@execute
             }
-            val polisher = polisher()
+            val polisher = polisher { take == machine.currentTake }
             if (polisher == null) {
                 main.post { answer(outcome, take) }
                 return@execute
@@ -363,7 +363,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         return Routed(client(settings.sttBaseUrl, sttToken), lanes, tokenless, sttToken.isNotBlank(), current) { Log.i(TAG, it) }
     }
 
-    private fun polisher(): Polisher? {
+    private fun polisher(current: () -> Boolean): Polisher? {
         if (!settings.polishEnabled) return null
         if (settings.polishBaseUrl.isBlank() || settings.polishModel.isBlank()) {
             if (polishUnconfigured.compareAndSet(false, true)) Log.i(TAG, POLISH_UNCONFIGURED)
@@ -374,6 +374,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             model = settings.polishModel, token = settings.polishToken,
             timeoutMs = clampTimeoutS(settings.polishTimeoutS) * MILLIS_PER_SECOND.toInt(),
             systemPrompt = systemPrompt(builtInPrompt(polishPrompt, settings.capitalizeFirstWord), settings.sttPrompt),
+            current = current,
         )
     }
 

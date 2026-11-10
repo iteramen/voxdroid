@@ -347,7 +347,9 @@ every other file: what a killed process left.
 `cancel()` ends the running one. The check before every read, between decode buffers and after
 each network stage throws `Cancelled` or `TimedOut`; `Routed` and `SttClient` get the same test as
 `current`, so no resend or retry starts after it. A reply that comes back afterwards is dropped,
-never returned. An HTTP call already under way runs to its own timeout.
+never returned. The shared STT transport now disconnects when this current/deadline check
+fails. Caption cleanup still runs to its own timeout; dictation cleanup also receives its take
+generation and is actively disconnected.
 
 **Profile** (`captionProfile`): `caption-profile-v2:` and a SHA-256 over a length-prefixed list of
 the normalization version, the STT address, model, glossary and no-speech threshold, the language
@@ -417,3 +419,25 @@ Settings and encrypted portable backup scaffold en/he/ru endpoints/voices and ex
 inheritance. English/default is configured first; HE/RU require real supported voices. Detection
 is dominant script per ≤500-code-point chunk, with a 20,000-code-point total limit. All routes
 must resolve before network begins. See SECURITY.md for byte, duration and format limits.
+
+### Incomplete cleanup responses
+
+A nonempty cleanup reply is rejected when its first choice explicitly reports a
+finish_reason other than the string stop, including length, filtering, tool calls,
+null or malformed values. Existing failure handling retains the complete raw transcript
+and reports cleanup failure. Servers omitting finish_reason remain compatible; the client
+cannot detect truncation that a server does not report. The failure message contains no
+response text. The output token limit and prompt are unchanged.
+
+### Active dictation transport cancellation
+
+STT and dictation cleanup pass the captured take-generation check to boundedPost. Its
+background watchdog checks every 50 ms and disconnects obsolete requests, including while
+waiting for headers or response bytes; the existing total-timeout task remains. The caller
+also checks before upload and after I/O. A cancelled STT request is not retried, and the
+existing generation fence discards late results. Disconnect never runs on the UI thread.
+The timer is removed in finally. Bytes already sent cannot be recalled from the server.
+
+Desktop JVM and Android HTTP implementations differ: desktop disconnect may block behind
+a body reader. JVM regressions exercise stalled headers for both clients; the APK transport
+is additionally tested on Android for stalled headers and bodies (docs/testing.md).

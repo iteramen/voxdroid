@@ -425,3 +425,13 @@ normal debug or release package.
 speech retained locally; a token forwarded by a redirect or without lane consent; late playback
 after invalidation. **Out of scope:** server retention policies and platform accessibility metadata
 that falsely identifies an unmarked password as ordinary text.
+
+### Dictation transport cancellation
+
+Cancelling or superseding a take invalidates its generation. The STT and dictation cleanup
+HTTP watchdog checks that generation every 50 ms and disconnects an obsolete connection
+on a background thread. Checks around upload/read and existing result fencing suppress
+cancelled retries and late insertion. This frees the serial worker on Android; it cannot
+recall bytes already received by an endpoint or guarantee that remote processing stops.
+Caption STT shares this cancellation path; caption cleanup retains its request timeout.
+The fixed cancellation error contains no URL, credentials or response text.
