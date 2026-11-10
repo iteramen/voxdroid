@@ -384,3 +384,13 @@ already compromised when its checksum was recorded, or one with no published adv
   text, and a connected computer can read the log.
 - Remember the cleanup endpoint sees every non-blank transcript of at least *Minimum words* words
   while the pass is configured.
+
+### Dictation transport cancellation
+
+Cancelling or superseding a take invalidates its generation. The STT and dictation cleanup
+HTTP watchdog checks that generation every 50 ms and disconnects an obsolete connection
+on a background thread. Checks around upload/read and existing result fencing suppress
+cancelled retries and late insertion. This frees the serial worker on Android; it cannot
+recall bytes already received by an endpoint or guarantee that remote processing stops.
+Caption STT shares this cancellation path; caption cleanup retains its request timeout.
+The fixed cancellation error contains no URL, credentials or response text.
