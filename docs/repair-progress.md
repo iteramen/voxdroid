@@ -94,3 +94,6 @@ configuration or credentials are replaced. Parent #47 remains draft.
 Local gates: lint, 487 JVM tests (486 passed, one explicit live-server test skipped), debug APK
 assembly and all six handset-helper tests passed. ADB currently has no connected device;
 handset acceptance remains pending and must not be inferred from these automated gates.
+The three blocking workflows previously filtered PRs to main only. Their PR filters now also
+include feat/read-aloud, so stacked repairs run the same gates, dependency audit and unsigned
+release witness before merge. Push/release triggers and checks are unchanged.

@@ -3,7 +3,7 @@ name: CI
 # Runs every [[gate]] from .claude/ouro.toml, then the synthetic handset-helper checks.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feat/read-aloud]
   push:
     branches: [main]
 
