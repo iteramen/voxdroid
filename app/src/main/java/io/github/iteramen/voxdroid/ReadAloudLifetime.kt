@@ -9,8 +9,8 @@ internal fun readAloudInvalidated(
     eventType: Int?,
     picking: Boolean,
     selectionMatches: Boolean,
-): Boolean = !sourceMatches || (eventFromSource && eventType in setOf(
-    AccessibilityEvent.TYPE_VIEW_SCROLLED,
-    AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-    AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
-))
+): Boolean = !sourceMatches || (!picking && !selectionMatches) || (eventFromSource && when (eventType) {
+    AccessibilityEvent.TYPE_VIEW_SCROLLED, AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> true
+    AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> picking
+    else -> false
+})

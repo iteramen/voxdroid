@@ -414,6 +414,12 @@ and playback are mutually exclusive with dictation/caption processing. Source/wi
 invalidate them. One serial bounded worker requests speech through `ReadAloud.kt`, then plays
 validated PCM16 via `AudioTrack` under audio focus and a mediaPlayback foreground service. A
 generation fence discards late work after cancellation; no text/audio history is created.
+Content updates invalidate picker coordinates. During speech, an unrelated content update is
+allowed only while the original selected node still refreshes with matching text, bounds,
+package/window and visible/read-only/non-password attributes. A missing or changed node stops
+the operation without selecting a replacement. Scroll and source window-state changes still
+cancel. The glyph uses `FLAG_KEEP_SCREEN_ON` only during synthesis/playback, releasing it on
+completion, cancellation or failure; manual screen-off remains cancellation.
 
 Settings and encrypted portable backup scaffold en/he/ru endpoints/voices and explicit TTS-token
 inheritance. English/default is configured first; HE/RU require real supported voices. Detection

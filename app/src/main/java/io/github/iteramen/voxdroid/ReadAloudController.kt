@@ -41,6 +41,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     private val generation = AtomicLong()
     private val lock = Any()
     private var glyph: View? = null
+    private var glyphParams: WindowManager.LayoutParams? = null
     private var picker: View? = null
     private var active = false
     private var sourcePackage: String? = null
@@ -50,6 +51,9 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     private var media = false
     private var focused = false
     private var choices = emptyList<Choice>()
+    private var selected: Choice? = null
+    private var selectedText: String? = null
+    private var contentKept = 0
     @Volatile private var playbackStarts = 0
     @Volatile private var playbackCompletes = 0
     @Volatile private var lastError = "none"
@@ -68,11 +72,30 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         if (locked || password || root?.packageName?.toString() == service.packageName) {
             cancel(); hideGlyph(); return
         }
-        if (busy && readAloudInvalidated(
-                root != null && root.windowId == sourceWindow && root.packageName?.toString() == sourcePackage,
+        if (busy) {
+            val sameSource = root != null && root.windowId == sourceWindow && root.packageName?.toString() == sourcePackage
+            val invalid = readAloudInvalidated(
+                sameSource,
                 event != null && event.packageName?.toString() == sourcePackage, event?.eventType,
-                picker != null, true)) cancel()
+                picker != null, sameSource && (picker != null || selectionStillCurrent()))
+            if (invalid) cancel()
+            else if (active && event?.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED &&
+                event.packageName?.toString() == sourcePackage) contentKept++
+        }
         showGlyph()
+    }
+
+    /** Refresh only the explicitly chosen node. Never find a replacement or read surrounding text. */
+    private fun selectionStillCurrent(): Boolean {
+        val choice = selected ?: return false
+        return choiceStillCurrent(choice) && choice.node.text?.toString() == selectedText
+    }
+
+    private fun choiceStillCurrent(choice: Choice): Boolean {
+        val node = choice.node
+        return node.refresh() && node.windowId == sourceWindow && node.packageName?.toString() == sourcePackage &&
+            node.isVisibleToUser && !node.isPassword && !node.isEditable &&
+            Rect().also(node::getBoundsInScreen) == choice.bounds
     }
 
     fun preferencesChanged() { cancel(); hideGlyph(); showGlyph() }
@@ -124,10 +147,21 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
             visibility = if (prefs.enabled) View.VISIBLE else View.GONE
             setOnClickListener { chooseOrStop() }
         }, LinearLayout.LayoutParams(dp(56), dp(56)))
-        windows.addView(box, params); glyph = box
+        if (active) params.flags = params.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        windows.addView(box, params); glyph = box; glyphParams = params
     }
 
-    private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null }
+    private fun keepScreenOn(on: Boolean) {
+        val view = glyph ?: return
+        val params = glyphParams ?: return
+        val flags = if (on) params.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            else params.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON.inv()
+        if (params.flags == flags) return
+        params.flags = flags
+        windows.updateViewLayout(view, params)
+    }
+
+    private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null; glyphParams = null }
     private fun hidePicker() { picker?.let { runCatching { windows.removeView(it) } }; picker = null; choices = emptyList() }
 
     private class Choice(val node: AccessibilityNodeInfo, val bounds: Rect)
@@ -170,8 +204,8 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
                     if (chosen == null) cancel() else {
                         val currentRoot = service.getRootInActiveWindow(0)
                         if (currentRoot?.windowId != sourceWindow || currentRoot.packageName?.toString() != sourcePackage ||
-                            !chosen.node.refresh() || chosen.node.isPassword || chosen.node.isEditable) cancel()
-                        else speak(chosen.node.text?.toString().orEmpty())
+                            !choiceStillCurrent(chosen)) cancel()
+                        else speak(chosen, chosen.node.text?.toString().orEmpty())
                     }
                 }; return true
             }
@@ -183,7 +217,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         notice(service.getString(R.string.read_pick_text))
     }
 
-    private fun speak(text: String) {
+    private fun speak(choice: Choice, text: String) {
         val config = prefs.snapshot()
         val prepared = try { config.prepare(text) } catch (failed: TtsFailure) { notice(failed.userMessage); return }
         if (!canStart()) { notice(service.getString(R.string.read_finish_first)); return }
@@ -191,6 +225,8 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         lastError = "none"
         try { beginMedia(); media = true } catch (_: RuntimeException) { lastError = "media_foreground_failed"; notice(service.getString(R.string.read_failed)); return }
         active = true
+        selected = choice; selectedText = text
+        keepScreenOn(true)
         worker.queue.clear()
         worker.execute {
             try {
@@ -239,6 +275,8 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
 
     fun cancel() {
         generation.incrementAndGet(); hidePicker(); active = false
+        selected = null; selectedText = null
+        keepScreenOn(false)
         worker.queue.clear()
         synchronized(lock) {
             connection?.disconnect(); connection = null
@@ -255,7 +293,8 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         val playing = synchronized(lock) { track?.playState == AudioTrack.PLAYSTATE_PLAYING }
         out.println("read-aloud enabled=${prefs.enabled} active=$active picking=${picker != null} playing=$playing starts=$playbackStarts completed=$playbackCompletes error=$lastError")
         val root = service.getRootInActiveWindow(0)
-        out.println("read-state glyph=${glyph != null} root=${root != null} ownRoot=${root?.packageName?.toString() == service.packageName} locked=${service.getSystemService(KeyguardManager::class.java).isKeyguardLocked}")
+        val awake = glyphParams?.flags?.and(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0 && glyphParams != null
+        out.println("read-state glyph=${glyph != null} root=${root != null} ownRoot=${root?.packageName?.toString() == service.packageName} locked=${service.getSystemService(KeyguardManager::class.java).isKeyguardLocked} keepScreenOn=$awake contentKept=$contentKept")
         val box = glyph as? LinearLayout
         if (box != null) for (i in 0 until box.childCount) {
             val child = box.getChildAt(i)

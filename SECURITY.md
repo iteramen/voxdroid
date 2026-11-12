@@ -406,7 +406,15 @@ no redirects and never displays server bodies. Replies are bounded to 12 MiB, PC
 mono/stereo, 8–48 kHz and 120 seconds per chunk. Kokoro's streaming RIFF/data length sentinels are
 completed only from the already bounded body; arbitrary truncation/oversize is rejected.
 
-One worker and one pending slot bound queued text. Stop, dictation start, source-view/app change,
+One worker and one pending slot bound queued text. While speaking, a content update may continue
+only if the originally chosen node refreshes and still has identical text/bounds, the original
+package/window, and remains visible, read-only and non-password. No replacement node is searched
+for. The chosen-node reference and comparison text are cleared on cancellation/completion. Picker content changes
+still invalidate its snapshot hit boxes. Scroll and source window-state changes still stop speech.
+One visible glyph window keeps the screen on during synthesis/playback only; idle, picker, error,
+completion and cancellation release that flag. Explicit screen-off still stops speech.
+
+Stop, dictation start, selected-view/app change,
 password focus, screen-off, audio-focus loss, settings change or destruction invalidates the
 request, disconnects transport and stops playback. Late replies cannot play. A request already
 received by the server may still finish there. Playback uses a mediaPlayback foreground service
@@ -417,7 +425,8 @@ The consent bit lives in backup-excluded `secrets.xml`, so Android cloud/device 
 re-enable screen-text access without a new opt-in.
 
 The opt-in `.readaloudtest` debug package adds metadata-only service diagnostics: own control
-bounds, candidate lengths/bounds, active/picker/playback flags and fixed failure classes. It emits
+bounds, candidate lengths/bounds, active/picker/playback/screen-awake flags, a count of tolerated
+content updates and fixed failure classes. It emits
 no selected text, endpoint, token or conversation identity. No diagnostic output is enabled in the
 normal debug or release package.
 
