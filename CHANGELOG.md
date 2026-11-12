@@ -3,12 +3,38 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
-## Unreleased
+## 0.4.0 — 2026-11-12
+
+Added
+- Optional read aloud: tap the floating speaker, choose a visible read-only text block, and hear
+  it through your own TTS server. Tap again to stop. English is the first release target;
+  Hebrew/Russian configuration is scaffolded and refuses if its voice is not configured.
+- Separate TTS endpoint, model, voice and token settings, with explicit enablement consent.
+  TTS configuration and tokens join encrypted settings export; consent stays local and excluded
+  from backups. Narration does not require microphone permission.
+
+Fixed
+- Telegram captions recognize selected voice waveforms exposed as SeekBar nodes in Telegram
+  13.2.1, retaining the single-note, voice-marker and conversation safety checks.
+- Cleanup responses explicitly marked incomplete fall back to the original transcript instead
+  of inserting truncated text.
+- Cancelled dictation and narration network requests release the worker promptly for the next
+  request. Already transmitted requests cannot be recalled from a server.
+- Unrelated page updates no longer interrupt an unchanged chosen narration block. Changes to
+  that block, leaving its source, Stop and screen-off still cancel playback.
+- Narration prevents automatic screen timeout during synthesis and playback, releasing the
+  flag when it finishes or fails. Manual screen-off still cancels.
+- The app's Try screen exposes its microphone control, while settings and password fields
+  remain excluded and narration is unavailable in the app's own windows.
 
 Security
 - STT and cleanup failure diagnostics omit response bodies and raw exception messages at every
   log level. Fixed failure categories and HTTP status remain available. Privacy policy updated
-  2026-11-12 to describe this behavior and the read-aloud release candidate.
+  2026-11-12 to describe this behavior and explicit read aloud.
+- TTS endpoints reject user information, query/fragment components and malformed host forms
+  before connection. Transport cancellation stays off the accessibility thread.
+- Security, privacy, Android accessibility wording and Play declaration drafts cover the
+  selected-text-to-TTS flow and media-playback foreground service. No Play approval is claimed.
 
 ## 0.3.0 — 2026-11-07
 

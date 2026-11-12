@@ -1,4 +1,4 @@
-# Reliability review repair queue â€” 2026-11-10
+# Reliability review repair queue — 2026-11-10
 
 Owner direction: repair one item at a time, preserve Git history and validation evidence.
 Each item uses an isolated branch and PR. The owner authorized merging repairs on green CI;
@@ -29,11 +29,13 @@ signed release and in-place phone upgrade with configuration preserved. Live TOD
 4. **Merged and core handset checks passed (#55 / #56):** Android narration source/power lifecycle.
    Native a9eac33 evidence is linked from #55; remaining combined acceptance is listed below.
 5. **Merged (#58 / #59):** microphone-only Try control; own settings hidden on the handset.
-   Permission revocation closes the test task; final real start/stop remains in combined acceptance.
+   Final Try start/Stop, valid WAV capture and synthetic STT/cleanup delivery passed on the
+   handset with narration/captions enabled; the owner confirmed delivery and the mic grant was revoked.
 6. **Merged (#60 / #61):** TTS endpoint validation and cancellation; native headers/body stalls
    cancelled in 56/86 ms and the next serial request completed. Security contract reconciled.
-7. **Active (#62):** remove sensitive server-error detail from production logging.
-8. Final combined regression on the release candidate: normal-speed English narration, dictation/
+7. **Merged (#62 / #63):** content-free failure diagnostics; all three CI checks passed on
+   18a3fb1, merged as 6887a31.
+8. **Accepted:** final combined regression on the release candidate: normal-speed English narration, dictation/
    captions coexistence, interruption/source guards, consent and settings preservation. Carry
    forward explicitly applicable evidence; broader device/language coverage is not an endless
    release gate.
@@ -139,8 +141,8 @@ no installed-app data, microphone, credentials or external endpoint is used by t
 ## Item 5 and 6 landing evidence
 
 PR #59 merged as a57a7ca after green CI on f483bc1. The native Try screen displayed the microphone
-and no narration control; own settings hid the control. Actual start/stop remains a final manual
-acceptance check. Temporary permissions and the test package were removed.
+and no narration control; own settings hid the control. Start/stop was then pending and passed
+in the final acceptance checkpoint below. Temporary permissions and the test package were removed.
 PR #61 merged as 8e3cd4d after green CI on 7c4634e. The committed APK transport passed Android
 loopback header/body cancellation in 56/86 ms with the next serial request completing. No app
 installation, credentials or microphone were used for this probe.
@@ -158,15 +160,30 @@ debug APK assembly and all six synthetic handset-helper tests. Red/green regress
 review cover both service failure-log paths; no production log or private content was collected.
 
 
-## Final acceptance blocker: Telegram selected SeekBar (#65)
+## Resolved final acceptance blocker: Telegram selected SeekBar (#65)
 
 Normal-speed narration passed on 18a3fb1, and the owner confirmed Try dictation delivery through
 a synthetic local STT/cleanup fixture after the UIAutomator harness interference was removed.
 The contextual caption check found a real compatibility rejection on Telegram 13.2.1: a selected
 voice note has the SeekBar role, excluded by the old role filter. Regression e5f1eed fails only
 that case (one failure among eight selection tests). The narrow repair retains selected-only
-metadata access and all one-note/voice-marker/share/origin checks. Release PR #64 remains draft
-until this repair and the native caption handoff are accepted.
+metadata access and all one-note/voice-marker/share/origin checks. PR #66 merged as 349d6c8 after all three CI checks passed on 8e87a31. The native caption
+handoff passed before merge; release PR #64 can proceed on green CI.
 
 Local #65 gates passed: lint, 505 JVM tests (504 passed, one explicit live-server skip), debug
-assembly and all six synthetic handset-helper tests. Native handoff is still pending.
+assembly and all six synthetic handset-helper tests. Native handoff and private display passed.
+
+
+## Final acceptance checkpoint
+
+The final code 18a3fb1 and merged feature 6887a31 have identical trees. The isolated handset
+check passed normal-speed English synthesis/playback through completion, screen-awake release,
+consent Cancel/Enable behavior and own-settings/external control visibility. Microphone permission
+stayed ungranted. The test package was removed and original accessibility/USB-wake settings were
+restored and verified. Try dictation now passed: the owner started and stopped a short take; valid audio reached the
+local fixture, STT/cleanup each ran once, and expected text landed. The temporary microphone
+grant was revoked. The Telegram caption regression then found and repaired selected SeekBar recognition (#65 / #66).
+The committed 8e87a31 APK passed native Share, decode, STT/cleanup and private-panel display with
+an empty composer and no microphone grant; the spool was removed. All temporary packages were
+removed and original settings restored. Final bounded handset acceptance is complete. The release branch prepares 0.4.0 (code 6), but neither
+publication nor installation has occurred yet; proceed on exact green CI with a signed in-place upgrade.

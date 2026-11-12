@@ -868,6 +868,41 @@ unique voice node, trusted Share action and original conversation lifetime check
 
 Automated checks cover the new role, existing roles, generic seek bars, and lazy metadata access:
 unselected nodes and unknown roles must not have their message metadata read. Native handoff
-and private-result acceptance remain required before closing #65. Use content-free service dumps
+and private-result acceptance passed on 8e87a31; #65 is closed. Use content-free service dumps
 or screenshots during an active operation: UIAutomator dump recreates the accessibility service
 on this handset and invalidates recording/caption/narration tests.
+
+
+### Live accessibility tests must not use UIAutomator inspection
+
+The final Try-screen check exposed a harness problem: `adb exec-out uiautomator dump /dev/tty`
+recreated the isolated accessibility service on this handset, including while the app process
+stayed alive. During recording, that teardown cancels the take. A before/after service-record
+identity check reproduced this at idle. Such an interrupted run is not evidence of a product
+recording failure or a passing regression.
+
+Use the isolated package's content-free service diagnostics while recording, processing captions
+or speaking. Use the handset's actual Stop control for manual dictation checks. UIAutomator may
+inspect isolated settings or a delivered test field only while no operation is active; allow the
+service to reconnect before starting the next operation. Never inspect ordinary chat content.
+
+
+### Final read-aloud release candidate: handset checkpoint
+
+Code 18a3fb1 has the same tree as merged feature 6887a31. The isolated app used synthetic text
+and local fixed STT/cleanup responses; no production settings or credentials were copied.
+
+| Check | Observed result |
+| --- | --- |
+| English narration at speed 1.0 through beast TTS | Started and completed normally; screen-awake flag cleared. Microphone permission remained ungranted. |
+| Consent and control contexts | Cancel stayed off; Enable wrote backup-excluded consent. Own settings hid controls; external text showed the shared controls. |
+| Try microphone with narration and captions enabled | Owner tapped mic, spoke briefly and tapped the Recording pill Stop. Valid WAV reached the local fixture; one STT and one cleanup request; expected synthetic text landed and owner confirmed. |
+| Temporary microphone permission | Verified granted before Try and revoked after delivery. |
+| Telegram contextual caption after #65 repair, on 8e87a31 | Selected SeekBar voice note -> native Share -> isolated receiver -> private panel. Valid WAV, one STT and one cleanup request; expected synthetic text displayed; composer empty, mic ungranted, spool empty. |
+
+This fixed-response test proves capture and delivery, not real-server STT accuracy. Earlier
+source/Stop/lock/automatic-timeout, caption cache/chat-switch and Android transport evidence above
+remains applicable. Additional devices and Hebrew/Russian voices remain follow-up coverage.
+
+All temporary test packages were removed and original accessibility/USB-wake settings were
+restored and verified after acceptance. Production configuration was not copied or changed.
