@@ -16,7 +16,8 @@ class TtsPolicyTest {
 
     @Test fun endpointPolicyRejectsAmbiguousOrEmbeddedData() {
         for (url in listOf("https://user@example.invalid/v1", "https://example.invalid/v1?key=value",
-            "https://example.invalid/v1#fragment", "https:///v1", "https://example.invalid:bad/v1")) {
+            "https://example.invalid/v1#fragment", "https://example.invalid/v1?", "https://example.invalid/v1#",
+            "https:///v1", "https://example.invalid:bad/v1")) {
             assertNotNull(url, validateBaseUrl(url, false, EndpointKind.Tts))
         }
         for (url in listOf("https://example.invalid/v1", "http://127.0.0.1:8770/v1", "http://[::1]:8770/v1")) {
@@ -60,7 +61,18 @@ class TtsPolicyTest {
             val release = CountDownLatch(1)
             val current = AtomicBoolean(true)
             val peer = thread(isDaemon = true) {
-                server.accept().use { socket -> entered.countDown(); release.await(20, TimeUnit.SECONDS) }
+                server.accept().use { socket ->
+                    socket.soTimeout = 3000
+                    val input = socket.getInputStream()
+                    val header = StringBuilder()
+                    while (!header.endsWith("\r\n\r\n") && header.length < 8192) {
+                        val byte = input.read(); if (byte < 0) return@thread
+                        header.append(byte.toChar())
+                    }
+                    val length = Regex("(?i)Content-Length: (\\d+)").find(header)!!.groupValues[1].toInt()
+                    input.readNBytes(length)
+                    entered.countDown(); release.await(20, TimeUnit.SECONDS)
+                }
             }
             val worker = Executors.newSingleThreadExecutor()
             try {

@@ -255,7 +255,8 @@ keeps candidates, chosen text and generated speech only in memory, never in logs
 or the clipboard. It reads no background document and does not use the microphone.
 
 Stop, leaving/changing the source view, locking, starting dictation or losing audio focus cancels
-reading and discards late replies. A server may finish a request it already received. The separate
+reading and discards late replies. Network I/O already admitted before cancellation may still
+reach or finish on the server; the app cannot recall it. The separate
 `FOREGROUND_SERVICE_MEDIA_PLAYBACK` permission supports playback with a Stop notification; it
 adds no permission dialog. TTS uses the same explicit remote-HTTP gate as dictation. TTS tokens
 are separate from speech/cleanup tokens, and language-token inheritance must be explicitly enabled.

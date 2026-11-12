@@ -430,6 +430,13 @@ inheritance. English/default is configured first; HE/RU require real supported v
 is dominant script per ≤500-code-point chunk, with a 20,000-code-point total limit. All routes
 must resolve before network begins. See SECURITY.md for byte, duration and format limits.
 
+The TTS transport revalidates its endpoint before connection registration. Cancellation is
+checked after registration, before upload, during response reads and before returning PCM. Its
+watchdog polls the captured generation every 50 ms and disconnects blocked I/O off the main
+thread. The total deadline also marks expiration so later phases cannot restart transport after
+timeout. The controller cancels playback immediately and leaves transport teardown to that
+watchdog; network I/O already admitted before cancellation cannot be recalled from the server.
+
 ### Incomplete cleanup responses
 
 A nonempty cleanup reply is rejected when its first choice explicitly reports a

@@ -406,7 +406,10 @@ language detection. Hebrew/Russian require their own configured supported voice;
 is substituted. All chunks are prepared before any request. Credentials are TTS-specific; a lane
 inherits the default TTS credential only by an explicit switch. STT/cleanup credentials are unused.
 `ReadAloud.kt` uses the existing HTTP consent gate, rejects URL credentials/query/fragment, follows
-no redirects and never displays server bodies. Replies are bounded to 12 MiB, PCM16 WAV,
+no redirects and never displays server bodies. The same endpoint validation runs in settings,
+preparation and at the transport boundary, requiring a nonempty host interpreted consistently
+by URI and URL. Invalid endpoints fail with a fixed message before connection registration or
+upload. Replies are bounded to 12 MiB, PCM16 WAV,
 mono/stereo, 8–48 kHz and 120 seconds per chunk. Kokoro's streaming RIFF/data length sentinels are
 completed only from the already bounded body; arbitrary truncation/oversize is rejected.
 
@@ -420,8 +423,11 @@ completion and cancellation release that flag. Explicit screen-off still stops s
 
 Stop, dictation start, selected-view/app change,
 password focus, screen-off, audio-focus loss, settings change or destruction invalidates the
-request, disconnects transport and stops playback. Late replies cannot play. A request already
-received by the server may still finish there. Playback uses a mediaPlayback foreground service
+request and stops playback. The transport watchdog disconnects obsolete I/O off the main thread
+at 50 ms intervals, with a separate total deadline and generation checks before upload and after
+I/O. Cancellation during registration is checked before opening a stream. Late replies cannot
+play. Already-admitted network I/O may still reach or finish on the server; it cannot be recalled.
+Playback uses a mediaPlayback foreground service
 and notification with Stop, not a microphone service; no microphone permission is needed. Text and
 generated audio never enter files, caption history, the clipboard or dictation logs. TTS
 configuration/tokens are included in explicit encrypted settings export; enable consent is not.
