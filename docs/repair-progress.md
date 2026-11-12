@@ -1,8 +1,9 @@
 # Reliability review repair queue â€” 2026-11-10
 
 Owner direction: repair one item at a time, preserve Git history and validation evidence.
-Each item uses an isolated branch and PR. Merge and installation are separate milestones;
-repository policy stops at PR. No version bump or deployment is part of item 1.
+Each item uses an isolated branch and PR. The owner authorized merging repairs on green CI;
+merge and installation remain separate milestones. Feature PRs remain unmerged until native
+acceptance. No version bump or production deployment is part of this repair queue.
 
 ## Verified baseline
 
@@ -19,10 +20,12 @@ repository policy stops at PR. No version bump or deployment is part of item 1.
    finish reasons, preserve the full raw transcript through existing fallback and notice.
    Keep compatibility with existing servers that omit finish_reason. Explicit null is not
    a completed response. Tests must fail before the parser fix and pass afterwards.
-2. **In progress:** cancel active Android dictation transport so new takes do not wait behind it.
-3. Queued: make separate byovox shortcuts the product default; keep selection discovery
-   from delaying recording stop/cancel. Diagnose the actual Notepad provider failure.
-4. Queued: qualify/fix Android narration event cancellation and automatic screen timeout.
+2. **Merged:** cancel active Android dictation transport so new takes do not wait behind it (#51).
+3. **Repaired on the desktop feature branch:** separate byovox shortcuts, asynchronous selection,
+   Notepad provider lifecycle and guarded Copy fallback. Owner confirmed narration/Stop in the
+   tested apps. Desktop #50 adds no-voice feedback; the owner confirmed muted Fifine notice and
+   unmuted dictation on b09dbdb. Broader desktop native acceptance remains tracked in #33/#42.
+4. **In progress (#55):** fix Android narration event cancellation and automatic screen timeout.
 5. Queued: restore an accessible tap trigger on Android's own Try screen.
 6. Queued: reconcile Android TTS endpoint validation and cancellation with security policy;
    keep security reproduction details local until reviewed.
@@ -74,3 +77,23 @@ server. Already-transmitted requests cannot be recalled from the remote server.
   completion of the next serial request. No APK installation or settings change was needed.
 - Full local gates passed: lint, 471 JVM tests, debug assembly, and 6 helper tests.
 - Final committed-APK native probe and CI checkpoint will be attached to the PR.
+
+## Item 4 contract and reproduction
+
+Source content changes currently cancel even an unchanged selected paragraph. Regression cf28502
+extracts the existing event policy unchanged and fails two tests: unrelated content interrupts
+speech, while a missing/changed chosen node without a source event is not checked.
+
+The repair keeps picker invalidation conservative; during speech it refreshes only the chosen
+node and requires unchanged text/bounds, package/window, visibility and non-password/read-only
+attributes. Root change, scroll, source window-state change and all existing stop paths remain
+cancellation. A glyph window flag prevents automatic timeout during synthesis/playback and is
+cleared when active work ends. Native checks are listed in docs/testing.md; no production APK,
+configuration or credentials are replaced. Parent #47 remains draft.
+
+Local gates: lint, 487 JVM tests (486 passed, one explicit live-server test skipped), debug APK
+assembly and all six handset-helper tests passed. ADB currently has no connected device;
+handset acceptance remains pending and must not be inferred from these automated gates.
+The three blocking workflows previously filtered PRs to main only. Their PR filters now also
+include feat/read-aloud, so stacked repairs run the same gates, dependency audit and unsigned
+release witness before merge. Push/release triggers and checks are unchanged.

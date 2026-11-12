@@ -798,3 +798,28 @@ for cancellation plus the next request. Recheck the final committed artifact bef
 
 This proves transport recovery, not the full handset lock/record/insert interaction. That
 end-to-end behavior remains a separate owner smoke test after a feature build is installed.
+
+## Narration source and screen lifecycle regression (#55)
+
+`ReadAloudLifetimeTest` reproduces unconditional content-event cancellation in cf28502 and
+checks unchanged selection continuity, changed/missing selection, package/window loss, scroll,
+window-state changes and conservative picker invalidation. These are policy tests; Android node
+refresh, event delivery and window power behavior require the isolated handset checks below.
+
+Use only a synthetic page and the `.readaloudtest` package, with microphone ungranted and no
+production credentials/config copied. Restore accessibility, screen timeout and USB-wake settings
+and remove the test package afterwards. Record the exact committed APK used for each result.
+
+| Check | Required result | Status |
+| --- | --- | --- |
+| Update unrelated page status while speaking | `contentKept` increases; playback continues and completes | Pending |
+| Replace/remove the chosen paragraph while speaking | Active/playback stop; no late restart or replacement text request | Pending |
+| Update content while choosing | Picker closes; stale coordinates cannot start speech | Pending |
+| Scroll, same-app navigation, app switch | Speech stops; no late restart | Pending |
+| Speaker Stop, notification Stop, new dictation | Stop narration and release screen flag | Pending |
+| Automatic timeout with USB wake disabled | During synthesis/playback, display stays awake beyond its configured timeout | Pending |
+| Completion, cancellation and failed TTS | `keepScreenOn=false`; idle display can time out | Pending |
+| Manual power-button lock during speech | Speech stops, glyph disappears and no late restart | Pending |
+
+Debug diagnostics expose counts/flags only, never selected text or other app identity. A green
+JVM/build gate does not establish these handset outcomes.
