@@ -1,6 +1,6 @@
 # Privacy policy — voxdroid
 
-**Effective: 2026-11-08 (read-aloud implementation draft).**
+**Effective: 2026-11-12 (read-aloud release candidate).**
 
 voxdroid is an Android accessibility service that dictates into the text field you are typing in,
 with your own keyboard staying up. You hold volume-down or tap the floating 🎤 control, speak,
@@ -222,13 +222,13 @@ the HTTP status when a long recording was resent without `vad` (`SttClient.kt`);
 control or format characters were removed from a dictation, never the text (`Commit.kt` —
 `droppedNote`).
 
-At debug level, a failed transcription or cleanup request logs one line describing the failure
-(`VoxdroidA11yService.kt` — `answer`, `answerPolished`), and release builds keep that line
-(`app/build.gradle.kts` — `isMinifyEnabled = false`). It can include the server's hostname from a
-network error and, for a reply the app could not use, its first 200 characters — which, from a
-server answering in the wrong shape, could be your dictation. The request's own bearer token is
-replaced with `[redacted]` in that line (`Http.kt` — `redact`, `bodyPrefix`); a token the server
-re-encodes before echoing it is not recognised.
+At debug level, a failed transcription or cleanup request logs one content-free line describing
+the stage, HTTP status when available, and a fixed failure category (`VoxdroidA11yService.kt` —
+`answer`, `answerPolished`). Release builds keep that line. It contains no server response body,
+transcript, hostname, URL, credential or raw exception message. `Http.kt` — `causeDetail`
+classifies exceptions by type, and `RESPONSE_DETAIL` replaces response content entirely, even
+if the server echoes an unconfigured or re-encoded credential. Cleanup failure still returns
+your original transcript for delivery; that transcript is separate from the diagnostic.
 
 ## Children
 

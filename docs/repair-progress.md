@@ -3,7 +3,8 @@
 Owner direction: repair one item at a time, preserve Git history and validation evidence.
 Each item uses an isolated branch and PR. The owner authorized merging repairs on green CI;
 merge and installation remain separate milestones. Feature PRs remain unmerged until native
-acceptance. No version bump or production deployment is part of this repair queue.
+acceptance. After the repair queue and final acceptance, proceed to the authorized version bump,
+signed release and in-place phone upgrade with configuration preserved. Live TODO: issue #57.
 
 ## Verified baseline
 
@@ -29,9 +30,9 @@ acceptance. No version bump or production deployment is part of this repair queu
    Native a9eac33 evidence is linked from #55; remaining combined acceptance is listed below.
 5. **Merged (#58 / #59):** microphone-only Try control; own settings hidden on the handset.
    Permission revocation closes the test task; final real start/stop remains in combined acceptance.
-6. **Active (#60):** reconcile Android TTS endpoint validation and cancellation with security policy;
-   keep security reproduction details local until reviewed.
-7. Queued: remove sensitive server-error detail from production logging.
+6. **Merged (#60 / #61):** TTS endpoint validation and cancellation; native headers/body stalls
+   cancelled in 56/86 ms and the next serial request completed. Security contract reconciled.
+7. **Active (#62):** remove sensitive server-error detail from production logging.
 8. Final combined regression on the release candidate: normal-speed English narration, dictation/
    captions coexistence, interruption/source guards, consent and settings preservation. Carry
    forward explicitly applicable evidence; broader device/language coverage is not an endless
@@ -133,3 +134,25 @@ and transport, checks generation before upload, and interrupts obsolete I/O from
 rather than blocking the main thread. The total deadline prevents later I/O phases restarting
 after expiry. Android header/body behavior is qualified with tools/TtsCancellationProbe.java;
 no installed-app data, microphone, credentials or external endpoint is used by that probe.
+
+
+## Item 5 and 6 landing evidence
+
+PR #59 merged as a57a7ca after green CI on f483bc1. The native Try screen displayed the microphone
+and no narration control; own settings hid the control. Actual start/stop remains a final manual
+acceptance check. Temporary permissions and the test package were removed.
+PR #61 merged as 8e3cd4d after green CI on 7c4634e. The committed APK transport passed Android
+loopback header/body cancellation in 56/86 ms with the next serial request completing. No app
+installation, credentials or microphone were used for this probe.
+
+## Item 7: content-free failure diagnostics (#62)
+
+Regression 56ab985 demonstrates server content and unrelated credentials escaping through STT,
+cleanup and transport failures. Error details now omit response bodies entirely and classify
+exceptions by type. Unknown adapter errors cannot turn raw exception messages into trusted
+stage errors. HTTP status, stage, body-size refusal and cleanup's original-text fallback remain.
+Security/privacy claims now apply to debug failure logs too. Synthetic tests use no real data.
+
+Local item 7 gates passed: lint, 501 JVM tests (500 passed, one explicit live-server skip),
+debug APK assembly and all six synthetic handset-helper tests. Red/green regression and source
+review cover both service failure-log paths; no production log or private content was collected.

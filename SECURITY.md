@@ -256,9 +256,8 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   changed by a configuration restore.
 
 - The tokens live in the `secrets` preferences file alone and are never logged (`Settings.kt`;
-  `SettingsStore.kt` — `storedAs`). The request's own token is replaced with `[redacted]` in every
-  failure text derived from a reply or an exception, before the 200-character cut (`Http.kt` —
-  `redact`, `bodyPrefix`, `causeDetail`). A token the HTTP stack refuses as a header value fails
+  `SettingsStore.kt` — `storedAs`). STT and cleanup failure details retain only fixed stage/status and failure classifications,
+  never response bodies or raw exception text (`Http.kt` — `RESPONSE_DETAIL`, `causeDetail`). A token the HTTP stack refuses as a header value fails
   the request with fixed text, before anything is sent (`Http.kt` — `HEADER_REFUSED`).
 - `secrets.xml` is excluded from cloud backup and device transfer
   (`res/xml/data_extraction_rules.xml`). No `fullBackupContent` is declared: Android ignores it on
@@ -284,13 +283,15 @@ rooted device or a debugger attached to the app's process.
 
 ### Logs
 
-At info and warn, voxdroid logs no transcript and no token. The two `Log.d` failure lines carry at
-most 200 characters of reply- or exception-derived text, which can be the dictation, with the
-request's token redacted (`VoxdroidA11yService.kt` — `answer`, `answerPolished`). Release builds
-keep `Log.d` (`app/build.gradle.kts` — `isMinifyEnabled = false`, no `isLoggable` guard).
+At every log level, voxdroid logs no transcript or token. The two `Log.d` failure lines retain
+only fixed stage/status and failure classifications (`VoxdroidA11yService.kt` — `answer`,
+`answerPolished`). STT/cleanup response bodies are replaced by a fixed omission marker;
+transport exceptions are classified by type without reading their message. Unknown exceptions
+from the transcription, language-lane and cleanup adapters receive fixed diagnostics too.
+Release builds keep these content-free lines; privacy does not depend on stripping debug logs.
 
-**In scope:** a transcript or a token in a log at info or warn. **Out of scope:** the `Log.d` reply
-text; see [Known limitations](#known-limitations).
+**In scope:** a transcript, token, response body or raw transport exception in a failure log,
+including at debug level. Synthetic response and exception regressions cover these paths.
 
 ### Enablement
 
@@ -364,11 +365,6 @@ already compromised when its checksum was recorded, or one with no published adv
 - **Play Protect.** Sideloaded builds of accessibility-service apps may be flagged by Play
   Protect, which can disable or remove them; install from Google Play, or turn off Play Protect
   scanning for a sideloaded build at your own risk.
-- **The `Log.d` reply text.** The two debug failure lines carry at most 200 characters of the
-  server's reply or of the exception that reported it, which, from a server answering in the wrong
-  shape, can be the dictation. Release builds keep them.
-- **A re-encoded token.** Redaction replaces the token as it was sent; a token the server
-  re-encodes before echoing it, such as JSON writing `/` as `\/`, is not recognised.
 - **Password fields.** The guard trusts what the app reports. A field that reports neither masking
   nor a password input type, such as a custom-drawn one, is not refused.
 - **Reach of the window read.** `keyboardTop` fetches every interactive window's info to find the
@@ -381,8 +377,8 @@ already compromised when its checksum was recorded, or one with no published adv
   when every such endpoint is reached over Tailscale, WireGuard or a similar encrypted network.
 - Turn a lane's "Send the STT token" switch on only for a server you trust with that token.
 - Leave the Delivery mode on Refuse if a clipboard manager or clipboard sync is on.
-- Turn USB and wireless debugging off when you are not using them: the `Log.d` lines carry reply
-  text, and a connected computer can read the log.
+- Turn USB and wireless debugging off when you are not using them: an authorized debugging
+  computer has broad access to the device.
 - Remember the cleanup endpoint sees every non-blank transcript of at least *Minimum words* words
   while the pass is configured.
 

@@ -845,3 +845,14 @@ and allow the next serial request to return valid PCM within three seconds, agai
 timeout. The body case waits 150 ms after the partial reply before cancellation. Compile/dex and
 run like TransportCancellationProbe, using named temporary jar/APK files under /data/local/tmp;
 remove them afterwards. This needs no app installation, permission, credentials or external TTS.
+
+
+## Failure diagnostic privacy (#62)
+
+Automated loopback regressions cover HTTP errors and malformed successful responses containing
+synthetic transcript and unrelated credential markers. Neither STT error details nor cleanup
+fallback details may include those markers, response prefixes, or raw exception messages.
+Cleanup must still return the original transcript separately. Tests also cover token fragments,
+missing configured tokens, oversized bodies, malformed URLs, and unknown failures through the
+transcription, lane and cleanup adapters. Review the two service debug-log call sites against
+these tested outcomes; never collect production transcripts or credentials as test evidence.

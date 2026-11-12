@@ -372,10 +372,10 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
   watchdog disconnects at the same timeout, so a peer that never reads cannot wedge the worker.
 - **Redirects are not followed**: a 3xx is the stage's failure. The probe does the same.
 - **Size caps.** A reply over 10 MiB (`BODY_LIMIT_BYTES`) is unreadable; a take stops at 5
-  minutes (`CAP_MS`); an error detail keeps 200 characters of the body.
+  minutes (`CAP_MS`); error details omit response bodies entirely.
 - **Tokens.** Sent only when set, as `Authorization: Bearer`; one no header can carry fails
-  before sending (`HEADER_REFUSED`). Every failure text from a reply or an exception has the
-  request's token replaced with `[redacted]` (`redact`, `bodyPrefix`, `causeDetail`).
+  before sending (`HEADER_REFUSED`). Failure diagnostics use only fixed classifications and
+  status codes (`RESPONSE_DETAIL`, `causeDetail`); no reply or raw exception text is retained.
 - **The probe** (`EndpointProbe.kt` — `probe`): `GET {stt}/models` every 5 s while the launcher
   is resumed, no token, 3 s timeouts; any HTTP status counts as reachable.
 - **HTTPS** uses the platform's verification, with no network security config. The threat model
