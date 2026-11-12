@@ -107,3 +107,9 @@ internal fun captionTelegramSelectionCount(label: CharSequence?): Int? {
 internal fun captionTelegramHeader(label: CharSequence?): String? = label?.toString()?.trim()?.takeIf {
     it.isNotBlank() && it.length <= 512 && !it.matches(Regex("\\d+(?:\\s+selected)?", RegexOption.IGNORE_CASE))
 }
+
+
+/** Read metadata only for a selected, recognized Telegram message node. */
+internal fun captionTelegramVoiceNode(selected: Boolean, className: CharSequence?, metadata: () -> String): Boolean =
+    selected && className?.toString() in setOf("android.view.ViewGroup", "android.widget.LinearLayout") &&
+        metadata().contains("Voice message", ignoreCase = true)
