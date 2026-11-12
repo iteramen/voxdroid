@@ -3,6 +3,14 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## 0.4.1 — 2026-11-12
+
+Changed
+- Restore a compact translucent floating pill with clear vector microphone and speaker icons.
+  Drag either icon to move it; no separate handle is needed. A drag does not activate the button.
+- Use a circular control when only one action is available. Keep 48 dp touch targets and
+  accessible button labels, and update the Settings/README instructions.
+
 ## 0.4.0 — 2026-11-12
 
 Added

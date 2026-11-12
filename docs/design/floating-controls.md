@@ -27,9 +27,11 @@ Owner-approved design following 0.4.0 handset feedback. Implementation and hands
 - [x] Replace the emoji buttons and handle in ReadAloudController with vector ImageButtons in a rounded translucent PillLayout.
 - [x] Preserve read_mic/read_speaker tags, accessibility descriptions, enable/visibility rules and saved placement.
 - [x] Update the Settings usage text and README's obsolete “Drag ⋮” instruction.
-- [ ] Run Android lint, unit tests and debug assembly.
-- [ ] On the handset, verify tap versus drag on both halves, no accidental activation after dragging, persistence and screen-edge clamping.
-- [ ] Check readability over light/dark content and TalkBack labels; verify microphone-only Try context and hidden own-settings context.
-- [ ] Confirm dictation start/Stop, caption routing and narration start/cancel still work. Do not use UIAutomator dumps during active operations on this handset.
+- [x] Run Android lint, unit tests and debug assembly.
+- [x] On the handset, verify tap versus drag on both halves, no accidental activation after dragging, persistence and screen-edge clamping.
+- [x] Check light/dark readability, microphone-only Try and hidden own-settings context. Accessible labels verified in code; live TalkBack navigation remains untested.
+- [x] Verify narration start/cancel on the handset. Existing dictation/caption callbacks are unchanged; carry forward the 0.4.0 capture/delivery and caption evidence explicitly. See docs/testing.md for limits.
 
 The owner approved this proposal before implementation. Handset acceptance precedes another signed deployment. No new permissions, service endpoints or consent changes are needed for this design.
+
+Implementation: PR #68 / issue #67. Native evidence and harness limitations are recorded in [testing](../testing.md#translucent-floating-controls-67--68).
