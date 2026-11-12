@@ -751,6 +751,34 @@ WhatsApp lock rerun. Equal-header mutation, format/size/duration and backup-poli
 coverage; actual source scrolling with an unchanged chat header and the shared lock handler have
 handset evidence. Those are stated separately from the unrun exact fixture cases.
 
+## Read-aloud qualification (2026-11-08)
+
+English first; Hebrew/Russian routing/settings are scaffolded, with missing-voice refusals covered
+by unit tests. No HE/RU backend or audible qualification is claimed. `ReadAloudTest` covers script
+routing, no implicit voice fallback, Unicode/size limits, credential projection, portable backup
+with enable consent excluded, real loopback HTTP payload/status behavior, cancellation and bounded
+PCM16 decoding, including Kokoro streaming WAV length sentinels.
+
+Pixel 10 / Android 17, isolated `.readaloudtest` debug APK, synthetic English paragraph in a local
+static page and the owner's actual TTS endpoint: selection → real generated PCM → `AudioTrack`
+passed; the second speaker tap stopped with no late restart; another read completed; switching
+to Home stopped active playback. A separate live-read lock test also passed: screen-off stopped
+playback and removed the glyph with no late restart. Microphone permission remained ungranted throughout. No production
+configuration or credentials were copied. The temporary package was removed and original
+accessibility/USB wake settings restored. The signed production app and backup stayed unchanged.
+
+Failed fixture setup attempts are excluded: a locked device correctly hid controls; initial debug
+control coordinates were window-relative and were corrected to screen coordinates. The passing
+run used screen coordinates. No generic conversation or document was inspected.
+
+The consent bit was subsequently moved to the backup-excluded private preferences file; portable
+export tests pin its exclusion from both preference namespaces. Audio/controller behavior was unchanged.
+
+Remaining manual coverage: actual audio-focus interruption, password and
+editable-block refusal in external controls, long/mixed-script real speech, new glyph contextual
+voice-caption/dictation regression, notification Stop, and additional Android/device versions.
+These are checklist items, not implied by unit or build success.
+
 ## Dictation transport cancellation regression (2026-11-10)
 
 Issue #50. JVM TransportCancellationTest first timed out waiting for the obsolete STT
@@ -770,3 +798,111 @@ for cancellation plus the next request. Recheck the final committed artifact bef
 
 This proves transport recovery, not the full handset lock/record/insert interaction. That
 end-to-end behavior remains a separate owner smoke test after a feature build is installed.
+
+## Narration source and screen lifecycle regression (#55)
+
+`ReadAloudLifetimeTest` reproduces unconditional content-event cancellation in cf28502 and
+checks unchanged selection continuity, changed/missing selection, package/window loss, scroll,
+window-state changes and conservative picker invalidation. These are policy tests; Android node
+refresh, event delivery and window power behavior require the isolated handset checks below.
+
+Use only a synthetic page and the `.readaloudtest` package, with microphone ungranted and no
+production credentials/config copied. Restore accessibility, screen timeout and USB-wake settings
+and remove the test package afterwards. Record the exact committed APK used for each result.
+
+| Check | Required result | Status |
+| --- | --- | --- |
+| Update unrelated page status while speaking | `contentKept` increases; playback continues and completes | Passed a9eac33, real TTS |
+| Replace/remove the chosen paragraph while speaking | Active/playback stop; no late restart or replacement text request | Passed a9eac33 |
+| Update content while choosing | Picker closes; stale coordinates cannot start speech | Passed a9eac33 |
+| Scroll, same-app navigation, app switch | Speech stops; no late restart | Passed a9eac33 |
+| Speaker Stop, notification Stop, new dictation | Stop narration and release screen flag | Speaker passed a9eac33; notification/new-dictation in final regression |
+| Automatic timeout with USB wake disabled | During synthesis/playback, display stays awake beyond its configured timeout | Passed a9eac33, 18 s observation against 15 s timeout, USB wake off |
+| Completion, cancellation and failed TTS | `keepScreenOn=false`; idle display can time out | Flag release passed on completion/cancel/503; idle timeout in final regression |
+| Manual power-button lock during speech | Speech stops, glyph disappears and no late restart | Injected screen-off passed a9eac33; physical button not separately tested |
+
+Debug diagnostics expose counts/flags only, never selected text or other app identity. A green
+JVM/build gate does not establish these handset outcomes.
+
+## Try-screen tap control (#58)
+
+`ReadControlContextTest` first fails on regression 15cbb5a, then checks microphone-only own Try
+context, hidden own settings and locked/password contexts, and normal external context.
+Native checklist: own Try field shows 🎤 but no 🔊; own settings/credential views show neither;
+returning to the external synthetic page restores configured controls; disabling the floating
+microphone hides it on Try. A tap uses the existing permission/field-checked dictation path.
+
+## TTS request policy (#60)
+
+`TtsPolicyTest` first fails in a301cbd: invalid endpoint structure is accepted, direct transport
+skips validation, registration-time cancellation reaches loopback, and a cancelled header wait
+retains the worker. Green cases require fixed refusals before registration/upload and prompt
+release of a real stalled-header request. Existing HTTP policy precedence is retained.
+
+`tools/TtsCancellationProbe.java` loads the committed APK through Android app_process and uses
+synthetic phone-loopback requests only. Both stalled-header and partial-body cases must cancel
+and allow the next serial request to return valid PCM within three seconds, against a 30-second
+timeout. The body case waits 150 ms after the partial reply before cancellation. Compile/dex and
+run like TransportCancellationProbe, using named temporary jar/APK files under /data/local/tmp;
+remove them afterwards. This needs no app installation, permission, credentials or external TTS.
+
+
+## Failure diagnostic privacy (#62)
+
+Automated loopback regressions cover HTTP errors and malformed successful responses containing
+synthetic transcript and unrelated credential markers. Neither STT error details nor cleanup
+fallback details may include those markers, response prefixes, or raw exception messages.
+Cleanup must still return the original transcript separately. Tests also cover token fragments,
+missing configured tokens, oversized bodies, malformed URLs, and unknown failures through the
+transcription, lane and cleanup adapters. Review the two service debug-log call sites against
+these tested outcomes; never collect production transcripts or credentials as test evidence.
+
+
+## Telegram selected voice waveform compatibility (#65)
+
+Telegram 13.2.1 on the acceptance handset exposes the selected voice waveform as an
+`android.widget.SeekBar` with `selected=true` and the `Voice message` metadata marker. The old
+ViewGroup/LinearLayout-only classifier refused it. Regression e5f1eed reproduces that refusal;
+the repair adds only SeekBar while retaining the one-selection toolbar check, voice marker,
+unique voice node, trusted Share action and original conversation lifetime checks.
+
+Automated checks cover the new role, existing roles, generic seek bars, and lazy metadata access:
+unselected nodes and unknown roles must not have their message metadata read. Native handoff
+and private-result acceptance passed on 8e87a31; #65 is closed. Use content-free service dumps
+or screenshots during an active operation: UIAutomator dump recreates the accessibility service
+on this handset and invalidates recording/caption/narration tests.
+
+
+### Live accessibility tests must not use UIAutomator inspection
+
+The final Try-screen check exposed a harness problem: `adb exec-out uiautomator dump /dev/tty`
+recreated the isolated accessibility service on this handset, including while the app process
+stayed alive. During recording, that teardown cancels the take. A before/after service-record
+identity check reproduced this at idle. Such an interrupted run is not evidence of a product
+recording failure or a passing regression.
+
+Use the isolated package's content-free service diagnostics while recording, processing captions
+or speaking. Use the handset's actual Stop control for manual dictation checks. UIAutomator may
+inspect isolated settings or a delivered test field only while no operation is active; allow the
+service to reconnect before starting the next operation. Never inspect ordinary chat content.
+
+
+### Final read-aloud release candidate: handset checkpoint
+
+Code 18a3fb1 has the same tree as merged feature 6887a31. The isolated app used synthetic text
+and local fixed STT/cleanup responses; no production settings or credentials were copied.
+
+| Check | Observed result |
+| --- | --- |
+| English narration at speed 1.0 through beast TTS | Started and completed normally; screen-awake flag cleared. Microphone permission remained ungranted. |
+| Consent and control contexts | Cancel stayed off; Enable wrote backup-excluded consent. Own settings hid controls; external text showed the shared controls. |
+| Try microphone with narration and captions enabled | Owner tapped mic, spoke briefly and tapped the Recording pill Stop. Valid WAV reached the local fixture; one STT and one cleanup request; expected synthetic text landed and owner confirmed. |
+| Temporary microphone permission | Verified granted before Try and revoked after delivery. |
+| Telegram contextual caption after #65 repair, on 8e87a31 | Selected SeekBar voice note -> native Share -> isolated receiver -> private panel. Valid WAV, one STT and one cleanup request; expected synthetic text displayed; composer empty, mic ungranted, spool empty. |
+
+This fixed-response test proves capture and delivery, not real-server STT accuracy. Earlier
+source/Stop/lock/automatic-timeout, caption cache/chat-switch and Android transport evidence above
+remains applicable. Additional devices and Hebrew/Russian voices remain follow-up coverage.
+
+All temporary test packages were removed and original accessibility/USB-wake settings were
+restored and verified after acceptance. Production configuration was not copied or changed.

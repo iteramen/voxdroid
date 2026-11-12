@@ -8,6 +8,7 @@ import java.net.URL
 internal enum class EndpointKind(val path: String) {
     Stt("/audio/transcriptions"),
     Polish("/chat/completions"),
+    Tts("/audio/speech"),
 }
 
 internal enum class BaseUrlProblem {
@@ -30,6 +31,13 @@ internal fun validateBaseUrl(url: String, allowInsecureHttp: Boolean, kind: Endp
     if (!portInRange(trimmed)) return BaseUrlProblem.PortOutOfRange
     if (uri.path.orEmpty().trimEnd('/').endsWith(kind.path)) return BaseUrlProblem.PathAlreadyThere
     if (insecureBlocked(trimmed, allowInsecureHttp)) return BaseUrlProblem.InsecureHttp
+    if (kind == EndpointKind.Tts) {
+        if (uri.rawUserInfo != null || uri.rawQuery != null || uri.rawFragment != null || uri.host.isNullOrBlank()) {
+            return BaseUrlProblem.NotAnHttpUrl
+        }
+        val target = try { URL(trimmed) } catch (_: MalformedURLException) { return BaseUrlProblem.NotAnHttpUrl }
+        if (!uri.host.equals(target.host, ignoreCase = true)) return BaseUrlProblem.NotAnHttpUrl
+    }
     return null
 }
 

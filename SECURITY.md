@@ -62,14 +62,15 @@ attacker who is not that user.
 - Dictation stores how high above the keyboard the pill was last dropped (`Settings.pillSaved`).
   Captions add transient origin/selection state in memory and optional transcript records below.
 - `res/xml/a11y_entry.xml` declares `canRetrieveWindowContent`, `canRequestFilterKeyEvents`, the
-  flags `flagRequestAccessibilityButton`, `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
+  flags `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
   `flagRetrieveInteractiveWindows` and `flagReportViewIds`, and `isAccessibilityTool="true"`, on
   Play's policy that
   services "designed to help people with disabilities" may declare it
   ([Play policy](https://support.google.com/googleplay/android-developer/answer/10964491)). The
   reasoning is in [docs/play/accessibility-declaration.md](docs/play/accessibility-declaration.md).
 
-**In scope:** text read from another app reaching a log, a file or the network; any key but
+**In scope:** text read from another app reaching a log or file, or reaching the network except
+through the explicit read-aloud selection described below; any key but
 volume-down consumed or kept; a take typing into a field other than the one captured at its start;
 a take recording into, typing into or copying for a password field; the service subscribing to or
 reading more than the declared set. **Out of scope:** that an enabled accessibility service can
@@ -255,9 +256,8 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   changed by a configuration restore.
 
 - The tokens live in the `secrets` preferences file alone and are never logged (`Settings.kt`;
-  `SettingsStore.kt` — `storedAs`). The request's own token is replaced with `[redacted]` in every
-  failure text derived from a reply or an exception, before the 200-character cut (`Http.kt` —
-  `redact`, `bodyPrefix`, `causeDetail`). A token the HTTP stack refuses as a header value fails
+  `SettingsStore.kt` — `storedAs`). STT and cleanup failure details retain only fixed stage/status and failure classifications,
+  never response bodies or raw exception text (`Http.kt` — `RESPONSE_DETAIL`, `causeDetail`). A token the HTTP stack refuses as a header value fails
   the request with fixed text, before anything is sent (`Http.kt` — `HEADER_REFUSED`).
 - `secrets.xml` is excluded from cloud backup and device transfer
   (`res/xml/data_extraction_rules.xml`). No `fullBackupContent` is declared: Android ignores it on
@@ -283,13 +283,15 @@ rooted device or a debugger attached to the app's process.
 
 ### Logs
 
-At info and warn, voxdroid logs no transcript and no token. The two `Log.d` failure lines carry at
-most 200 characters of reply- or exception-derived text, which can be the dictation, with the
-request's token redacted (`VoxdroidA11yService.kt` — `answer`, `answerPolished`). Release builds
-keep `Log.d` (`app/build.gradle.kts` — `isMinifyEnabled = false`, no `isLoggable` guard).
+At every log level, voxdroid logs no transcript or token. The two `Log.d` failure lines retain
+only fixed stage/status and failure classifications (`VoxdroidA11yService.kt` — `answer`,
+`answerPolished`). STT/cleanup response bodies are replaced by a fixed omission marker;
+transport exceptions are classified by type without reading their message. Unknown exceptions
+from the transcription, language-lane and cleanup adapters receive fixed diagnostics too.
+Release builds keep these content-free lines; privacy does not depend on stripping debug logs.
 
-**In scope:** a transcript or a token in a log at info or warn. **Out of scope:** the `Log.d` reply
-text; see [Known limitations](#known-limitations).
+**In scope:** a transcript, token, response body or raw transport exception in a failure log,
+including at debug level. Synthetic response and exception regressions cover these paths.
 
 ### Enablement
 
@@ -363,11 +365,6 @@ already compromised when its checksum was recorded, or one with no published adv
 - **Play Protect.** Sideloaded builds of accessibility-service apps may be flagged by Play
   Protect, which can disable or remove them; install from Google Play, or turn off Play Protect
   scanning for a sideloaded build at your own risk.
-- **The `Log.d` reply text.** The two debug failure lines carry at most 200 characters of the
-  server's reply or of the exception that reported it, which, from a server answering in the wrong
-  shape, can be the dictation. Release builds keep them.
-- **A re-encoded token.** Redaction replaces the token as it was sent; a token the server
-  re-encodes before echoing it, such as JSON writing `/` as `\/`, is not recognised.
 - **Password fields.** The guard trusts what the app reports. A field that reports neither masking
   nor a password input type, such as a custom-drawn one, is not refused.
 - **Reach of the window read.** `keyboardTop` fetches every interactive window's info to find the
@@ -380,10 +377,69 @@ already compromised when its checksum was recorded, or one with no published adv
   when every such endpoint is reached over Tailscale, WireGuard or a similar encrypted network.
 - Turn a lane's "Send the STT token" switch on only for a server you trust with that token.
 - Leave the Delivery mode on Refuse if a clipboard manager or clipboard sync is on.
-- Turn USB and wireless debugging off when you are not using them: the `Log.d` lines carry reply
-  text, and a connected computer can read the log.
+- Turn USB and wireless debugging off when you are not using them: an authorized debugging
+  computer has broad access to the device.
 - Remember the cleanup endpoint sees every non-blank transcript of at least *Minimum words* words
   while the pass is configured.
+
+## Explicit read aloud
+
+`ReadAloudController` provides a draggable accessibility overlay with contextual 🎤 and optional 🔊.
+On Voxdroid's own Try screen, an input-focused editable `try_field` allows the microphone control
+only, subject to the floating-microphone toggle. Own settings/credential windows, password focus
+and lock hide the controls. Narration remains excluded from all Voxdroid-owned windows; changing
+between the Try field and external apps rebuilds the controls for the new context.
+It replaces the requested system accessibility button; the legacy callback remains compatible.
+Read aloud is off by default and enabling it explains screen access and the TTS data flow. On a
+speaker press it examines at most 600 nodes from the active foreground tree, skips password
+subtrees and editable text, and outlines visible read-only blocks of at least 15 characters. Those
+candidate nodes/text stay in memory only until selection or cancellation. Only the block explicitly
+tapped, revalidated against its original package/window and refreshed node, is sent to TTS.
+
+The selected block is limited to 20,000 Unicode code points, split into chunks of at most 500.
+Dominant Latin, Hebrew or Cyrillic script selects en/he/ru. This is script routing, not semantic
+language detection. Hebrew/Russian require their own configured supported voice; no English voice
+is substituted. All chunks are prepared before any request. Credentials are TTS-specific; a lane
+inherits the default TTS credential only by an explicit switch. STT/cleanup credentials are unused.
+`ReadAloud.kt` uses the existing HTTP consent gate, rejects URL credentials/query/fragment, follows
+no redirects and never displays server bodies. The same endpoint validation runs in settings,
+preparation and at the transport boundary, requiring a nonempty host interpreted consistently
+by URI and URL. Invalid endpoints fail with a fixed message before connection registration or
+upload. Replies are bounded to 12 MiB, PCM16 WAV,
+mono/stereo, 8–48 kHz and 120 seconds per chunk. Kokoro's streaming RIFF/data length sentinels are
+completed only from the already bounded body; arbitrary truncation/oversize is rejected.
+
+One worker and one pending slot bound queued text. While speaking, a content update may continue
+only if the originally chosen node refreshes and still has identical text/bounds, the original
+package/window, and remains visible, read-only and non-password. No replacement node is searched
+for. The chosen-node reference and comparison text are cleared on cancellation/completion. Picker content changes
+still invalidate its snapshot hit boxes. Scroll and source window-state changes still stop speech.
+One visible glyph window keeps the screen on during synthesis/playback only; idle, picker, error,
+completion and cancellation release that flag. Explicit screen-off still stops speech.
+
+Stop, dictation start, selected-view/app change,
+password focus, screen-off, audio-focus loss, settings change or destruction invalidates the
+request and stops playback. The transport watchdog disconnects obsolete I/O off the main thread
+at 50 ms intervals, with a separate total deadline and generation checks before upload and after
+I/O. Cancellation during registration is checked before opening a stream. Late replies cannot
+play. Already-admitted network I/O may still reach or finish on the server; it cannot be recalled.
+Playback uses a mediaPlayback foreground service
+and notification with Stop, not a microphone service; no microphone permission is needed. Text and
+generated audio never enter files, caption history, the clipboard or dictation logs. TTS
+configuration/tokens are included in explicit encrypted settings export; enable consent is not.
+The consent bit lives in backup-excluded `secrets.xml`, so Android cloud/device restore cannot
+re-enable screen-text access without a new opt-in.
+
+The opt-in `.readaloudtest` debug package adds metadata-only service diagnostics: own control
+bounds, candidate lengths/bounds, active/picker/playback/screen-awake flags, a count of tolerated
+content updates and fixed failure classes. It emits
+no selected text, endpoint, token or conversation identity. No diagnostic output is enabled in the
+normal debug or release package.
+
+**In scope:** another block sent without selection; password/editable content selected; text or
+speech retained locally; a token forwarded by a redirect or without lane consent; late playback
+after invalidation. **Out of scope:** server retention policies and platform accessibility metadata
+that falsely identifies an unmarked password as ordinary text.
 
 ### Dictation transport cancellation
 

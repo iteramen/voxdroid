@@ -71,7 +71,8 @@ Kotlin only: no Compose, OkHttp, Retrofit or extra coroutine libraries. Tests us
 - Tokens live in their own `secrets` SharedPreferences file, which `dataExtractionRules`
   excludes from cloud backup and device transfer. They never reach a log, an error string or the
   repository.
-- Transcript text is never logged at the default level.
+- Transcript text is never logged, including at debug level. Failure diagnostics omit response
+  bodies and raw exception text; keep only fixed classifications and status codes.
 - Release signing reads `keystore.properties` (gitignored, repo root; a relative `storeFile`
   resolves against the repo root). A file with a missing key fails the build.
 

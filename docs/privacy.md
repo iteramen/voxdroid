@@ -1,9 +1,9 @@
 # Privacy policy — voxdroid
 
-**Effective: 2026-11-07 (version 0.3.0).**
+**Effective: 2026-11-12.**
 
 voxdroid is an Android accessibility service that dictates into the text field you are typing in,
-with your own keyboard staying up. You hold volume-down or tap the accessibility button, speak,
+with your own keyboard staying up. You hold volume-down or tap the floating 🎤 control, speak,
 stop, and the transcript lands where your cursor was. voxdroid has no server of its own: it sends
 your speech to servers you configure yourself, as its desktop sibling
 [byovox](https://github.com/iteramen/byovox) does. This policy describes what the app does. Each
@@ -12,17 +12,19 @@ statement names the source file and symbol that does it, in the
 
 ## Permissions
 
-voxdroid declares four Android permissions (`AndroidManifest.xml`):
+voxdroid declares five Android permissions (`AndroidManifest.xml`):
 
 - **Microphone** (`RECORD_AUDIO`), to record what you say. The app's status card asks for it, and
   you can take it back at any time in Android's app settings; without it nothing is recorded
   (`VoxdroidA11yService.kt` — `startRecording`).
-- **Network** (`INTERNET`), so the recording can reach the servers you configure.
+- **Network** (`INTERNET`), so recordings and explicitly selected read-aloud text can reach the servers you configure.
 - **Foreground service, microphone type** (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MICROPHONE`),
   so the service can record while the app you dictate into is on screen. It runs only from a
   start until a stop, a cancel, the 5-minute cap or the screen turning off, while the dictation
   pill and Android's microphone indicator show. voxdroid does not request the notification
   permission.
+- **Foreground media playback** (`FOREGROUND_SERVICE_MEDIA_PLAYBACK`), to synthesize and play an
+  explicitly selected text block under a notification with Stop; no microphone access is needed.
 
 The built app also carries `io.github.iteramen.voxdroid.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`,
 which an AndroidX library adds: it is signature-level, so only an app signed with voxdroid's own
@@ -207,8 +209,8 @@ voxdroid's accessibility service reaches the following, and only when stated
 - **The clipboard**, written only in the mode you chose, with the dictated text, which Android's
   clipboard preview shows (`FieldAccess.kt` — `copy`).
 
-None of the text read from the field or around the cursor is written to a log, a file or the
-network. What leaves the device is what [Where the audio goes](#where-the-audio-goes) lists.
+Cursor-adjacent text used for dictation spacing is never logged, saved or sent. Separately,
+explicitly chosen read-only text goes to the configured TTS server as described under Optional read aloud.
 
 ## Logs
 
@@ -220,13 +222,13 @@ the HTTP status when a long recording was resent without `vad` (`SttClient.kt`);
 control or format characters were removed from a dictation, never the text (`Commit.kt` —
 `droppedNote`).
 
-At debug level, a failed transcription or cleanup request logs one line describing the failure
-(`VoxdroidA11yService.kt` — `answer`, `answerPolished`), and release builds keep that line
-(`app/build.gradle.kts` — `isMinifyEnabled = false`). It can include the server's hostname from a
-network error and, for a reply the app could not use, its first 200 characters — which, from a
-server answering in the wrong shape, could be your dictation. The request's own bearer token is
-replaced with `[redacted]` in that line (`Http.kt` — `redact`, `bodyPrefix`); a token the server
-re-encodes before echoing it is not recognised.
+At debug level, a failed transcription or cleanup request logs one content-free line describing
+the stage, HTTP status when available, and a fixed failure category (`VoxdroidA11yService.kt` —
+`answer`, `answerPolished`). Release builds keep that line. It contains no server response body,
+transcript, hostname, URL, credential or raw exception message. `Http.kt` — `causeDetail`
+classifies exceptions by type, and `RESPONSE_DETAIL` replaces response content entirely, even
+if the server echoes an unconfigured or re-encoded credential. Cleanup failure still returns
+your original transcript for delivery; that transcript is separate from the diagnostic.
 
 ## Children
 
@@ -242,3 +244,23 @@ here.
 
 Questions about this policy or your data: byovox.licensing@gmail.com. Non-sensitive questions are
 also welcome as [GitHub issues](https://github.com/iteramen/voxdroid/issues).
+
+## Optional read aloud
+
+Read aloud is off by default. Its enable dialog explains that tapping 🔊 examines visible
+read-only foreground text to outline choices. Only the block you then choose is sent to your own
+configured TTS endpoint, as text with model, voice and speed, in `POST /audio/speech`. The server
+can retain it under its own policy. Password fields and editable blocks are excluded. The app
+keeps candidates, chosen text and generated speech only in memory, never in logs, files, captions
+or the clipboard. It reads no background document and does not use the microphone.
+
+Stop, leaving/changing the source view, locking, starting dictation or losing audio focus cancels
+reading and discards late replies. Network I/O already admitted before cancellation may still
+reach or finish on the server; the app cannot recall it. The separate
+`FOREGROUND_SERVICE_MEDIA_PLAYBACK` permission supports playback with a Stop notification; it
+adds no permission dialog. TTS uses the same explicit remote-HTTP gate as dictation. TTS tokens
+are separate from speech/cleanup tokens, and language-token inheritance must be explicitly enabled.
+English is the first supported configuration; Hebrew/Russian slots need supported voices and do not
+fall back to an English voice. Read-aloud configuration and its tokens are included in encrypted
+settings export, but its enable consent is excluded and must be granted again after reinstall.
+The read-aloud consent bit is also excluded from Android cloud backup and device transfer.

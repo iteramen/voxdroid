@@ -23,7 +23,7 @@ sealed interface SttLanguage {
     }
 }
 
-/** [bar] is the pill's head and drops the response body; neither field ever contains the token. */
+/** [bar] is the pill head; both fields contain only fixed diagnostics and status, never response content. */
 class SttError(val bar: String, message: String) : Exception(message)
 
 internal fun <T> notCurrent(): Result<T> = Result.failure(SttError(NOT_CURRENT, NOT_CURRENT))
@@ -68,20 +68,20 @@ class SttClient(
             Attempt.Blocked -> return fail(INSECURE_BLOCKED)
         }
         if (answered.status !in HTTP_OK_FIRST..HTTP_OK_LAST) {
-            return fail("stt HTTP ${answered.status}", prefix(answered.body))
+            return fail("stt HTTP ${answered.status}", RESPONSE_DETAIL)
         }
         val fields = try {
             JSONTokener(answered.body).nextValue() as? JSONObject
-                ?: return fail("stt response is not an object", prefix(answered.body))
+                ?: return fail("stt response is not an object", RESPONSE_DETAIL)
         } catch (malformed: JSONException) {
-            return fail("stt JSON", prefix(answered.body))
+            return fail("stt JSON", RESPONSE_DETAIL)
         }
         val text = fields.opt("text") as? String
-            ?: return fail("stt response has no text field", prefix(answered.body))
+            ?: return fail("stt response has no text field", RESPONSE_DETAIL)
         // whisper breaks `text` at segment boundaries, not at spoken line breaks, so lines join on a space.
         val joined = text.lines().map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ")
         val prob = if (scored) {
-            maxNoSpeechProb(fields, answered.body).getOrElse { return Result.failure(it) }
+            maxNoSpeechProb(fields).getOrElse { return Result.failure(it) }
         } else {
             null
         }
@@ -91,17 +91,17 @@ class SttClient(
     }
 
     /** `null` when no segment is scored; a malformed `segments` or score fails loudly instead of looking like an unscored server. */
-    private fun maxNoSpeechProb(fields: JSONObject, body: String): Result<Float?> {
+    private fun maxNoSpeechProb(fields: JSONObject): Result<Float?> {
         val segments = fields.opt("segments")
         if (segments == null || segments === JSONObject.NULL) return Result.success(null)
-        if (segments !is JSONArray) return fail("stt response segments is not an array", prefix(body))
+        if (segments !is JSONArray) return fail("stt response segments is not an array", RESPONSE_DETAIL)
         var max: Float? = null
         for (i in 0 until segments.length()) {
             val segment = segments.opt(i) as? JSONObject ?: continue
             // Absent and JSON null differ: an absent key is skipped, a null score is a reply this client does not understand.
             val score = segment.opt("no_speech_prob") ?: continue
             val prob = (score as? Number)?.toFloat()
-                ?: return fail("stt response no_speech_prob is not a number", prefix(body))
+                ?: return fail("stt response no_speech_prob is not a number", RESPONSE_DETAIL)
             max = if (max == null) prob else maxOf(max, prob)
         }
         return Result.success(max)
@@ -129,8 +129,6 @@ class SttClient(
 
     private fun <T> fail(head: String, detail: String? = null, bar: String = head): Result<T> =
         Result.failure(SttError(bar, if (detail.isNullOrEmpty()) head else "$head: $detail"))
-
-    private fun prefix(body: String) = bodyPrefix(body, token)
 
     private companion object {
         const val PATH = "/audio/transcriptions"

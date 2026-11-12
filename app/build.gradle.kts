@@ -30,8 +30,8 @@ android {
         applicationId = "io.github.iteramen.voxdroid"
         minSdk = 33
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.3.0"
+        versionCode = 6
+        versionName = "0.4.0"
         val commit = providers.of(GitCommit::class) {}.get()
         buildConfigField("String", "COMMIT", "\"$commit\"")
     }
@@ -75,6 +75,12 @@ android {
                 applicationIdSuffix = ".captiontest"
                 versionNameSuffix = "-caption-test"
                 resValue("string", "app_name", "Voxdroid Caption Test")
+            }
+            if (providers.gradleProperty("readAloudTest").orNull == "true") {
+                check(providers.gradleProperty("captionTest").orNull != "true") { "Choose one isolated handset package" }
+                applicationIdSuffix = ".readaloudtest"
+                versionNameSuffix = "-read-aloud-test"
+                resValue("string", "app_name", "Voxdroid Read Aloud Test")
             }
         }
         release {

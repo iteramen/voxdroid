@@ -26,7 +26,7 @@ internal fun systemPrompt(base: String, glossary: String?): String {
 
 internal fun wordCount(text: String): Int = text.split(WHITESPACE).count { it.isNotEmpty() }
 
-/** [message] is the whole line for logcat and never carries the token; [blocked] marks a refused insecure endpoint; [notice] is a connection failure's pill line. */
+/** [message] is the whole line for logcat and carries fixed diagnostic words and status only; [blocked] marks a refused insecure endpoint; [notice] is a connection failure's pill line. */
 class PolishError(message: String, val blocked: Boolean = false, val notice: String? = null) : Exception(message)
 
 interface Polisher {
@@ -60,7 +60,10 @@ fun polish(polisher: Polisher, raw: String, minWords: Int, lowercaseRule: Boolea
         onSuccess = { PolishOutcome.Text(if (lowercaseRule) restoreFirstI(it) else it) },
         onFailure = {
             val error = it as? PolishError
-            PolishOutcome.Fallback(raw, it.message.orEmpty(), blocked = error?.blocked == true, notice = error?.notice)
+            PolishOutcome.Fallback(
+                raw, error?.message ?: "polish transport: ${causeDetail(it)}",
+                blocked = error?.blocked == true, notice = error?.notice,
+            )
         },
     )
 }
@@ -100,23 +103,23 @@ class PolishClient(
             Attempt.Blocked -> return Result.failure(PolishError(INSECURE_BLOCKED, blocked = true))
         }
         if (answered.status !in HTTP_OK_FIRST..HTTP_OK_LAST) {
-            return fail("polish HTTP ${answered.status}", bodyPrefix(answered.body, token))
+            return fail("polish HTTP ${answered.status}", RESPONSE_DETAIL)
         }
         val fields = try {
             JSONTokener(answered.body).nextValue() as? JSONObject
-                ?: return fail("polish response is not an object", bodyPrefix(answered.body, token))
+                ?: return fail("polish response is not an object", RESPONSE_DETAIL)
         } catch (malformed: JSONException) {
-            return fail("polish JSON", bodyPrefix(answered.body, token))
+            return fail("polish JSON", RESPONSE_DETAIL)
         }
         val choice = (fields.opt("choices") as? JSONArray)?.opt(0) as? JSONObject
-            ?: return fail(NO_CONTENT, bodyPrefix(answered.body, token))
+            ?: return fail(NO_CONTENT, RESPONSE_DETAIL)
         // Older compatible servers may omit this field. Explicit incomplete or malformed
         // reasons must preserve the complete raw transcript through the normal fallback.
         if (choice.has("finish_reason") && choice.opt("finish_reason") != "stop") {
             return fail("polish returned incomplete content")
         }
         val content = (choice.opt("message") as? JSONObject)?.opt("content") as? String
-            ?: return fail(NO_CONTENT, bodyPrefix(answered.body, token))
+            ?: return fail(NO_CONTENT, RESPONSE_DETAIL)
         val trimmed = content.trim()
         if (trimmed.isEmpty()) return fail("polish returned empty content")
         return Result.success(trimmed)

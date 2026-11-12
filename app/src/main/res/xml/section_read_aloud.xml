@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreferenceCompat android:key="tts_enabled" android:defaultValue="false"
+        android:title="@string/read_enable" android:summary="@string/read_enable_summary" />
+    <Preference android:title="@string/read_usage_title" android:summary="@string/read_usage" />
+    <EditTextPreference android:key="tts_speed" android:defaultValue="1.0" android:title="@string/read_speed" />
+    <EditTextPreference android:key="tts_timeout_s" android:defaultValue="30" android:title="@string/read_timeout" />
+    <PreferenceCategory android:title="@string/read_en">
+        <EditTextPreference android:key="tts_url_en" android:defaultValue="" android:title="@string/read_url" android:dialogMessage="@string/read_url_help" />
+        <EditTextPreference android:key="tts_model_en" android:defaultValue="kokoro" android:title="@string/read_model" />
+        <EditTextPreference android:key="tts_voice_en" android:defaultValue="af_bella" android:title="@string/read_voice" android:summary="@string/read_voice_help" />
+        <EditTextPreference android:key="tts_token_en" android:defaultValue="" android:title="@string/read_token" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/read_he">
+        <EditTextPreference android:key="tts_url_he" android:defaultValue="" android:title="@string/read_url" android:dialogMessage="@string/read_url_help" />
+        <EditTextPreference android:key="tts_model_he" android:defaultValue="" android:title="@string/read_model" />
+        <EditTextPreference android:key="tts_voice_he" android:defaultValue="" android:title="@string/read_voice" android:summary="@string/read_voice_help" />
+        <EditTextPreference android:key="tts_token_he" android:defaultValue="" android:title="@string/read_token" />
+        <SwitchPreferenceCompat android:key="tts_inherit_token_he" android:defaultValue="false" android:title="@string/read_inherit" android:summary="@string/read_inherit_help" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/read_ru">
+        <EditTextPreference android:key="tts_url_ru" android:defaultValue="" android:title="@string/read_url" android:dialogMessage="@string/read_url_help" />
+        <EditTextPreference android:key="tts_model_ru" android:defaultValue="" android:title="@string/read_model" />
+        <EditTextPreference android:key="tts_voice_ru" android:defaultValue="" android:title="@string/read_voice" android:summary="@string/read_voice_help" />
+        <EditTextPreference android:key="tts_token_ru" android:defaultValue="" android:title="@string/read_token" />
+        <SwitchPreferenceCompat android:key="tts_inherit_token_ru" android:defaultValue="false" android:title="@string/read_inherit" android:summary="@string/read_inherit_help" />
+    </PreferenceCategory>
+</PreferenceScreen>

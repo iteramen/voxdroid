@@ -51,9 +51,10 @@ internal object CaptionAccessibility {
             .mapNotNull { captionTelegramSelectionCount(it.text) }.singleOrNull()
             ?: -1 // An unreadable selected-mode count must refuse, never fall through to microphone dictation.
         if (count != 1) return Selection(count, null, null, null)
-        val selected = nodes(root).filter { it.isSelected && it.className?.toString() in setOf("android.view.ViewGroup", "android.widget.LinearLayout") }
-        val voices = selected.filter { node ->
-            (node.contentDescription?.toString().orEmpty() + " " + node.text?.toString().orEmpty()).contains("Voice message", ignoreCase = true)
+        val voices = nodes(root).filter { node ->
+            captionTelegramVoiceNode(node.isSelected, node.className) {
+                node.contentDescription?.toString().orEmpty() + " " + node.text?.toString().orEmpty()
+            }
         }
         val voice = voices.singleOrNull() ?: return Selection(1, null, null, null)
         val share = chrome.filter { it.contentDescription?.toString() == "Share" && it.isVisibleToUser && it.isClickable }

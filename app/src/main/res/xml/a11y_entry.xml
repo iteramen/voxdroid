@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- isAccessibilityTool="true": voice input for motor impairments and private selected-note
-     captions for people who are deaf or hard of hearing. See docs/play/accessibility-declaration.md. -->
+     captions for people who are deaf or hard of hearing, plus explicit read aloud for access to written text. See docs/play/accessibility-declaration.md. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeWindowsChanged|typeWindowStateChanged|typeWindowContentChanged|typeViewScrolled|typeViewClicked|typeViewLongClicked"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagRequestAccessibilityButton|flagRequestFilterKeyEvents|flagInputMethodEditor|flagRetrieveInteractiveWindows|flagReportViewIds"
+    android:accessibilityFlags="flagRequestFilterKeyEvents|flagInputMethodEditor|flagRetrieveInteractiveWindows|flagReportViewIds"
     android:canRequestFilterKeyEvents="true"
     android:canRetrieveWindowContent="true"
     android:description="@string/a11y_description"
