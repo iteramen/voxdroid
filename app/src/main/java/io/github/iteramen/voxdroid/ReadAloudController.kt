@@ -69,7 +69,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         val root = service.getRootInActiveWindow(0)
         val locked = service.getSystemService(KeyguardManager::class.java).isKeyguardLocked
         val password = root?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.isPassword == true
-        if (locked || password || root?.packageName?.toString() == service.packageName) {
+        if (readControlContext(root?.packageName?.toString() == service.packageName, false, locked, password) == ReadControlContext.Hidden) {
             cancel(); hideGlyph(); return
         }
         if (busy) {
