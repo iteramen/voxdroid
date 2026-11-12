@@ -906,3 +906,32 @@ remains applicable. Additional devices and Hebrew/Russian voices remain follow-u
 
 All temporary test packages were removed and original accessibility/USB-wake settings were
 restored and verified after acceptance. Production configuration was not copied or changed.
+
+
+### Translucent floating controls (#67 / #68)
+
+Native UI code 79aa160, following owner approval of design 84b369c. The release preparation
+changes only version metadata/documentation after this code. The isolated app used synthetic
+browser text; production configuration/tokens were not copied.
+
+| Check | Evidence |
+| --- | --- |
+| Paired layout | Screenshot inspection on light and dark synthetic pages: rounded translucent capsule, clear vector icons, faint divider, no handle. Each action measured 126 px at this handset's density (48 dp). |
+| Drag from either action | Both buttons moved the capsule without opening the narration picker or starting playback. Moving beyond the top/left edge stayed on-screen. |
+| Saved position | Leaving for own settings hid the capsule; returning restored the saved coordinates. Wait for final layout before comparing screen bounds. |
+| Speaker tap and cancel | Opened and cancelled the text picker; selected synthetic English text played through the real TTS endpoint at speed 1.0; tapping the speaker stopped playback and released screen-awake. |
+| Microphone-only Try | Opened through Settings, focused the isolated Try field, verified a circular microphone with no speaker, and dragged it. No recording was requested. |
+| Accessibility | ImageButtons keep the existing action descriptions and 48 dp targets, checked in source/resources. Live TalkBack navigation was not tested. |
+| Action routing | The existing microphone and narration callbacks are unchanged. Prior 0.4.0 capture/delivery and Telegram caption acceptance remain applicable; these were not represented as fresh end-to-end tests. |
+| Cleanup | Test app removed; original accessibility and USB-wake values restored. Production package data and grants untouched. |
+
+Local lint/build, 505 JVM tests (504 passed, one existing live-server skip) and six handset-helper
+tests passed. All four PR checks passed on 79aa160 before the version/documentation follow-up.
+Final landing must use green checks on that follow-up too.
+
+Harness limits: a locked-phone attempt was discarded. UIAutomator recreates the service and
+omits transient overlay nodes, so screenshots and content-free diagnostics validated active
+controls. A direct shell launch correctly refused the unexported Try activity; the passing layout
+check opened it through Settings. The Try readiness prerequisite used a temporary microphone
+runtime grant without requesting recording; the grant ended with test-app removal. A final
+appops text-format assertion did not pass and is not claimed as audio-policy evidence.

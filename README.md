@@ -135,7 +135,7 @@ Open **Read aloud**, configure your TTS base URL (for example `http://<tailnet-h
 model and voice, then enable it after reviewing the disclosure. With Kokoro, English can use
 `kokoro` and `af_bella`. Enable remote HTTP explicitly only when appropriate for your connection.
 Tap 🔊 on the floating control, then tap an outlined read-only text block. Tap 🔊 again to stop;
-leaving the source view or locking the phone also cancels. Drag ⋮ to move the control. 🎤 retains
+leaving the source view or locking the phone also cancels. Drag either icon to move the control. 🎤 retains
 dictation and selected voice-note captions; volume-down still dictates. Read aloud needs no mic
 permission. Text and generated speech stay in memory on the phone; your server has its own policy.
 
