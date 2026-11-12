@@ -24,7 +24,6 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import java.net.HttpURLConnection
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -47,7 +46,6 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     private var active = false
     private var sourcePackage: String? = null
     private var sourceWindow = -1
-    private var connection: HttpURLConnection? = null
     private var track: AudioTrack? = null
     private var media = false
     private var focused = false
@@ -245,9 +243,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
             try {
                 for ((chunk, endpoint) in prepared) {
                     if (generation.get() != id) break
-                    val pcm = ttsSynthesize(config, endpoint, chunk, { generation.get() == id }) { value ->
-                        synchronized(lock) { if (generation.get() == id) connection = value else value?.disconnect() }
-                    }
+                    val pcm = ttsSynthesize(config, endpoint, chunk, { generation.get() == id }, {})
                     if (generation.get() != id) break
                     synchronized(lock) {
                         if (generation.get() != id) return@execute
@@ -292,7 +288,6 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         keepScreenOn(false)
         worker.queue.clear()
         synchronized(lock) {
-            connection?.disconnect(); connection = null
             track?.let { runCatching { it.pause(); it.flush(); it.stop() } }
             if (focused) { audio.abandonAudioFocusRequest(focus); focused = false }
         }

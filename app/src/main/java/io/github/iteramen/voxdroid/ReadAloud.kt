@@ -7,6 +7,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Timer
 import java.util.TimerTask
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val TTS_MAX_TEXT = 20_000
 internal const val TTS_CHUNK = 500
@@ -112,11 +113,27 @@ internal fun ttsWav(bytes: ByteArray): SpeechPcm {
 internal fun ttsSynthesize(config: ReadAloudConfig, endpoint: TtsEndpoint, text: String, current: () -> Boolean,
     connectionChanged: (HttpURLConnection?) -> Unit): SpeechPcm {
     if (!current()) throw TtsFailure("Read aloud cancelled")
-    val connection = URL("${endpoint.baseUrl}/audio/speech").openConnection() as HttpURLConnection
-    connectionChanged(connection)
+    if (endpoint.baseUrl.isBlank() || validateBaseUrl(endpoint.baseUrl, config.allowHttp, EndpointKind.Tts) != null) {
+        throw TtsFailure("Read aloud: check the TTS base URL and insecure HTTP setting")
+    }
+    val connection = URL("${endpoint.baseUrl.trim().trimEnd('/')}/audio/speech").openConnection() as HttpURLConnection
     val timer = Timer("read-aloud-deadline", true)
-    timer.schedule(object : TimerTask() { override fun run() { connection.disconnect() } }, config.timeoutS * 1000L)
+    val timedOut = AtomicBoolean(false)
+    fun checkCurrent() {
+        if (!current()) throw TtsFailure("Read aloud cancelled")
+        if (timedOut.get()) throw TtsFailure("Read aloud: TTS request timed out")
+    }
     return try {
+        connectionChanged(connection)
+        // Stop may arrive while the connection is being registered, before any I/O.
+        checkCurrent()
+        timer.schedule(object : TimerTask() {
+            override fun run() { timedOut.set(true); connection.disconnect() }
+        }, config.timeoutS * 1000L)
+        // Disconnect blocked transport off the accessibility/main thread, as for dictation.
+        timer.schedule(object : TimerTask() {
+            override fun run() { if (!current()) connection.disconnect() }
+        }, 0L, 50L)
         connection.requestMethod = "POST"
         connection.doOutput = true
         connection.instanceFollowRedirects = false
@@ -127,21 +144,27 @@ internal fun ttsSynthesize(config: ReadAloudConfig, endpoint: TtsEndpoint, text:
         val body = JSONObject().put("model", endpoint.model).put("voice", endpoint.voice).put("input", text)
             .put("speed", config.speed).put("response_format", "wav").put("stream", false).toString().toByteArray(Charsets.UTF_8)
         connection.setFixedLengthStreamingMode(body.size)
-        connection.outputStream.use { it.write(body) }
+        checkCurrent()
+        connection.outputStream.use {
+            checkCurrent()
+            it.write(body)
+        }
+        checkCurrent()
         val status = connection.responseCode
+        checkCurrent()
         if (status != 200) throw TtsFailure("Read aloud: TTS returned HTTP $status")
         val bytes = connection.inputStream.use { stream ->
             val out = java.io.ByteArrayOutputStream()
             val buffer = ByteArray(8192)
             while (out.size() <= TTS_MAX_AUDIO) {
-                if (!current()) throw TtsFailure("Read aloud cancelled")
+                checkCurrent()
                 val count = stream.read(buffer, 0, minOf(buffer.size, TTS_MAX_AUDIO + 1 - out.size()))
                 if (count < 0) break
                 out.write(buffer, 0, count)
             }
             out.toByteArray()
         }
-        if (!current()) throw TtsFailure("Read aloud cancelled")
+        checkCurrent()
         ttsWav(bytes)
     } finally { timer.cancel(); connection.disconnect(); connectionChanged(null) }
 }

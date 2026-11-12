@@ -27,8 +27,9 @@ acceptance. No version bump or production deployment is part of this repair queu
    unmuted dictation on b09dbdb. Broader desktop native acceptance remains tracked in #33/#42.
 4. **Merged and core handset checks passed (#55 / #56):** Android narration source/power lifecycle.
    Native a9eac33 evidence is linked from #55; remaining combined acceptance is listed below.
-5. **Active (#58):** restore an accessible tap trigger on Android's own Try screen.
-6. Queued: reconcile Android TTS endpoint validation and cancellation with security policy;
+5. **Merged (#58 / #59):** microphone-only Try control; own settings hidden on the handset.
+   Permission revocation closes the test task; final real start/stop remains in combined acceptance.
+6. **Active (#60):** reconcile Android TTS endpoint validation and cancellation with security policy;
    keep security reproduction details local until reviewed.
 7. Queued: remove sensitive server-error detail from production logging.
 8. Final combined regression on the release candidate: normal-speed English narration, dictation/
@@ -122,3 +123,13 @@ settings/credentials, password focus and lock remain hidden. Narration remains u
 own windows; switching to an external app rebuilds its usual controls. The existing trigger
 toggle and microphone permission check remain in force. Native UI qualification follows the
 committed isolated APK; no production data is copied.
+
+## Item 6: TTS endpoint and transport policy (#60)
+
+Regression a301cbd fails all four synthetic cases before implementation: malformed endpoint
+policy, transport-boundary validation, cancellation at connection registration, and cancellation
+during a stalled response-header wait. The fix validates endpoint structure at both preparation
+and transport, checks generation before upload, and interrupts obsolete I/O from the watchdog
+rather than blocking the main thread. The total deadline prevents later I/O phases restarting
+after expiry. Android header/body behavior is qualified with tools/TtsCancellationProbe.java;
+no installed-app data, microphone, credentials or external endpoint is used by that probe.

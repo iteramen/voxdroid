@@ -831,3 +831,17 @@ context, hidden own settings and locked/password contexts, and normal external c
 Native checklist: own Try field shows 🎤 but no 🔊; own settings/credential views show neither;
 returning to the external synthetic page restores configured controls; disabling the floating
 microphone hides it on Try. A tap uses the existing permission/field-checked dictation path.
+
+## TTS request policy (#60)
+
+`TtsPolicyTest` first fails in a301cbd: invalid endpoint structure is accepted, direct transport
+skips validation, registration-time cancellation reaches loopback, and a cancelled header wait
+retains the worker. Green cases require fixed refusals before registration/upload and prompt
+release of a real stalled-header request. Existing HTTP policy precedence is retained.
+
+`tools/TtsCancellationProbe.java` loads the committed APK through Android app_process and uses
+synthetic phone-loopback requests only. Both stalled-header and partial-body cases must cancel
+and allow the next serial request to return valid PCM within three seconds, against a 30-second
+timeout. The body case waits 150 ms after the partial reply before cancellation. Compile/dex and
+run like TransportCancellationProbe, using named temporary jar/APK files under /data/local/tmp;
+remove them afterwards. This needs no app installation, permission, credentials or external TTS.
