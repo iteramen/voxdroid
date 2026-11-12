@@ -3,6 +3,13 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Security
+- STT and cleanup failure diagnostics omit response bodies and raw exception messages at every
+  log level. Fixed failure categories and HTTP status remain available. Privacy policy updated
+  2026-11-12 to describe this behavior and the read-aloud release candidate.
+
 ## 0.3.0 — 2026-11-07
 
 Added

@@ -29,8 +29,9 @@ fun dictate(
     noSpeechThreshold: Float,
 ): SttOutcome {
     val transcription = transcriber.transcribe(wav, language, prompt).getOrElse { failed ->
-        val detail = failed.message.orEmpty()
-        val bar = (failed as? SttError)?.bar ?: detail.substringBefore(':').trim()
+        val error = failed as? SttError
+        val detail = error?.message ?: "stt transport: ${causeDetail(failed)}"
+        val bar = error?.bar ?: "stt transport"
         return SttOutcome.Failure(bar, detail)
     }
     val prob = transcription.noSpeechProb

@@ -44,12 +44,12 @@ class DictateTest {
     fun theBarGetsTheHeadOfAFailureAndLogcatTheWholeLine() {
         val failing = object : Transcriber {
             override fun transcribe(wav: ByteArray, language: SttLanguage, prompt: String?) =
-                Result.failure<Transcription>(SttError("stt HTTP 502", "stt HTTP 502: <html>gateway</html>"))
+                Result.failure<Transcription>(SttError("stt HTTP 502", "stt HTTP 502: response content omitted"))
         }
 
         val outcome = dictate(failing, WAV, LANGUAGE, null, 0.3f)
 
-        assertEquals(SttOutcome.Failure("stt HTTP 502", "stt HTTP 502: <html>gateway</html>"), outcome)
+        assertEquals(SttOutcome.Failure("stt HTTP 502", "stt HTTP 502: response content omitted"), outcome)
     }
 
     @Test

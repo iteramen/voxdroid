@@ -14,6 +14,17 @@ import java.util.Collections
 
 class PolishClientTest {
 
+    @Test fun failureDiagnosticsExcludeContentWhilePreservingTheRawFallback() {
+        for ((status, body) in listOf(500 to "PRIVATE_TRANSCRIPT OTHER_CREDENTIAL", 200 to "PRIVATE_TRANSCRIPT {broken OTHER_CREDENTIAL")) {
+            val server = start(status = status, reply = body)
+            val result = fallback(polish(client(server.url, token = TOKEN), RAW, 0))
+            assertEquals(RAW, result.raw)
+            assertFalse(result.detail, result.detail.contains("PRIVATE_TRANSCRIPT"))
+            assertFalse(result.detail, result.detail.contains("OTHER_CREDENTIAL"))
+            server.stop()
+        }
+    }
+
     @Test
     fun incompleteCompletionsPreserveTheEntireRawTranscript() {
         for (reason in listOf("length", "content_filter", "tool_calls", "unknown", JSONObject.NULL, 42)) {
@@ -104,7 +115,7 @@ class PolishClientTest {
         val outcome = polish(client(server.url), RAW, 0)
 
         assertEquals(RAW, fallback(outcome).raw)
-        assertEquals("polish HTTP 500: {\"error\":\"boom\"}", fallback(outcome).detail)
+        assertEquals("polish HTTP 500: response content omitted", fallback(outcome).detail)
     }
 
     @Test
@@ -220,7 +231,7 @@ class PolishClientTest {
         val outcome = polish(client(server.url), RAW, 0)
 
         assertEquals(RAW, fallback(outcome).raw)
-        assertEquals("polish response is not an object: <html>gateway</html>", fallback(outcome).detail)
+        assertEquals("polish response is not an object: response content omitted", fallback(outcome).detail)
     }
 
     @Test
@@ -247,64 +258,64 @@ class PolishClientTest {
     }
 
     @Test
-    fun aFailureBodyThatEchoesTheTokenIsRedacted() {
+    fun aFailureBodyThatEchoesTheTokenIsOmitted() {
         val server = start(status = 500, reply = "upstream rejected: Bearer $TOKEN, again $TOKEN")
 
         val outcome = polish(client(server.url, token = TOKEN), RAW, 0)
 
         assertEquals(
-            "polish HTTP 500: upstream rejected: Bearer [redacted], again [redacted]",
+            "polish HTTP 500: response content omitted",
             fallback(outcome).detail,
         )
     }
 
     @Test
-    fun aNoContentBodyThatEchoesTheTokenIsRedacted() {
+    fun aNoContentBodyThatEchoesTheTokenIsOmitted() {
         val server = start(reply = """{"text": "auth=Bearer $TOKEN"}""")
 
         val outcome = polish(client(server.url, token = TOKEN), RAW, 0)
 
         assertEquals(
-            "polish response has no content field: {\"text\": \"auth=Bearer [redacted]\"}",
+            "polish response has no content field: response content omitted",
             fallback(outcome).detail,
         )
     }
 
     @Test
-    fun aTokenStraddlingTheCutLeavesNoFragment() {
+    fun aLongFailureBodyLeavesNoTokenFragment() {
         val server = start(status = 500, reply = "a".repeat(195) + TOKEN)
 
         val outcome = polish(client(server.url, token = TOKEN), RAW, 0)
 
-        assertEquals("polish HTTP 500: " + ("a".repeat(195) + "[redacted]").take(200), fallback(outcome).detail)
+        assertEquals("polish HTTP 500: response content omitted", fallback(outcome).detail)
         assertFalse(fallback(outcome).detail, fallback(outcome).detail.contains(TOKEN.take(3)))
     }
 
     @Test
-    fun anEmptyTokenRedactsNothing() {
+    fun anEmptyConfiguredTokenStillOmitsResponseContent() {
         val server = start(status = 500, reply = "echo $TOKEN")
 
         val outcome = polish(client(server.url, token = ""), RAW, 0)
 
-        assertEquals("polish HTTP 500: echo $TOKEN", fallback(outcome).detail)
+        assertEquals("polish HTTP 500: response content omitted", fallback(outcome).detail)
     }
 
     @Test
-    fun aTransportCauseThatQuotesTheTokenIsRedacted() {
+    fun aTransportCauseThatQuotesTheTokenIsClassified() {
         val outcome = polish(client("a$TOKEN://host", token = TOKEN), RAW, 0)
 
         assertFalse(fallback(outcome).detail, fallback(outcome).detail.contains(TOKEN, ignoreCase = true))
-        assertTrue(fallback(outcome).detail, fallback(outcome).detail.contains("[redacted]"))
+        assertEquals("polish transport: invalid URL", fallback(outcome).detail)
     }
 
     @Test
-    fun aMalformedJsonReplyLogsOnlyTheBodyPrefix() {
+    fun aMalformedJsonReplyOmitsTheBody() {
         val body = """{"choices":[{"message":{"content":"${"a".repeat(210)} $SENTINEL"""
         val server = start(reply = body)
 
         val outcome = polish(client(server.url), RAW, 0)
 
-        assertEquals("polish JSON: " + body.take(200), fallback(outcome).detail)
+        assertEquals("polish JSON: response content omitted", fallback(outcome).detail)
         assertFalse(fallback(outcome).detail, fallback(outcome).detail.contains(SENTINEL))
     }
 
@@ -315,7 +326,7 @@ class PolishClientTest {
         val outcome = polish(client(server.url), RAW, 0)
 
         assertEquals(RAW, fallback(outcome).raw)
-        assertEquals("polish response has no content field: {\"choices\":[]}", fallback(outcome).detail)
+        assertEquals("polish response has no content field: response content omitted", fallback(outcome).detail)
     }
 
     @Test

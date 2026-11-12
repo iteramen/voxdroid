@@ -40,8 +40,9 @@ class Routed(
 
     /** A lane failure renamed `stt[he] HTTP 502` so a dead lane is loud; a 401 gains [NO_TOKEN_SENT] when the lane was sent no token. */
     private fun named(code: String, failed: Throwable): SttError {
-        val detail = failed.message.orEmpty()
-        val bar = (failed as? SttError)?.bar ?: detail.substringBefore(':').trim()
+        val error = failed as? SttError
+        val detail = error?.message ?: "stt transport: ${causeDetail(failed)}"
+        val bar = error?.bar ?: "stt transport"
         if (!lane401Hint(bar, laneSendsToken = code !in tokenlessLanes, sttHasToken = sttHasToken)) {
             return SttError(lane(code, bar), lane(code, detail))
         }
