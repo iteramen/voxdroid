@@ -1,4 +1,4 @@
-# Reliability review repair queue â€” 2026-11-10
+# Reliability review repair queue — 2026-11-10
 
 Owner direction: repair one item at a time, preserve Git history and validation evidence.
 Each item uses an isolated branch and PR. The owner authorized merging repairs on green CI;
@@ -35,7 +35,7 @@ signed release and in-place phone upgrade with configuration preserved. Live TOD
    cancelled in 56/86 ms and the next serial request completed. Security contract reconciled.
 7. **Merged (#62 / #63):** content-free failure diagnostics; all three CI checks passed on
    18a3fb1, merged as 6887a31.
-8. **Active:** final combined regression on the release candidate: normal-speed English narration, dictation/
+8. **Accepted:** final combined regression on the release candidate: normal-speed English narration, dictation/
    captions coexistence, interruption/source guards, consent and settings preservation. Carry
    forward explicitly applicable evidence; broader device/language coverage is not an endless
    release gate.
@@ -141,8 +141,8 @@ no installed-app data, microphone, credentials or external endpoint is used by t
 ## Item 5 and 6 landing evidence
 
 PR #59 merged as a57a7ca after green CI on f483bc1. The native Try screen displayed the microphone
-and no narration control; own settings hid the control. Actual start/stop remains a final manual
-acceptance check. Temporary permissions and the test package were removed.
+and no narration control; own settings hid the control. Start/stop was then pending and passed
+in the final acceptance checkpoint below. Temporary permissions and the test package were removed.
 PR #61 merged as 8e3cd4d after green CI on 7c4634e. The committed APK transport passed Android
 loopback header/body cancellation in 56/86 ms with the next serial request completing. No app
 installation, credentials or microphone were used for this probe.
@@ -158,6 +158,20 @@ Security/privacy claims now apply to debug failure logs too. Synthetic tests use
 Local item 7 gates passed: lint, 501 JVM tests (500 passed, one explicit live-server skip),
 debug APK assembly and all six synthetic handset-helper tests. Red/green regression and source
 review cover both service failure-log paths; no production log or private content was collected.
+
+
+## Resolved final acceptance blocker: Telegram selected SeekBar (#65)
+
+Normal-speed narration passed on 18a3fb1, and the owner confirmed Try dictation delivery through
+a synthetic local STT/cleanup fixture after the UIAutomator harness interference was removed.
+The contextual caption check found a real compatibility rejection on Telegram 13.2.1: a selected
+voice note has the SeekBar role, excluded by the old role filter. Regression e5f1eed fails only
+that case (one failure among eight selection tests). The narrow repair retains selected-only
+metadata access and all one-note/voice-marker/share/origin checks. PR #66 merged as 349d6c8 after all three CI checks passed on 8e87a31. The native caption
+handoff passed before merge; release PR #64 can proceed on green CI.
+
+Local #65 gates passed: lint, 505 JVM tests (504 passed, one explicit live-server skip), debug
+assembly and all six synthetic handset-helper tests. Native handoff and private display passed.
 
 
 ## Final acceptance checkpoint

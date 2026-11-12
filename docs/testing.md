@@ -858,6 +858,21 @@ transcription, lane and cleanup adapters. Review the two service debug-log call 
 these tested outcomes; never collect production transcripts or credentials as test evidence.
 
 
+## Telegram selected voice waveform compatibility (#65)
+
+Telegram 13.2.1 on the acceptance handset exposes the selected voice waveform as an
+`android.widget.SeekBar` with `selected=true` and the `Voice message` metadata marker. The old
+ViewGroup/LinearLayout-only classifier refused it. Regression e5f1eed reproduces that refusal;
+the repair adds only SeekBar while retaining the one-selection toolbar check, voice marker,
+unique voice node, trusted Share action and original conversation lifetime checks.
+
+Automated checks cover the new role, existing roles, generic seek bars, and lazy metadata access:
+unselected nodes and unknown roles must not have their message metadata read. Native handoff
+and private-result acceptance passed on 8e87a31; #65 is closed. Use content-free service dumps
+or screenshots during an active operation: UIAutomator dump recreates the accessibility service
+on this handset and invalidates recording/caption/narration tests.
+
+
 ### Live accessibility tests must not use UIAutomator inspection
 
 The final Try-screen check exposed a harness problem: `adb exec-out uiautomator dump /dev/tty`
