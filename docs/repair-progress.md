@@ -156,3 +156,17 @@ Security/privacy claims now apply to debug failure logs too. Synthetic tests use
 Local item 7 gates passed: lint, 501 JVM tests (500 passed, one explicit live-server skip),
 debug APK assembly and all six synthetic handset-helper tests. Red/green regression and source
 review cover both service failure-log paths; no production log or private content was collected.
+
+
+## Final acceptance blocker: Telegram selected SeekBar (#65)
+
+Normal-speed narration passed on 18a3fb1, and the owner confirmed Try dictation delivery through
+a synthetic local STT/cleanup fixture after the UIAutomator harness interference was removed.
+The contextual caption check found a real compatibility rejection on Telegram 13.2.1: a selected
+voice note has the SeekBar role, excluded by the old role filter. Regression e5f1eed fails only
+that case (one failure among eight selection tests). The narrow repair retains selected-only
+metadata access and all one-note/voice-marker/share/origin checks. Release PR #64 remains draft
+until this repair and the native caption handoff are accepted.
+
+Local #65 gates passed: lint, 505 JVM tests (504 passed, one explicit live-server skip), debug
+assembly and all six synthetic handset-helper tests. Native handoff is still pending.
