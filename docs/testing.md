@@ -870,3 +870,24 @@ Use the isolated package's content-free service diagnostics while recording, pro
 or speaking. Use the handset's actual Stop control for manual dictation checks. UIAutomator may
 inspect isolated settings or a delivered test field only while no operation is active; allow the
 service to reconnect before starting the next operation. Never inspect ordinary chat content.
+
+
+### Final read-aloud release candidate: handset checkpoint
+
+Code 18a3fb1 has the same tree as merged feature 6887a31. The isolated app used synthetic text
+and local fixed STT/cleanup responses; no production settings or credentials were copied.
+
+| Check | Observed result |
+| --- | --- |
+| English narration at speed 1.0 through beast TTS | Started and completed normally; screen-awake flag cleared. Microphone permission remained ungranted. |
+| Consent and control contexts | Cancel stayed off; Enable wrote backup-excluded consent. Own settings hid controls; external text showed the shared controls. |
+| Try microphone with narration and captions enabled | Owner tapped mic, spoke briefly and tapped the Recording pill Stop. Valid WAV reached the local fixture; one STT and one cleanup request; expected synthetic text landed and owner confirmed. |
+| Temporary microphone permission | Verified granted before Try and revoked after delivery. |
+| Telegram contextual caption after #65 repair, on 8e87a31 | Selected SeekBar voice note -> native Share -> isolated receiver -> private panel. Valid WAV, one STT and one cleanup request; expected synthetic text displayed; composer empty, mic ungranted, spool empty. |
+
+This fixed-response test proves capture and delivery, not real-server STT accuracy. Earlier
+source/Stop/lock/automatic-timeout, caption cache/chat-switch and Android transport evidence above
+remains applicable. Additional devices and Hebrew/Russian voices remain follow-up coverage.
+
+All temporary test packages were removed and original accessibility/USB-wake settings were
+restored and verified after acceptance. Production configuration was not copied or changed.

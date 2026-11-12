@@ -14,6 +14,8 @@ Added
   from backups. Narration does not require microphone permission.
 
 Fixed
+- Telegram captions recognize selected voice waveforms exposed as SeekBar nodes in Telegram
+  13.2.1, retaining the single-note, voice-marker and conversation safety checks.
 - Cleanup responses explicitly marked incomplete fall back to the original transcript instead
   of inserting truncated text.
 - Cancelled dictation and narration network requests release the worker promptly for the next

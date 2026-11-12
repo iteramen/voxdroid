@@ -29,7 +29,8 @@ signed release and in-place phone upgrade with configuration preserved. Live TOD
 4. **Merged and core handset checks passed (#55 / #56):** Android narration source/power lifecycle.
    Native a9eac33 evidence is linked from #55; remaining combined acceptance is listed below.
 5. **Merged (#58 / #59):** microphone-only Try control; own settings hidden on the handset.
-   Permission revocation closes the test task; final real start/stop remains in combined acceptance.
+   Final Try start/Stop, valid WAV capture and synthetic STT/cleanup delivery passed on the
+   handset with narration/captions enabled; the owner confirmed delivery and the mic grant was revoked.
 6. **Merged (#60 / #61):** TTS endpoint validation and cancellation; native headers/body stalls
    cancelled in 56/86 ms and the next serial request completed. Security contract reconciled.
 7. **Merged (#62 / #63):** content-free failure diagnostics; all three CI checks passed on
@@ -165,6 +166,10 @@ The final code 18a3fb1 and merged feature 6887a31 have identical trees. The isol
 check passed normal-speed English synthesis/playback through completion, screen-awake release,
 consent Cancel/Enable behavior and own-settings/external control visibility. Microphone permission
 stayed ungranted. The test package was removed and original accessibility/USB-wake settings were
-restored and verified. The combined Try-dictation/caption check is pending owner interaction;
-this checkpoint does not claim it passed. The release branch prepares 0.4.0 (code 6), but neither
-its tag nor production installation will proceed before the final acceptance checks pass.
+restored and verified. Try dictation now passed: the owner started and stopped a short take; valid audio reached the
+local fixture, STT/cleanup each ran once, and expected text landed. The temporary microphone
+grant was revoked. The Telegram caption regression then found and repaired selected SeekBar recognition (#65 / #66).
+The committed 8e87a31 APK passed native Share, decode, STT/cleanup and private-panel display with
+an empty composer and no microphone grant; the spool was removed. All temporary packages were
+removed and original settings restored. Final bounded handset acceptance is complete. The release branch prepares 0.4.0 (code 6), but neither
+publication nor installation has occurred yet; proceed on exact green CI with a signed in-place upgrade.
