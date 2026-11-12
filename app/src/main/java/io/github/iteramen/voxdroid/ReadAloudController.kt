@@ -42,6 +42,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     private val lock = Any()
     private var glyph: View? = null
     private var glyphParams: WindowManager.LayoutParams? = null
+    private var glyphContext: ReadControlContext? = null
     private var picker: View? = null
     private var active = false
     private var sourcePackage: String? = null
@@ -67,10 +68,11 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
 
     fun observe(event: AccessibilityEvent?) {
         val root = service.getRootInActiveWindow(0)
-        val locked = service.getSystemService(KeyguardManager::class.java).isKeyguardLocked
-        val password = root?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.isPassword == true
-        if (readControlContext(root?.packageName?.toString() == service.packageName, false, locked, password) == ReadControlContext.Hidden) {
-            cancel(); hideGlyph(); return
+        val context = controlContext(root)
+        if (context != ReadControlContext.External) {
+            cancel()
+            if (context == ReadControlContext.Hidden) hideGlyph() else showGlyph()
+            return
         }
         if (busy) {
             val sameSource = root != null && root.windowId == sourceWindow && root.packageName?.toString() == sourcePackage
@@ -100,11 +102,22 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
 
     fun preferencesChanged() { cancel(); hideGlyph(); showGlyph() }
 
+    private fun controlContext(root: AccessibilityNodeInfo?): ReadControlContext {
+        if (root == null) return ReadControlContext.Hidden
+        val field = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+        return readControlContext(root.packageName?.toString() == service.packageName,
+            field?.isEditable == true && field.viewIdResourceName == "${service.packageName}:id/try_field",
+            service.getSystemService(KeyguardManager::class.java).isKeyguardLocked,
+            field?.isPassword == true)
+    }
+
     private fun showGlyph() {
-        if (glyph != null || service.getSystemService(KeyguardManager::class.java).isKeyguardLocked) return
-        if (!Settings(service).triggerButton && !prefs.enabled) return
-        val current = service.getRootInActiveWindow(0)
-        if (current?.packageName?.toString() == service.packageName || current?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.isPassword == true) return
+        val context = controlContext(service.getRootInActiveWindow(0))
+        val microphone = Settings(service).triggerButton
+        val speaker = prefs.enabled && context == ReadControlContext.External
+        if (context == ReadControlContext.Hidden || (!microphone && !speaker)) { hideGlyph(); return }
+        if (glyphContext != context) hideGlyph()
+        if (glyph != null) return
         val density = service.resources.displayMetrics.density
         fun dp(v: Int) = (v * density).toInt()
         val screen = windows.currentWindowMetrics.bounds
@@ -137,18 +150,18 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         box.addView(Button(service).apply {
             tag = "read_mic"
             text = "🎤"; contentDescription = service.getString(R.string.read_dictate)
-            isEnabled = Settings(service).triggerButton
+            isEnabled = microphone
             visibility = if (isEnabled) View.VISIBLE else View.GONE
             setOnClickListener { cancel(); mic() }
         }, LinearLayout.LayoutParams(dp(56), dp(56)))
         box.addView(Button(service).apply {
             tag = "read_speaker"
             text = "🔊"; contentDescription = service.getString(R.string.read_speak_stop)
-            visibility = if (prefs.enabled) View.VISIBLE else View.GONE
+            visibility = if (speaker) View.VISIBLE else View.GONE
             setOnClickListener { chooseOrStop() }
         }, LinearLayout.LayoutParams(dp(56), dp(56)))
         if (active) params.flags = params.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-        windows.addView(box, params); glyph = box; glyphParams = params
+        windows.addView(box, params); glyph = box; glyphParams = params; glyphContext = context
     }
 
     private fun keepScreenOn(on: Boolean) {
@@ -161,7 +174,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         windows.updateViewLayout(view, params)
     }
 
-    private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null; glyphParams = null }
+    private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null; glyphParams = null; glyphContext = null }
     private fun hidePicker() { picker?.let { runCatching { windows.removeView(it) } }; picker = null; choices = emptyList() }
 
     private class Choice(val node: AccessibilityNodeInfo, val bounds: Rect)

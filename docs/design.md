@@ -408,7 +408,11 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 
 ## Read-aloud control and pipeline
 
-`ReadAloudController` owns the draggable 🎤/🔊 overlay. Read-only blocks are discovered only on a
+`ReadAloudController` owns the draggable 🎤/🔊 overlay. In the own Try screen, the focused editable
+test field allows 🎤 only; own settings
+and credential screens keep the overlay hidden. The floating-microphone toggle still applies,
+and changing between own and external windows rebuilds the visible controls. No new exported
+trigger is introduced. Read-only blocks are discovered only on a
 speaker press, bounded to 600 foreground nodes; a second tap selects one refreshed block. Picker
 and playback are mutually exclusive with dictation/caption processing. Source/window changes
 invalidate them. One serial bounded worker requests speech through `ReadAloud.kt`, then plays
