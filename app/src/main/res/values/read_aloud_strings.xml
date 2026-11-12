@@ -5,7 +5,7 @@
     <string name="read_enable_summary">Choose visible text with 🔊 and hear it through your TTS server.</string>
     <string name="read_disclosure">Tapping 🔊 reads visible read-only text to outline choices. Only the block you then tap is sent to your configured text-to-speech server. Text and generated audio stay in memory on the phone; the server has its own retention policy. Stop, leaving the app, or locking the phone cancels reading. Password fields are excluded.</string>
     <string name="read_usage_title">Choose text to hear</string>
-    <string name="read_usage">Tap 🔊 on the floating control, then tap an outlined text block. Tap 🔊 again to stop. Drag ⋮ to move the controls. 🎤 keeps dictation and selected voice-note captions. Volume-down still dictates. English is ready to configure; Hebrew and Russian need their own supported voices.</string>
+    <string name="read_usage">Tap 🔊 on the floating control, then tap an outlined text block. Tap 🔊 again to stop. Drag either icon to move the controls. 🎤 keeps dictation and selected voice-note captions. Volume-down still dictates. English is ready to configure; Hebrew and Russian need their own supported voices.</string>
     <string name="read_en">English / default endpoint</string>
     <string name="read_he">Hebrew (configure a supported voice)</string>
     <string name="read_ru">Russian (configure a supported voice)</string>
@@ -21,7 +21,6 @@
     <string name="read_timeout">Request timeout, seconds (1–120)</string>
     <string name="read_speed_range">Use a speed from 0.25 to 4.0.</string>
     <string name="read_timeout_range">Use a timeout from 1 to 120 seconds.</string>
-    <string name="read_move">Move floating controls</string>
     <string name="read_dictate">Dictate or caption the selected voice note</string>
     <string name="read_speak_stop">Choose text to read aloud, or stop reading</string>
     <string name="read_enable_first">Enable Read aloud in Voxdroid settings first.</string>

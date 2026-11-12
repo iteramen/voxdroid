@@ -20,9 +20,8 @@ import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -119,45 +118,48 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         val density = service.resources.displayMetrics.density
         fun dp(v: Int) = (v * density).toInt()
         val screen = windows.currentWindowMetrics.bounds
+        val paired = microphone && speaker
+        val width = dp(if (paired) 104 else 48)
+        val height = dp(48)
         val params = WindowManager.LayoutParams(-2, -2, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = (prefs.x ?: (screen.width() - dp(155))).coerceIn(0, maxOf(0, screen.width() - dp(155)))
-            y = (prefs.y ?: screen.height() / 3).coerceIn(0, maxOf(0, screen.height() - dp(80)))
+            x = (prefs.x ?: (screen.width() - width)).coerceIn(0, maxOf(0, screen.width() - width))
+            y = (prefs.y ?: screen.height() / 3).coerceIn(0, maxOf(0, screen.height() - height))
         }
-        val box = LinearLayout(service).apply {
+        val box = PillLayout(service, null).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(dp(3), dp(3), dp(3), dp(3)); setBackgroundColor(0xff202124.toInt())
+            val inset = if (paired) dp(4) else 0
+            setPadding(inset, 0, inset, 0)
+            setBackgroundResource(if (paired) R.drawable.floating_controls_pair else R.drawable.floating_controls_background)
+            clipToOutline = true
         }
-        var downX = 0f; var downY = 0f; var oldX = 0; var oldY = 0
-        box.addView(TextView(service).apply {
-            text = "⋮"; textSize = 24f; setTextColor(Color.WHITE); setPadding(dp(8), dp(6), dp(8), dp(6))
-            contentDescription = service.getString(R.string.read_move)
-            setOnTouchListener { _, event ->
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> { downX = event.rawX; downY = event.rawY; oldX = params.x; oldY = params.y }
-                    MotionEvent.ACTION_MOVE -> {
-                        params.x = (oldX + event.rawX - downX).toInt().coerceIn(0, maxOf(0, screen.width() - box.width))
-                        params.y = (oldY + event.rawY - downY).toInt().coerceIn(0, maxOf(0, screen.height() - box.height))
-                        windows.updateViewLayout(box, params)
-                    }
-                    MotionEvent.ACTION_UP -> { performClick(); prefs.position(params.x, params.y) }
-                }; true
+        // Reuse the pill's touch-slop interception: dragging cancels the child button's tap.
+        var oldX = 0; var oldY = 0
+        box.onDown = { oldX = params.x; oldY = params.y }
+        box.onDrag = { dx, dy, ended ->
+            val bounds = windows.currentWindowMetrics.bounds
+            params.x = (oldX + dx).toInt().coerceIn(0, maxOf(0, bounds.width() - box.width))
+            params.y = (oldY + dy).toInt().coerceIn(0, maxOf(0, bounds.height() - box.height))
+            windows.updateViewLayout(box, params)
+            if (ended) prefs.position(params.x, params.y)
+        }
+        fun action(tagName: String, icon: Int, description: Int, visible: Boolean, click: () -> Unit) =
+            ImageButton(service).apply {
+                tag = tagName
+                setImageResource(icon)
+                contentDescription = service.getString(description)
+                setPadding(dp(12), dp(12), dp(12), dp(12))
+                setBackgroundResource(R.drawable.floating_control_press)
+                visibility = if (visible) View.VISIBLE else View.GONE
+                setOnClickListener { click() }
             }
-        })
-        box.addView(Button(service).apply {
-            tag = "read_mic"
-            text = "🎤"; contentDescription = service.getString(R.string.read_dictate)
-            isEnabled = microphone
-            visibility = if (isEnabled) View.VISIBLE else View.GONE
-            setOnClickListener { cancel(); mic() }
-        }, LinearLayout.LayoutParams(dp(56), dp(56)))
-        box.addView(Button(service).apply {
-            tag = "read_speaker"
-            text = "🔊"; contentDescription = service.getString(R.string.read_speak_stop)
-            visibility = if (speaker) View.VISIBLE else View.GONE
-            setOnClickListener { chooseOrStop() }
-        }, LinearLayout.LayoutParams(dp(56), dp(56)))
+        box.addView(action("read_mic", R.drawable.ic_control_mic, R.string.read_dictate, microphone) {
+            cancel(); mic()
+        }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        box.addView(action("read_speaker", R.drawable.ic_control_speaker, R.string.read_speak_stop, speaker) {
+            chooseOrStop()
+        }, LinearLayout.LayoutParams(dp(48), dp(48)))
         if (active) params.flags = params.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         windows.addView(box, params); glyph = box; glyphParams = params; glyphContext = context
     }
