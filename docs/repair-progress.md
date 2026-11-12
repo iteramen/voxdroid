@@ -25,11 +25,19 @@ acceptance. No version bump or production deployment is part of this repair queu
    Notepad provider lifecycle and guarded Copy fallback. Owner confirmed narration/Stop in the
    tested apps. Desktop #50 adds no-voice feedback; the owner confirmed muted Fifine notice and
    unmuted dictation on b09dbdb. Broader desktop native acceptance remains tracked in #33/#42.
-4. **In progress (#55):** fix Android narration event cancellation and automatic screen timeout.
-5. Queued: restore an accessible tap trigger on Android's own Try screen.
+4. **Merged and core handset checks passed (#55 / #56):** Android narration source/power lifecycle.
+   Native a9eac33 evidence is linked from #55; remaining combined acceptance is listed below.
+5. **Active (#58):** restore an accessible tap trigger on Android's own Try screen.
 6. Queued: reconcile Android TTS endpoint validation and cancellation with security policy;
    keep security reproduction details local until reviewed.
-7. Queued: reassess documented production error-body logging.
+7. Queued: remove sensitive server-error detail from production logging.
+8. Final combined regression on the release candidate: normal-speed English narration, dictation/
+   captions coexistence, interruption/source guards, consent and settings preservation. Carry
+   forward explicitly applicable evidence; broader device/language coverage is not an endless
+   release gate.
+9. Merge feature on green, bump, build/sign and upgrade the phone preserving configuration after
+   acceptance. Play Console #5 remains owner-parked; #2 is untouched. Other backlog is outside
+   this audit wave (including #44/PR #45); do not silently include or close it.
 
 ## Item 1 contract
 
@@ -92,8 +100,25 @@ cleared when active work ends. Native checks are listed in docs/testing.md; no p
 configuration or credentials are replaced. Parent #47 remains draft.
 
 Local gates: lint, 487 JVM tests (486 passed, one explicit live-server test skipped), debug APK
-assembly and all six handset-helper tests passed. ADB currently has no connected device;
-handset acceptance remains pending and must not be inferred from these automated gates.
+assembly and all six handset-helper tests passed. PR #56 merged as 0b1021b after all three
+CI checks passed on a9eac33. Handset evidence then passed: unrelated updates continued to real
+TTS completion; changed/removed text and picker updates cancelled; speaker Stop, Home, scroll
+and same-app navigation cancelled; HTTP 503 released the screen flag; 15-second automatic
+timeout was prevented during delayed synthesis and playback; injected screen-off stopped and
+hid the glyph. The microphone stayed ungranted, no production credentials/config were copied,
+the test package was removed, and original settings were restored/read back. Power tests used
+silent PCM after the owner objected to the first slow synthetic speech sample. Use normal speed
+for audible checks. Remaining qualification is tracked under final combined regression, not
+as a claim that these observed passes are still pending.
 The three blocking workflows previously filtered PRs to main only. Their PR filters now also
 include feat/read-aloud, so stacked repairs run the same gates, dependency audit and unsigned
 release witness before merge. Push/release triggers and checks are unchanged.
+
+## Item 5: own Try-screen tap control (#58)
+
+Regression 15cbb5a fails because the old own-app exclusion hides every control in TryActivity.
+The repair allows microphone-only controls when the own editable try_field is input-focused;
+settings/credentials, password focus and lock remain hidden. Narration remains unavailable in
+own windows; switching to an external app rebuilds its usual controls. The existing trigger
+toggle and microphone permission check remain in force. Native UI qualification follows the
+committed isolated APK; no production data is copied.

@@ -812,14 +812,22 @@ and remove the test package afterwards. Record the exact committed APK used for 
 
 | Check | Required result | Status |
 | --- | --- | --- |
-| Update unrelated page status while speaking | `contentKept` increases; playback continues and completes | Pending |
-| Replace/remove the chosen paragraph while speaking | Active/playback stop; no late restart or replacement text request | Pending |
-| Update content while choosing | Picker closes; stale coordinates cannot start speech | Pending |
-| Scroll, same-app navigation, app switch | Speech stops; no late restart | Pending |
-| Speaker Stop, notification Stop, new dictation | Stop narration and release screen flag | Pending |
-| Automatic timeout with USB wake disabled | During synthesis/playback, display stays awake beyond its configured timeout | Pending |
-| Completion, cancellation and failed TTS | `keepScreenOn=false`; idle display can time out | Pending |
-| Manual power-button lock during speech | Speech stops, glyph disappears and no late restart | Pending |
+| Update unrelated page status while speaking | `contentKept` increases; playback continues and completes | Passed a9eac33, real TTS |
+| Replace/remove the chosen paragraph while speaking | Active/playback stop; no late restart or replacement text request | Passed a9eac33 |
+| Update content while choosing | Picker closes; stale coordinates cannot start speech | Passed a9eac33 |
+| Scroll, same-app navigation, app switch | Speech stops; no late restart | Passed a9eac33 |
+| Speaker Stop, notification Stop, new dictation | Stop narration and release screen flag | Speaker passed a9eac33; notification/new-dictation in final regression |
+| Automatic timeout with USB wake disabled | During synthesis/playback, display stays awake beyond its configured timeout | Passed a9eac33, 18 s observation against 15 s timeout, USB wake off |
+| Completion, cancellation and failed TTS | `keepScreenOn=false`; idle display can time out | Flag release passed on completion/cancel/503; idle timeout in final regression |
+| Manual power-button lock during speech | Speech stops, glyph disappears and no late restart | Injected screen-off passed a9eac33; physical button not separately tested |
 
 Debug diagnostics expose counts/flags only, never selected text or other app identity. A green
 JVM/build gate does not establish these handset outcomes.
+
+## Try-screen tap control (#58)
+
+`ReadControlContextTest` first fails on regression 15cbb5a, then checks microphone-only own Try
+context, hidden own settings and locked/password contexts, and normal external context.
+Native checklist: own Try field shows 🎤 but no 🔊; own settings/credential views show neither;
+returning to the external synthetic page restores configured controls; disabling the floating
+microphone hides it on Try. A tap uses the existing permission/field-checked dictation path.

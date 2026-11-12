@@ -141,7 +141,7 @@
     <string name="status_route_lane">%1$s → %2$s lane</string>
     <string name="status_route_explicit">%1$s → sent as %2$s</string>
     <string name="status_route_auto">%1$s → auto %2$s</string>
-    <string name="try_hint">Hold volume-down, speak, then press volume-down to stop</string>
+    <string name="try_hint">Tap the floating microphone to start and stop, or hold volume-down to start and press it again to stop.</string>
     <string name="caption_section">Voice messages</string>
     <string name="caption_section_summary">Private captions from Telegram and WhatsApp</string>
     <string name="caption_share_target">Caption with Voxdroid</string>

@@ -389,6 +389,10 @@ already compromised when its checksum was recorded, or one with no published adv
 ## Explicit read aloud
 
 `ReadAloudController` provides a draggable accessibility overlay with contextual 🎤 and optional 🔊.
+On Voxdroid's own Try screen, an input-focused editable `try_field` allows the microphone control
+only, subject to the floating-microphone toggle. Own settings/credential windows, password focus
+and lock hide the controls. Narration remains excluded from all Voxdroid-owned windows; changing
+between the Try field and external apps rebuilds the controls for the new context.
 It replaces the requested system accessibility button; the legacy callback remains compatible.
 Read aloud is off by default and enabling it explains screen access and the TTS data flow. On a
 speaker press it examines at most 600 nodes from the active foreground tree, skips password
