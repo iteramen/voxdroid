@@ -32,8 +32,9 @@ signed release and in-place phone upgrade with configuration preserved. Live TOD
    Permission revocation closes the test task; final real start/stop remains in combined acceptance.
 6. **Merged (#60 / #61):** TTS endpoint validation and cancellation; native headers/body stalls
    cancelled in 56/86 ms and the next serial request completed. Security contract reconciled.
-7. **Active (#62):** remove sensitive server-error detail from production logging.
-8. Final combined regression on the release candidate: normal-speed English narration, dictation/
+7. **Merged (#62 / #63):** content-free failure diagnostics; all three CI checks passed on
+   18a3fb1, merged as 6887a31.
+8. **Active:** final combined regression on the release candidate: normal-speed English narration, dictation/
    captions coexistence, interruption/source guards, consent and settings preservation. Carry
    forward explicitly applicable evidence; broader device/language coverage is not an endless
    release gate.
@@ -156,3 +157,14 @@ Security/privacy claims now apply to debug failure logs too. Synthetic tests use
 Local item 7 gates passed: lint, 501 JVM tests (500 passed, one explicit live-server skip),
 debug APK assembly and all six synthetic handset-helper tests. Red/green regression and source
 review cover both service failure-log paths; no production log or private content was collected.
+
+
+## Final acceptance checkpoint
+
+The final code 18a3fb1 and merged feature 6887a31 have identical trees. The isolated handset
+check passed normal-speed English synthesis/playback through completion, screen-awake release,
+consent Cancel/Enable behavior and own-settings/external control visibility. Microphone permission
+stayed ungranted. The test package was removed and original accessibility/USB-wake settings were
+restored and verified. The combined Try-dictation/caption check is pending owner interaction;
+this checkpoint does not claim it passed. The release branch prepares 0.4.0 (code 6), but neither
+its tag nor production installation will proceed before the final acceptance checks pass.

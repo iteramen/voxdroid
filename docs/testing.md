@@ -856,3 +856,17 @@ Cleanup must still return the original transcript separately. Tests also cover t
 missing configured tokens, oversized bodies, malformed URLs, and unknown failures through the
 transcription, lane and cleanup adapters. Review the two service debug-log call sites against
 these tested outcomes; never collect production transcripts or credentials as test evidence.
+
+
+### Live accessibility tests must not use UIAutomator inspection
+
+The final Try-screen check exposed a harness problem: `adb exec-out uiautomator dump /dev/tty`
+recreated the isolated accessibility service on this handset, including while the app process
+stayed alive. During recording, that teardown cancels the take. A before/after service-record
+identity check reproduced this at idle. Such an interrupted run is not evidence of a product
+recording failure or a passing regression.
+
+Use the isolated package's content-free service diagnostics while recording, processing captions
+or speaking. Use the handset's actual Stop control for manual dictation checks. UIAutomator may
+inspect isolated settings or a delivered test field only while no operation is active; allow the
+service to reconnect before starting the next operation. Never inspect ordinary chat content.
