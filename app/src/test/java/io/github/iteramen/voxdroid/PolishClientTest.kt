@@ -14,6 +14,17 @@ import java.util.Collections
 
 class PolishClientTest {
 
+    @Test fun failureDiagnosticsExcludeContentWhilePreservingTheRawFallback() {
+        for ((status, body) in listOf(500 to "PRIVATE_TRANSCRIPT OTHER_CREDENTIAL", 200 to "PRIVATE_TRANSCRIPT {broken OTHER_CREDENTIAL")) {
+            val server = start(status = status, reply = body)
+            val result = fallback(polish(client(server.url, token = TOKEN), RAW, 0))
+            assertEquals(RAW, result.raw)
+            assertFalse(result.detail, result.detail.contains("PRIVATE_TRANSCRIPT"))
+            assertFalse(result.detail, result.detail.contains("OTHER_CREDENTIAL"))
+            server.stop()
+        }
+    }
+
     @Test
     fun incompleteCompletionsPreserveTheEntireRawTranscript() {
         for (reason in listOf("length", "content_filter", "tool_calls", "unknown", JSONObject.NULL, 42)) {

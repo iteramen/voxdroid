@@ -448,6 +448,27 @@ class SttClientTest {
     }
 
     @Test
+    fun failureDiagnosticsExcludeResponseTextAndUnrelatedSecrets() {
+        for ((status, body) in listOf(500 to "PRIVATE_TRANSCRIPT OTHER_CREDENTIAL", 200 to "PRIVATE_TRANSCRIPT {broken OTHER_CREDENTIAL")) {
+            val server = start(status = status, reply = body)
+            val error = client(server.url, token = TOKEN).transcribe(wav, auto, null).exceptionOrNull()!!
+            for (marker in listOf("PRIVATE_TRANSCRIPT", "OTHER_CREDENTIAL")) {
+                assertFalse(error.message, error.message!!.contains(marker))
+            }
+            server.stop()
+        }
+    }
+
+    @Test
+    fun transportDiagnosticExcludesRawExceptionContent() {
+        val error = java.net.ProtocolException("PRIVATE_TRANSCRIPT OTHER_CREDENTIAL https://private.invalid/path")
+        val detail = causeDetail(error, TOKEN)
+        assertFalse(detail, detail.contains("PRIVATE_TRANSCRIPT"))
+        assertFalse(detail, detail.contains("OTHER_CREDENTIAL"))
+        assertFalse(detail, detail.contains("private.invalid"))
+    }
+
+    @Test
     fun aFailureBodyThatEchoesTheTokenIsRedacted() {
         val server = start(status = 500, reply = "upstream rejected: Bearer $TOKEN, again $TOKEN")
 
