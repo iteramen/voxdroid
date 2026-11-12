@@ -68,10 +68,10 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         if (locked || password || root?.packageName?.toString() == service.packageName) {
             cancel(); hideGlyph(); return
         }
-        if (busy && (root == null || root.windowId != sourceWindow || root.packageName?.toString() != sourcePackage ||
-                (event != null && event.packageName?.toString() == sourcePackage && event.eventType in setOf(
-                    AccessibilityEvent.TYPE_VIEW_SCROLLED, AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-                    AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)))) cancel()
+        if (busy && readAloudInvalidated(
+                root != null && root.windowId == sourceWindow && root.packageName?.toString() == sourcePackage,
+                event != null && event.packageName?.toString() == sourcePackage, event?.eventType,
+                picker != null, true)) cancel()
         showGlyph()
     }
 
