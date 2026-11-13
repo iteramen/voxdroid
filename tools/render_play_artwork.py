@@ -1,5 +1,6 @@
 """Render store artwork from Voxdroid's existing microphone mark (requires Pillow)."""
 from pathlib import Path
+import math
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,7 +14,9 @@ def mic(draw, x, y, size):
                                        x+c*size/108, y+d*size/108))
     width = max(1, round(4*size/108))
     draw.rounded_rectangle(box(44, 30, 64, 68), radius=10*size/108, fill='white')
-    draw.arc(box(36, 40, 72, 76), 0, 180, fill='white', width=width)
+    arc = [(round(x+(54-18*math.cos(i*math.pi/180))*size/108),
+            round(y+(58+18*math.sin(i*math.pi/180))*size/108)) for i in range(181)]
+    draw.line(arc, fill='white', width=width, joint='curve')
     for coords in ((36, 52, 36, 58), (72, 52, 72, 58),
                    (54, 76, 54, 83), (46, 83, 62, 83)):
         draw.line(box(*coords), fill='white', width=width)
