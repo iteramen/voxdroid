@@ -17,7 +17,7 @@ Owner-approved design following 0.4.0 handset feedback. Implementation and hands
 
 - Tap microphone: preserve existing dictation / selected voice-message caption routing.
 - Tap speaker: preserve text picking; tapping again during picking, synthesis or playback cancels.
-- Drag from either icon or the surrounding capsule. Reuse the existing PillLayout gesture threshold so a drag cancels the child click, and a slightly unsteady tap still activates it. Save the final position and clamp it to the display.
+- Drag from either icon or the surrounding capsule. Reuse the existing PillLayout gesture threshold so a drag cancels the child click, and a slightly unsteady tap still activates it. Save the nearest physical corner and dp edge margins. Recompute its position inside the system-bar/cutout-safe display area after rotation or a button-count change; clamp without overwriting the saved margins. Existing raw coordinates migrate on first display, and encrypted settings backups preserve the anchor.
 - Keep existing operation/status pills and all source, microphone, screen-lock and cancellation safeguards unchanged.
 - Preserve focus-free accessibility-overlay behavior. Each action remains a separately labelled accessible button: Dictate / Read aloud or stop. The existing cancellation action remains available during synthesis and playback.
 - Press feedback stays inside the capsule. Avoid idle animation, blinking or a persistent glow.

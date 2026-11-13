@@ -13,6 +13,7 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
@@ -119,6 +120,11 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         readAloud?.observe(event)
         captions?.observe(event)
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED && machine.state != TakeState.Idle) pill.follow()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        readAloud?.configurationChanged()
     }
 
     override fun onInterrupt() = Unit

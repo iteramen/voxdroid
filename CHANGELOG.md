@@ -3,6 +3,15 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## 0.4.2 — 2026-11-13
+
+Fixed
+- Floating controls keep their nearest corner and edge margins across rotation, service restart
+  and one/two-button layouts, staying clear of system bars and display cutouts. Existing saved
+  positions migrate on first display; encrypted settings backups retain the new placement.
+- Backup and restore and Read aloud now have icons and navigation arrows matching the other
+  Settings rows.
+
 ## 0.4.1 — 2026-11-12
 
 Changed
