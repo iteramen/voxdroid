@@ -960,3 +960,15 @@ restart was checked separately. An earlier narration attempt cancelled before pl
 not used as passing evidence. The final pass used one dedicated Chrome tab, navigating that
 same tab instead of repeatedly launching VIEW intents. Keep reusing that tab for future tests;
 do not create one tab per test run. UIAutomator remains unsuitable during active media operations.
+
+
+### Settings row subtitles (0.4.3)
+
+- Scroll the main Settings screen to Backup and restore, Read aloud and Privacy policy.
+  Each row must use the same title/secondary-text hierarchy as Speech and Languages, with
+  its existing icon and chevron aligned around the two-line text block. Check at the owner's
+  large font size that subtitles wrap naturally without overlapping the arrow.
+- Backup explains encrypted settings save/restore; Read aloud names voices, speed and speech
+  server settings; Privacy policy explicitly says it opens a web page.
+- Navigation listeners and destination activities/URL are unchanged. This resource-only change
+  does not require new narration, microphone, rotation or caption tests.

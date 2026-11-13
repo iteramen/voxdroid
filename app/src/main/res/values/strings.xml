@@ -180,4 +180,5 @@
     <string name="caption_delete_summary">Also invalidates requests that started before deletion.</string>
     <string name="caption_delete_confirm">Remove every remembered voice-message caption? Your messaging apps and their audio are unchanged.</string>
     <string name="caption_storage_failed">Caption storage could not be updated. Try again.</string>
+    <string name="section_privacy_summary">Opens the privacy policy web page</string>
 </resources>
