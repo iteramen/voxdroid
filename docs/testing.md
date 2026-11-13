@@ -935,3 +935,28 @@ controls. A direct shell launch correctly refused the unexported Try activity; t
 check opened it through Settings. The Try readiness prerequisite used a temporary microphone
 runtime grant without requesting recording; the grant ended with test-app removal. A final
 appops text-format assertion did not pass and is not claimed as audio-policy evidence.
+
+
+### Corner-preserving controls and Settings rows (#69 / #70)
+
+| Regression/check | Result |
+| --- | --- |
+| Raw coordinate rotation regression | Red 7a69da3: five failures among six placement cases. The repair keeps all four corners/margins, dp scaling, one/two-button width changes and clamped round trips. |
+| Encrypted backup regression | Red 4622b70 dropped the new placement fields. 061f532 preserves all four typed fields, rejects malformed/incomplete anchors and accepts legacy x/y backups for migration. |
+| Portrait -> both landscape orientations -> portrait | Native e4a4829: top-right and bottom-left retained their physical corner; coordinates stayed inside the screen and clear of the cutout/system bars. Saved anchor values did not change on rotation. |
+| Migration and restart | Legacy x/y migrated once; the same anchor survived service disconnect/reconnect and reproduced the same position. |
+| Narration while rotating | Native 061f532: synthetic English TTS started; rotation cancelled playback and cleared the screen-awake flag. |
+| Settings rows | Screenshot inspection confirmed matching icon backgrounds, aligned titles and chevrons for Backup and restore / Read aloud; both rows opened their intended screens. |
+| TTS configuration | Live owner-server inventory and synthetic request verified the supported English endpoint/model/voice. Production Settings already held those values and speed 1.0; they were verified and re-saved without changing tokens or dictation configuration. No Hebrew/Russian TTS backend was found, so STT lanes were not substituted. |
+
+Local 061f532 checks: lint/debug build, 513 JVM tests (512 pass, one existing live-server skip),
+six helper tests. Placement/controller/menu code is unchanged from the e4a4829 native rotation
+checks; the follow-up adds backup support and version metadata. Test apps were removed and
+original rotation, accessibility and USB-wake settings restored and checked. Narration tests
+never granted the microphone or copied production credentials.
+
+An empty-setting ADB argument interrupted the first helper after its completed rotation checks;
+restart was checked separately. An earlier narration attempt cancelled before playback and is
+not used as passing evidence. The final pass used one dedicated Chrome tab, navigating that
+same tab instead of repeatedly launching VIEW intents. Keep reusing that tab for future tests;
+do not create one tab per test run. UIAutomator remains unsuitable during active media operations.
