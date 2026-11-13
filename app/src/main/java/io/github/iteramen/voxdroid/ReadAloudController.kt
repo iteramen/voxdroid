@@ -1,5 +1,6 @@
 package io.github.iteramen.voxdroid
 
+import android.annotation.SuppressLint
 import android.accessibilityservice.AccessibilityService
 import android.app.KeyguardManager
 import android.graphics.Canvas
@@ -17,6 +18,7 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -41,6 +43,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     private var glyph: View? = null
     private var glyphParams: WindowManager.LayoutParams? = null
     private var glyphContext: ReadControlContext? = null
+    private var glyphSpace: ControlSpace? = null
     private var picker: View? = null
     private var active = false
     private var sourcePackage: String? = null
@@ -108,25 +111,47 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
             field?.isPassword == true)
     }
 
+    fun configurationChanged() { cancel(); hideGlyph(); showGlyph() }
+
+    private fun controlSpace(paired: Boolean): ControlSpace {
+        val density = service.resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+        val metrics = windows.currentWindowMetrics
+        val insets = metrics.windowInsets.getInsetsIgnoringVisibility(
+            WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+        return ControlSpace(maxOf(0, metrics.bounds.width() - insets.left - insets.right),
+            maxOf(0, metrics.bounds.height() - insets.top - insets.bottom),
+            if (paired) 2 * dp(48) + 2 * dp(4) else dp(48), dp(48), density)
+    }
+
+    @SuppressLint("RtlHardcoded") // Physical screen corners must not mirror with UI language.
     private fun showGlyph() {
         val context = controlContext(service.getRootInActiveWindow(0))
         val microphone = Settings(service).triggerButton
         val speaker = prefs.enabled && context == ReadControlContext.External
         if (context == ReadControlContext.Hidden || (!microphone && !speaker)) { hideGlyph(); return }
         if (glyphContext != context) hideGlyph()
-        if (glyph != null) return
-        val density = service.resources.displayMetrics.density
-        fun dp(v: Int) = (v * density).toInt()
-        val screen = windows.currentWindowMetrics.bounds
         val paired = microphone && speaker
-        val width = dp(if (paired) 104 else 48)
-        val height = dp(48)
-        val space = ControlSpace(screen.width(), screen.height(), width, height, density)
-        val position = placeControl(rememberControl(ControlPosition(prefs.x ?: space.maxX,
-            prefs.y ?: screen.height() / 3), space), space)
+        val space = controlSpace(paired)
+        val position = placeControl(prefs.anchor(space), space)
+        if (glyph != null) {
+            // Insets/metrics can settle after onConfigurationChanged; events re-place the same anchor.
+            if (glyphSpace != space) {
+                glyphParams?.let { params ->
+                    params.x = position.x; params.y = position.y
+                    windows.updateViewLayout(glyph, params)
+                }
+                glyphSpace = space
+            }
+            return
+        }
+        val density = space.density
+        fun dp(v: Int) = (v * density).toInt()
         val params = WindowManager.LayoutParams(-2, -2, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, PixelFormat.TRANSLUCENT).apply {
-            gravity = Gravity.TOP or Gravity.START
+            gravity = Gravity.TOP or Gravity.LEFT
+            fitInsetsTypes = WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout()
+            setFitInsetsIgnoringVisibility(true)
             x = position.x
             y = position.y
         }
@@ -141,11 +166,11 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         var oldX = 0; var oldY = 0
         box.onDown = { oldX = params.x; oldY = params.y }
         box.onDrag = { dx, dy, ended ->
-            val bounds = windows.currentWindowMetrics.bounds
-            params.x = (oldX + dx).toInt().coerceIn(0, maxOf(0, bounds.width() - box.width))
-            params.y = (oldY + dy).toInt().coerceIn(0, maxOf(0, bounds.height() - box.height))
+            val current = controlSpace(paired)
+            params.x = (oldX + dx).toInt().coerceIn(0, current.maxX)
+            params.y = (oldY + dy).toInt().coerceIn(0, current.maxY)
             windows.updateViewLayout(box, params)
-            if (ended) prefs.position(params.x, params.y)
+            if (ended) prefs.position(rememberControl(ControlPosition(params.x, params.y), current))
         }
         fun action(tagName: String, icon: Int, description: Int, visible: Boolean, click: () -> Unit) =
             ImageButton(service).apply {
@@ -164,7 +189,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
             chooseOrStop()
         }, LinearLayout.LayoutParams(dp(48), dp(48)))
         if (active) params.flags = params.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-        windows.addView(box, params); glyph = box; glyphParams = params; glyphContext = context
+        windows.addView(box, params); glyph = box; glyphParams = params; glyphContext = context; glyphSpace = space
     }
 
     private fun keepScreenOn(on: Boolean) {
@@ -177,7 +202,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         windows.updateViewLayout(view, params)
     }
 
-    private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null; glyphParams = null; glyphContext = null }
+    private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null; glyphParams = null; glyphContext = null; glyphSpace = null }
     private fun hidePicker() { picker?.let { runCatching { windows.removeView(it) } }; picker = null; choices = emptyList() }
 
     private class Choice(val node: AccessibilityNodeInfo, val bounds: Rect)

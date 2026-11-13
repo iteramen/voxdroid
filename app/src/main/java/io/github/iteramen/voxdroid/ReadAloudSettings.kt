@@ -15,7 +15,23 @@ internal class ReadAloudSettings(context: Context) {
             text("tts_voice_$code"), token(code), prefs.getBoolean("tts_inherit_token_$code", false)) },
         prefs.getFloat("tts_speed", 1f), prefs.getInt("tts_timeout_s", 30),
         prefs.getBoolean("allow_insecure_http", false))
-    val x: Int? get() = if (prefs.contains("read_glyph_x")) prefs.getInt("read_glyph_x", 0) else null
-    val y: Int? get() = if (prefs.contains("read_glyph_y")) prefs.getInt("read_glyph_y", 0) else null
-    fun position(x: Int, y: Int) { prefs.edit().putInt("read_glyph_x", x).putInt("read_glyph_y", y).apply() }
+    fun anchor(space: ControlSpace): ControlAnchor {
+        if (prefs.contains("read_anchor_horizontal_dp") && prefs.contains("read_anchor_vertical_dp")) {
+            val horizontal = prefs.getFloat("read_anchor_horizontal_dp", 0f)
+            val vertical = prefs.getFloat("read_anchor_vertical_dp", 0f)
+            if (horizontal.isFinite() && horizontal >= 0 && vertical.isFinite() && vertical >= 0) {
+                return ControlAnchor(prefs.getBoolean("read_anchor_right", true),
+                    prefs.getBoolean("read_anchor_bottom", false), horizontal, vertical)
+            }
+        }
+        // One-time migration of the old raw coordinates in the first visible orientation.
+        val legacy = ControlPosition(prefs.getInt("read_glyph_x", space.maxX),
+            prefs.getInt("read_glyph_y", space.height / 3))
+        return rememberControl(legacy, space).also(::position)
+    }
+    fun position(anchor: ControlAnchor) {
+        prefs.edit().putBoolean("read_anchor_right", anchor.right).putBoolean("read_anchor_bottom", anchor.bottom)
+            .putFloat("read_anchor_horizontal_dp", anchor.horizontalDp).putFloat("read_anchor_vertical_dp", anchor.verticalDp)
+            .remove("read_glyph_x").remove("read_glyph_y").apply()
+    }
 }

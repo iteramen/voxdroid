@@ -336,17 +336,37 @@
                     android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
 
-            <TextView android:id="@+id/row_backup" style="@style/Voxdroid.RowTitle"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground" android:padding="16dp"
-                android:minHeight="48dp" android:clickable="true" android:focusable="true"
-                android:text="@string/backup_title" />
+            <LinearLayout android:id="@+id/row_backup" style="@style/Voxdroid.Row">
+                <androidx.appcompat.widget.AppCompatImageView
+                    style="@style/Voxdroid.RowIcon"
+                    android:padding="6dp"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    app:srcCompat="@drawable/ic_backup_restore"
+                    app:tint="?attr/colorOnSecondaryContainer" />
+                <TextView style="@style/Voxdroid.RowTitle"
+                    android:layout_width="0dp" android:layout_weight="1"
+                    android:text="@string/backup_title" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
 
-            <TextView android:id="@+id/row_read_aloud" style="@style/Voxdroid.RowTitle"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground" android:padding="16dp"
-                android:minHeight="48dp" android:clickable="true" android:focusable="true"
-                android:text="@string/read_title" />
+            <LinearLayout android:id="@+id/row_read_aloud" style="@style/Voxdroid.Row">
+                <androidx.appcompat.widget.AppCompatImageView
+                    style="@style/Voxdroid.RowIcon"
+                    android:padding="6dp"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    app:srcCompat="@drawable/ic_control_speaker"
+                    app:tint="?attr/colorOnSecondaryContainer" />
+                <TextView style="@style/Voxdroid.RowTitle"
+                    android:layout_width="0dp" android:layout_weight="1"
+                    android:text="@string/read_title" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/row_privacy"
