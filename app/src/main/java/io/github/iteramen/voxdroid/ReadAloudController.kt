@@ -121,11 +121,14 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         val paired = microphone && speaker
         val width = dp(if (paired) 104 else 48)
         val height = dp(48)
+        val space = ControlSpace(screen.width(), screen.height(), width, height, density)
+        val position = placeControl(rememberControl(ControlPosition(prefs.x ?: space.maxX,
+            prefs.y ?: screen.height() / 3), space), space)
         val params = WindowManager.LayoutParams(-2, -2, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = (prefs.x ?: (screen.width() - width)).coerceIn(0, maxOf(0, screen.width() - width))
-            y = (prefs.y ?: screen.height() / 3).coerceIn(0, maxOf(0, screen.height() - height))
+            x = position.x
+            y = position.y
         }
         val box = PillLayout(service, null).apply {
             orientation = LinearLayout.HORIZONTAL
