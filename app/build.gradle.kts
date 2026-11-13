@@ -30,8 +30,8 @@ android {
         applicationId = "io.github.iteramen.voxdroid"
         minSdk = 33
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.4.1"
+        versionCode = 8
+        versionName = "0.4.2"
         val commit = providers.of(GitCommit::class) {}.get()
         buildConfigField("String", "COMMIT", "\"$commit\"")
     }
