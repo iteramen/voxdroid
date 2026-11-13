@@ -3,6 +3,13 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## 0.4.3 — 2026-11-13
+
+Changed
+- Add smaller explanatory subtitles to Backup and restore, Read aloud and Privacy policy,
+  using the same two-line menu layout as the other Settings rows. The privacy subtitle
+  explicitly says that it opens a web page.
+
 ## 0.4.2 — 2026-11-13
 
 Fixed

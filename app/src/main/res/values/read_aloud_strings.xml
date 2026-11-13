@@ -31,4 +31,5 @@
     <string name="read_channel">Read aloud playback</string>
     <string name="read_notification">Reading aloud</string>
     <string name="read_stop">Stop reading</string>
+    <string name="read_summary">Voices, speed and speech server</string>
 </resources>

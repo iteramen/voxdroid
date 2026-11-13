@@ -18,4 +18,5 @@
     <string name="backup_busy">Finish or cancel the current dictation, caption or read aloud, then restore again.</string>
     <string name="backup_restore_failed">Restore could not be completed. Retry from your backup before dictating.</string>
     <string name="backup_failed">Could not read or write this backup. Check the passphrase, file and destination, then try again. An unreadable backup does not change settings.</string>
+    <string name="backup_summary">Save or restore encrypted settings</string>
 </resources>

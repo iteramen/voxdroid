@@ -344,9 +344,11 @@
                     android:importantForAccessibility="no"
                     app:srcCompat="@drawable/ic_backup_restore"
                     app:tint="?attr/colorOnSecondaryContainer" />
-                <TextView style="@style/Voxdroid.RowTitle"
-                    android:layout_width="0dp" android:layout_weight="1"
-                    android:text="@string/backup_title" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/Voxdroid.RowTitle" android:text="@string/backup_title" />
+                    <TextView style="@style/Voxdroid.RowSummary" android:text="@string/backup_summary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:importantForAccessibility="no"
                     android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
@@ -360,9 +362,11 @@
                     android:importantForAccessibility="no"
                     app:srcCompat="@drawable/ic_control_speaker"
                     app:tint="?attr/colorOnSecondaryContainer" />
-                <TextView style="@style/Voxdroid.RowTitle"
-                    android:layout_width="0dp" android:layout_weight="1"
-                    android:text="@string/read_title" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/Voxdroid.RowTitle" android:text="@string/read_title" />
+                    <TextView style="@style/Voxdroid.RowSummary" android:text="@string/read_summary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:importantForAccessibility="no"
                     android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
@@ -377,11 +381,11 @@
                     style="@style/Voxdroid.RowIcon"
                     android:text="@string/section_privacy_icon" />
 
-                <TextView
-                    style="@style/Voxdroid.RowTitle"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:text="@string/section_privacy" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/Voxdroid.RowTitle" android:text="@string/section_privacy" />
+                    <TextView style="@style/Voxdroid.RowSummary" android:text="@string/section_privacy_summary" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
