@@ -25,3 +25,6 @@ jobs:
 
       - name: Handset test-helper checks (synthetic data only)
         run: python3 -m unittest discover -s tools -p 'test_caption_test_*.py'
+
+      - name: Play listing text and artwork checks
+        run: python3 tools/check_play_package.py

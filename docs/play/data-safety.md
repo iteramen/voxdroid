@@ -1,7 +1,7 @@
 # Play Data safety form — voxdroid
 
-Draft for version 0.3.0, reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
-on 2026-11-06. This records implementation behavior; no Console submission has been made. The owner
+Draft for version 0.4.3, reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
+on 2026-11-13. This records implementation behavior; no Console submission has been made. The owner
 must reconcile the actual form and all distributed versions before a Play release. The public policy is
 [`docs/privacy.md`](../privacy.md).
 
@@ -9,7 +9,7 @@ must reconcile the actual form and all distributed versions before a Play releas
 
 | Question | Draft answer | Implementation evidence |
 | --- | --- | --- |
-| Collect any required data types? | **Yes** | Dictated and explicitly shared received audio goes to configured speech servers; optional cleanup receives text. |
+| Collect any required data types? | **Yes** | Dictated and explicitly shared received audio goes to configured speech servers; optional cleanup and read aloud send chosen text to configured servers. |
 | All user data encrypted in transit? | **No** | HTTPS uses Android verification, but the user can explicitly enable remote HTTP. Loopback HTTP is allowed. |
 | Deletion mechanism? | **Local transcript deletion exists; remote deletion is not provided** | Voice messages → Delete all and turning remembering off delete local records. Voxdroid cannot delete data retained by user-configured servers. Do not promise end-to-end deletion in the Console. |
 | Independent security review? | **No** | No independent certification is claimed. |
@@ -18,7 +18,7 @@ must reconcile the actual form and all distributed versions before a Play releas
 
 | Category | Type | Collected | Shared | Ephemeral | Required/Optional | Purpose |
 | --- | --- | --- | --- | --- | --- | --- |
-| Audio files | Voice or sound recordings | **Yes** | **No, under the user-initiated transfer exception below** | **No blanket claim** | Required for dictation | App functionality |
+| Audio files | Voice or sound recordings | **Yes** | **No, under the user-initiated transfer exception below** | **No blanket claim** | Optional overall; necessary for dictation/captions | App functionality |
 | Messages | Other in-app messages | **Yes** | **Same exception** | **No** | Optional | App functionality |
 | App activity | Other user-generated content | **Yes** | **Same exception** | **No blanket claim** | Optional | App functionality |
 
@@ -37,7 +37,8 @@ and file names are not sent. Routine accessibility observation reads only bounde
 header/selection metadata, held in memory (`CaptionAccessibility`, `CaptionController`).
 
 **Other user-generated content:** the user's glossary and optional dictated-text cleanup input.
-It is separate from the received-message category (`SttClient`, `PolishClient`).
+It also includes chosen non-message text sent for read aloud; chosen message text belongs
+in the Messages row (`SttClient`, `PolishClient`, `TtsClient`).
 
 **Shared:** the draft relies on the explicit user-initiated transfer exception, not merely on the
 developer running no server. The user configures destinations, enables captions with a data-flow
@@ -77,7 +78,7 @@ except explicit dictation language sent with STT. Its changed event subscription
 purposes are in [`accessibility-declaration.md`](accessibility-declaration.md). Google approval is
 not implied. Voxdroid is not directed at children.
 
-## Read-aloud change (implementation draft)
+## Read aloud in the current release
 
 Optional read aloud adds explicitly selected foreground text sent to a user-configured TTS server.
 That can include message text and other user-generated content: include it in the corresponding
