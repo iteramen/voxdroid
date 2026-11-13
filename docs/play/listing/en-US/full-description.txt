@@ -1,0 +1,27 @@
+Speaking, reading and listening should be easier to reach.
+
+voxdroid is an Android accessibility app built first for people who find typing painful or difficult, including people with RSI or motor impairments. It also offers private voice-message captions for people who are deaf or hard of hearing, and read aloud for people who have difficulty seeing or reading text.
+
+DICTATE WITH YOUR EXISTING KEYBOARD
+Keep your own keyboard. Focus a text field, hold Volume Down or tap the floating microphone, speak, then stop. Your transcript lands at the original cursor. Optional cleanup can add punctuation and remove fillers. Password fields are excluded, and changing the target field prevents an unintended insertion.
+
+READ RECEIVED VOICE MESSAGES
+Select a downloaded WhatsApp or Telegram voice note and use the floating microphone to start the supported share flow. The caption appears in a private panel over the original conversation. It is not automatically pasted or sent to anyone. You can optionally remember captions for 30 days and delete them in the app. Supported sharing currently requires the English interface in those messaging apps.
+
+HEAR TEXT YOU CHOOSE
+Tap the floating speaker, then choose an outlined, visible text block. Tap the speaker again to stop. Read aloud excludes password fields and editable text. English, Hebrew and Russian have separate voice and endpoint settings; available languages and voice quality depend on the servers you configure.
+
+YOUR SERVERS, YOUR SETTINGS
+You need a compatible speech-to-text server for dictation or captions. Read aloud needs a compatible text-to-speech server, and cleanup needs an optional compatible chat-completions server. voxdroid does not include a hosted service, API subscription or on-device speech model. A server administrator or someone helping you set up the phone may be needed. Provider charges may apply.
+
+ACCESSIBILITY ACCESS
+voxdroid uses Android's AccessibilityService API to work in the app you are using: identify the focused field, insert your dictation, handle the optional Volume Down trigger, show floating controls, identify supported voice-note selections, and let you choose visible text to hear. Captions and read aloud are separately enabled with explanations of their data flow. This is not a full screen reader or a voice-controlled replacement for Android navigation.
+
+PRIVACY AND CONTROL
+No advertising, analytics or developer-operated speech server. Selected audio and text go to the endpoints you configure. Their retention policies apply. Optional remembered captions stay in app-private storage. Tokens are excluded from Android backup; you can explicitly export settings and tokens in a passphrase-encrypted backup. HTTPS is supported; remote HTTP requires an explicit opt-in.
+
+Requires Android 13 or later. Other apps must expose compatible accessibility content; not every app or text block can be read or edited. voxdroid is not affiliated with WhatsApp or Telegram.
+
+Setup and source: https://github.com/iteramen/voxdroid
+Privacy: https://iteramen.github.io/voxdroid/privacy
+Support: byovox.licensing@gmail.com

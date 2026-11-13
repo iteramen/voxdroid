@@ -40,7 +40,9 @@ signed release and in-place phone upgrade with configuration preserved. Live TOD
    forward explicitly applicable evidence; broader device/language coverage is not an endless
    release gate.
 9. Merge feature on green, bump, build/sign and upgrade the phone preserving configuration after
-   acceptance. Play Console #5 remains owner-parked; #2 is untouched. Other backlog is outside
+   acceptance. Play Console #5 resumed on 2026-11-13 with unattended launch preparation;
+   account registration and submission remain pending ([checklist](play/launch-checklist.md)).
+   #2 is untouched. Other backlog is outside
    this audit wave (including #44/PR #45); do not silently include or close it.
 
 ## Item 1 contract
