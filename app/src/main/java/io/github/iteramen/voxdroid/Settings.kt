@@ -18,7 +18,7 @@ internal fun cueVolume(stored: Int): Int = stored.coerceIn(0, 100)
 
 internal const val ALLOW_INSECURE_HTTP_DEFAULT = false
 
-/** Two app-private files: `voxdroid`, and `secrets` for the tokens alone, the file `android:dataExtractionRules` keeps off a backup. */
+/** Two app-private files: `voxdroid`, and `secrets` for the tokens and the disclosed opt-ins ([isConsent]), the file `android:dataExtractionRules` keeps off a backup. */
 class Settings(context: Context) {
 
     private val prefs = context.getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE)
@@ -60,7 +60,7 @@ class Settings(context: Context) {
     val triggerButton: Boolean get() = prefs.getBoolean("trigger_button", true)
 
     /** Explicit opt-in before observing foreground conversation metadata for private captions. */
-    val voiceCaptions: Boolean get() = prefs.getBoolean("voice_captions", false)
+    val voiceCaptions: Boolean get() = secrets.getBoolean("voice_captions", false)
 
     val allowDuringCall: Boolean get() = prefs.getBoolean("allow_during_call", false)
 

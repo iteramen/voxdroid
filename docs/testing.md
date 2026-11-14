@@ -128,6 +128,9 @@ Handset checklist (record actual results below; these rows alone are not passes)
 | Busy restore | Refused while a dictation or caption is active; active configuration untouched. |
 | Cancel/recreate picker | Cancelling/rotating/leaving does not write plaintext or change settings; retry available. |
 | Signed reinstall | Public APK hash/certificate checked; encrypted backup recovered before old signer removed; restore succeeds. Android grants/caption consent separately enabled. |
+| Consent off a backup | Turn on *Enable voice-message captions* and read aloud, then on a debug build `adb shell run-as <package> grep -l voice_captions shared_prefs/*.xml` and the same for `tts_enabled`: each names `secrets.xml` only. |
+| Upgrade over a build that stored caption consent in `voxdroid.xml` | Captions are off after the upgrade; turning the switch on shows the disclosure again and captions then work. |
+| Token box and autofill | Enter a token on the Speech page with a password manager enabled as the autofill service: no offer to save it. |
 
 Everything here needs a handset; the JVM tests (`./gradlew testDebugUnitTest`) cover the logic
 that runs without one. Run this against the debug APK (`./gradlew assembleDebug`) before a PR that

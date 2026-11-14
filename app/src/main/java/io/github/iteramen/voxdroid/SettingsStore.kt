@@ -23,6 +23,9 @@ internal fun storedAs(key: String): StoredAs = when (key) {
     else -> if (key.startsWith(LANE_TOKEN_PREFIX) || TTS_LANGUAGES.any { key == "tts_token_$it" }) StoredAs.Secret else StoredAs.Text
 }
 
+/** A switch turned on after a disclosure. It lives in `secrets`, off a backup, so a restore or device transfer cannot turn it on unasked. */
+internal fun isConsent(key: String): Boolean = key == "tts_enabled" || key == "voice_captions"
+
 internal enum class NumberProblem {
     NotANumber,
     Negative,
@@ -100,11 +103,11 @@ internal class SettingsStore(context: Context) : PreferenceDataStore() {
         }
 
     override fun putBoolean(key: String, value: Boolean) {
-        (if (key == "tts_enabled") secrets else prefs).edit().putBoolean(key, value).apply()
+        (if (isConsent(key)) secrets else prefs).edit().putBoolean(key, value).apply()
     }
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean =
-        (if (key == "tts_enabled") secrets else prefs).getBoolean(key, defValue)
+        (if (isConsent(key)) secrets else prefs).getBoolean(key, defValue)
 
     /** The cue volume's slider; the base class throws on a put. */
     override fun putInt(key: String, value: Int) {

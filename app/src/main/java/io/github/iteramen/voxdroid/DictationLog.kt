@@ -24,6 +24,9 @@ internal const val MAX_DICTATION_RECORD_BYTES = 256 * 1024
 
 internal const val MAX_DETAIL_CHARS = 300
 
+/** A settings or server value on one metadata line. */
+internal const val MAX_VALUE_CHARS = 100
+
 enum class LogOutcome {
     Cleaned,
     CleanupFailed,
@@ -85,6 +88,11 @@ private val SAFE_DETAILS = listOf(
     """mic: (?:permission missing|refused by the platform|unavailable)""",
 ).map(::Regex)
 
+private val DETECTED = Regex("""$LOG_LANGUAGE [0-9]\.[0-9]{2}""")
+
+/** A language code and its score, as `SttTrace` writes them, else `null`: with no candidates sent, the code is whatever key the server chose. */
+internal fun safeDetected(text: String): String? = text.takeIf { it.length <= MAX_VALUE_CHARS && DETECTED.matches(it) }
+
 /** Only complete, known diagnostic shapes survive. Unknown text is omitted, never guessed safe by redaction. */
 internal fun safeDetail(text: String): String =
     if (text.length <= MAX_DETAIL_CHARS && SAFE_DETAILS.any { it.matches(text) }) text else "diagnostic detail omitted"
@@ -101,7 +109,7 @@ internal fun DictationEntry.toJson(): JSONObject = JSONObject()
     .putOpt("polish_model", polishModel)
     .putOpt("polish_timeout_s", polishTimeoutS)
     .putOpt("stt_language", sttLanguage)
-    .putOpt("stt_detected", sttDetected)
+    .putOpt("stt_detected", sttDetected?.let(::safeDetected))
     .putOpt("stt_served_by", sttServedBy)
     .putOpt("stt_ms", sttMs)
     .putOpt("polish_ms", polishMs)

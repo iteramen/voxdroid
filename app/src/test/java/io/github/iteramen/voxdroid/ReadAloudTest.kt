@@ -42,6 +42,14 @@ class ReadAloudTest {
         val inherited = TtsLane(lane.baseUrl, lane.model, lane.voice, "", true)
         assertEquals("synthetic-root-token", config(mapOf("he" to inherited)).endpoint("he").token)
     }
+    @Test fun aLaneWithoutItsOwnServerNeverSendsItsTokenToTheEnglishOne() {
+        val lane = TtsLane("", "he-model", "he-voice", "synthetic-lane-token", false)
+        val endpoint = config(mapOf("he" to lane)).endpoint("he")
+        assertEquals("http://127.0.0.1:8770/v1", endpoint.baseUrl)
+        assertEquals("", endpoint.token)
+        val inherited = TtsLane("", "he-model", "he-voice", "", true)
+        assertEquals("the switch still sends the English token there", "synthetic-root-token", config(mapOf("he" to inherited)).endpoint("he").token)
+    }
     @Test fun chunksPreserveUnicodeAndBoundLongSelections() {
         val input = "שלום 😀 עולם. ".repeat(200)
         val parts = ttsChunks(input)

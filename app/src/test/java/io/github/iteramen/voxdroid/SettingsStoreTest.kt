@@ -1,10 +1,21 @@
 package io.github.iteramen.voxdroid
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SettingsStoreTest {
+
+    /** A restore or a device transfer must not switch on what the user agreed to after a disclosure. */
+    @Test
+    fun theDisclosedOptInsAreKeptOffABackup() {
+        assertTrue(isConsent("voice_captions"))
+        assertTrue(isConsent("tts_enabled"))
+        assertFalse(isConsent("polish_enabled"))
+        assertFalse(isConsent("trigger_button"))
+    }
 
     @Test
     fun theTwoNamedTokensAreSecrets() {
