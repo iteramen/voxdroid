@@ -200,68 +200,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/row_triggers"
-                style="@style/Voxdroid.Row">
-
-                <TextView
-                    style="@style/Voxdroid.RowIcon"
-                    android:text="@string/section_triggers_icon" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/Voxdroid.RowTitle"
-                        android:text="@string/section_triggers" />
-
-                    <TextView
-                        android:id="@+id/row_triggers_summary"
-                        style="@style/Voxdroid.RowSummary"
-                        android:text="@string/section_triggers_summary" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/section_chevron"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_delivery"
-                style="@style/Voxdroid.Row">
-
-                <TextView
-                    style="@style/Voxdroid.RowIcon"
-                    android:text="@string/section_delivery_icon" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/Voxdroid.RowTitle"
-                        android:text="@string/section_delivery" />
-
-                    <TextView
-                        android:id="@+id/row_delivery_summary"
-                        style="@style/Voxdroid.RowSummary"
-                        android:text="@string/section_delivery_summary" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/section_chevron"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/row_cleanup"
                 style="@style/Voxdroid.Row">
 
@@ -324,6 +262,68 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/row_triggers"
+                style="@style/Voxdroid.Row">
+
+                <TextView
+                    style="@style/Voxdroid.RowIcon"
+                    android:text="@string/section_triggers_icon" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Voxdroid.RowTitle"
+                        android:text="@string/section_triggers" />
+
+                    <TextView
+                        android:id="@+id/row_triggers_summary"
+                        style="@style/Voxdroid.RowSummary"
+                        android:text="@string/section_triggers_summary" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_chevron"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/row_delivery"
+                style="@style/Voxdroid.Row">
+
+                <TextView
+                    style="@style/Voxdroid.RowIcon"
+                    android:text="@string/section_delivery_icon" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Voxdroid.RowTitle"
+                        android:text="@string/section_delivery" />
+
+                    <TextView
+                        android:id="@+id/row_delivery_summary"
+                        style="@style/Voxdroid.RowSummary"
+                        android:text="@string/section_delivery_summary" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/section_chevron"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/row_voice_messages"
                 style="@style/Voxdroid.Row">
                 <TextView style="@style/Voxdroid.RowIcon" android:text="@string/section_speech_icon" />
@@ -333,24 +333,6 @@
                     <TextView style="@style/Voxdroid.RowSummary" android:text="@string/caption_section_summary" />
                 </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
-            </LinearLayout>
-
-            <LinearLayout android:id="@+id/row_backup" style="@style/Voxdroid.Row">
-                <androidx.appcompat.widget.AppCompatImageView
-                    style="@style/Voxdroid.RowIcon"
-                    android:padding="6dp"
-                    android:contentDescription="@null"
-                    android:importantForAccessibility="no"
-                    app:srcCompat="@drawable/ic_backup_restore"
-                    app:tint="?attr/colorOnSecondaryContainer" />
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:orientation="vertical">
-                    <TextView style="@style/Voxdroid.RowTitle" android:text="@string/backup_title" />
-                    <TextView style="@style/Voxdroid.RowSummary" android:text="@string/backup_summary" />
-                </LinearLayout>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:importantForAccessibility="no"
                     android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
 
@@ -372,6 +354,24 @@
                     android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
 
+            <LinearLayout android:id="@+id/row_backup" style="@style/Voxdroid.Row">
+                <androidx.appcompat.widget.AppCompatImageView
+                    style="@style/Voxdroid.RowIcon"
+                    android:padding="6dp"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    app:srcCompat="@drawable/ic_backup_restore"
+                    app:tint="?attr/colorOnSecondaryContainer" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/Voxdroid.RowTitle" android:text="@string/backup_title" />
+                    <TextView style="@style/Voxdroid.RowSummary" android:text="@string/backup_summary" />
+                </LinearLayout>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:text="@string/section_chevron" android:textColor="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/row_privacy"
                 style="@style/Voxdroid.Row"
@@ -387,11 +387,6 @@
                     <TextView style="@style/Voxdroid.RowSummary" android:text="@string/section_privacy_summary" />
                 </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/section_chevron"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

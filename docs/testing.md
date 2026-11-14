@@ -966,9 +966,21 @@ do not create one tab per test run. UIAutomator remains unsuitable during active
 
 - Scroll the main Settings screen to Backup and restore, Read aloud and Privacy policy.
   Each row must use the same title/secondary-text hierarchy as Speech and Languages, with
-  its existing icon and chevron aligned around the two-line text block. Check at the owner's
+  its existing icon aligned around the two-line text block (internal pages also have a chevron). Check at the owner's
   large font size that subtitles wrap naturally without overlapping the arrow.
 - Backup explains encrypted settings save/restore; Read aloud names voices, speed and speech
   server settings; Privacy policy explicitly says it opens a web page.
 - Navigation listeners and destination activities/URL are unchanged. This resource-only change
   does not require new narration, microphone, rotation or caption tests.
+
+### Settings setup order and navigation
+
+- [ ] Main rows follow Speech → Cleanup → Languages → Triggers → Delivery → Voice messages →
+  Read aloud → Backup and restore → Privacy policy, including accessibility traversal order.
+- [ ] Backup and restore uses the same toolbar/title/back arrow as the other sub-pages;
+  the arrow is labelled "Back to settings" for accessibility and returns to Settings.
+  Android Back also returns; scrolling backup content leaves the toolbar visible.
+- [ ] Privacy policy retains its icon and explanatory subtitle, has no right chevron,
+  and still opens the policy URL in the browser. Internal sub-pages retain their chevrons.
+- [ ] Large fonts and landscape do not clip the backup actions or overlap the toolbar.
+  Backup screenshot protection remains enabled; no export/restore is needed for these checks.

@@ -7,11 +7,13 @@ import android.text.InputType
 import android.view.View
 import android.view.WindowManager
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import java.util.concurrent.Executors
 
@@ -45,10 +47,17 @@ class ConfigBackupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        setContentView(R.layout.config_backup)
-        status = findViewById(R.id.backup_status)
-        findViewById<View>(R.id.backup_back).setOnClickListener { finish() }
-        findViewById<View>(R.id.backup_export).setOnClickListener { password(true) { chars ->
+        setContentView(R.layout.section)
+        val container = findViewById<FrameLayout>(R.id.section_content)
+        val content = layoutInflater.inflate(R.layout.config_backup, container, false)
+        container.addView(content)
+        findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setTitle(R.string.backup_title)
+            setNavigationContentDescription(R.string.backup_back)
+            setNavigationOnClickListener { finish() }
+        }
+        status = content.findViewById(R.id.backup_status)
+        content.findViewById<View>(R.id.backup_export).setOnClickListener { password(true) { chars ->
             work {
                 val bytes = try {
                     val snapshot = store.snapshot()
@@ -68,7 +77,7 @@ class ConfigBackupActivity : AppCompatActivity() {
                 R.string.backup_choose_destination
             }
         } }
-        findViewById<View>(R.id.backup_import).setOnClickListener {
+        content.findViewById<View>(R.id.backup_import).setOnClickListener {
             open.launch(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "*/*"
