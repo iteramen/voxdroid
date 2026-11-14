@@ -7,7 +7,7 @@ Voxdroid never applies the preset automatically.
 ## Set up
 
 1. Install Voxdroid from [GitHub Releases](https://github.com/iteramen/voxdroid/releases).
-   If Android blocks accessibility, follow the [sideload guide](sideload).
+   If Android blocks accessibility, follow the [sideload guide](https://iteramen.github.io/voxdroid/sideload).
 2. In **Speech → Easy start with Groq**, review the destination and changes, then tap **Use Groq**.
    Cancel leaves your setup unchanged. Export a password-protected backup first if you want to
    preserve an existing setup for switching back later.
@@ -56,7 +56,7 @@ applying the preset does not itself send audio or transcripts.
 Groq controls retention and processing at its service. Review
 [Groq's data documentation](https://console.groq.com/docs/your-data) and linked policies.
 Voxdroid operates no server, stores tokens privately and excludes them from Android backup.
-Your optional encrypted settings export includes tokens. Read the [privacy policy](privacy).
+Your optional encrypted settings export includes tokens. Read the [privacy policy](https://iteramen.github.io/voxdroid/privacy).
 
 ## If it fails
 
