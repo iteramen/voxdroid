@@ -3,7 +3,6 @@ package io.github.iteramen.voxdroid
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import org.json.JSONTokener
 import java.io.ByteArrayOutputStream
 
 /** The literal "auto" never goes on the wire: auto is a candidate list or nothing at all. */
@@ -83,7 +82,7 @@ class SttClient(
             return fail("stt HTTP ${answered.status}", RESPONSE_DETAIL)
         }
         val fields = try {
-            JSONTokener(answered.body).nextValue() as? JSONObject
+            parseJson(answered.body) as? JSONObject
                 ?: return fail("stt response is not an object", RESPONSE_DETAIL)
         } catch (malformed: JSONException) {
             return fail("stt JSON", RESPONSE_DETAIL)
@@ -157,7 +156,7 @@ class SttClient(
     private fun rejectsLanguageCandidates(answer: Attempt.Answered): Boolean {
         if (answer.status != 400) return false
         val error = try {
-            (JSONTokener(answer.body).nextValue() as? JSONObject)?.opt("error") as? JSONObject
+            (parseJson(answer.body) as? JSONObject)?.opt("error") as? JSONObject
         } catch (_: JSONException) {
             null
         } ?: return false

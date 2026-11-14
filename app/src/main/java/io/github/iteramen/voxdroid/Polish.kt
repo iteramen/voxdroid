@@ -4,7 +4,6 @@ import android.content.res.Resources
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import org.json.JSONTokener
 
 internal const val CAPITALISE_FIRST_RULE = """1. Add punctuation and capitalisation where the speech pauses or clauses end."""
 
@@ -106,7 +105,7 @@ class PolishClient(
             return fail("polish HTTP ${answered.status}", RESPONSE_DETAIL)
         }
         val fields = try {
-            JSONTokener(answered.body).nextValue() as? JSONObject
+            parseJson(answered.body) as? JSONObject
                 ?: return fail("polish response is not an object", RESPONSE_DETAIL)
         } catch (malformed: JSONException) {
             return fail("polish JSON", RESPONSE_DETAIL)
