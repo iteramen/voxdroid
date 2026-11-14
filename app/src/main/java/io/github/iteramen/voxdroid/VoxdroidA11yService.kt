@@ -31,6 +31,14 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
 
     private val main = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor()
+    /** Dictation log writes, kept off the main thread and out of the STT queue. */
+    private val logWriter = Executors.newSingleThreadExecutor()
+    private val dictationLog by lazy { DictationLog(dictationLogDir(filesDir)) }
+    private val capture by lazy {
+        DictationCapture(dictationLog, versionLine(BuildConfig.VERSION_NAME, BuildConfig.COMMIT),
+            write = { task -> logWriter.execute { task() } }, unsaved = { Log.i(TAG, "dictation log: entry not saved ($it)") })
+    }
+    private var landed = ""
     private val settings by lazy { Settings(this) }
     private val fields by lazy { FieldAccess(this) }
     private val polishPrompt by lazy { readBuiltInPrompt(resources) }
@@ -93,6 +101,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         accessibilityButtonController.registerAccessibilityButtonCallback(button)
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
         readAloud?.observe(null)
+        logWriter.execute { dictationLog.prune() }
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
@@ -150,9 +159,12 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             unregisterReceiver(screenOff)
             pill.hide()
             tones.stop()
+            capture.close()
         }
         main.removeCallbacksAndMessages(null)
         worker.shutdownNow()
+        // Not shutdownNow: an entry already handed over is still written.
+        logWriter.shutdown()
         super.onDestroy()
     }
 
@@ -177,13 +189,17 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
                     polishNotice = null
                     startField = field
                     takeKeyboardTag = fields.keyboardTag()
+                    capture.drop()
                 }
             }
         }
         val before = machine.state
         val beforeTake = machine.currentTake
         machine.on(event)
-        if (event == TakeEvent.Cancel) pill.hide()
+        if (event == TakeEvent.Cancel) {
+            pill.hide()
+            capture.drop()
+        }
         render()
         cue(cueFor(before, machine.state, sameTake = beforeTake == machine.currentTake))
     }
@@ -213,6 +229,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         // A microphone foreground service without RECORD_AUDIO throws a SecurityException on Android 14+,
         // so the permission is checked first and named.
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            capture.recordingFailed(machine.currentTake, "mic: permission missing")
             return getString(R.string.pill_mic_missing)
         }
         val rec = AudioRecorder(this)
@@ -222,6 +239,8 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         } catch (failed: RuntimeException) {
             // IllegalStateException from the recorder, SecurityException from the platform.
             stopForeground(STOP_FOREGROUND_REMOVE)
+            // The log keeps a fixed line: the exception's text is not ours to store.
+            capture.recordingFailed(machine.currentTake, if (failed is SecurityException) "mic: refused by the platform" else "mic: unavailable")
             return failed.message ?: "mic: unavailable"
         }
         recorder = rec
@@ -246,8 +265,15 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
 
     override fun transcribe(wav: ByteArray, take: Int) {
         val language = takeFor(takeKeyboardTag, settings::isExplicit, settings.chipLanguages, laneCodes(settings.chipLanguages, settings::laneBaseUrl))
+        capture.attempt(take, languageSent(language))
         worker.execute {
-            val outcome = dictate(transcriber { take == machine.currentTake }, wav, language, settings.sttPrompt, settings.noSpeechThreshold)
+            val trace = SttTrace()
+            val sttStarted = SystemClock.elapsedRealtime()
+            val outcome = dictate(
+                transcriber(trace, { capture.note(take, it) }) { take == machine.currentTake },
+                wav, language, settings.sttPrompt, settings.noSpeechThreshold,
+            )
+            capture.stt(take, trace.detected, trace.servedBy, SystemClock.elapsedRealtime() - sttStarted)
             // A blank transcript is silence: it never goes to the polish server.
             if (outcome !is SttOutcome.Text || outcome.text.isBlank()) {
                 main.post { answer(outcome, take) }
@@ -264,8 +290,11 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
                 dispatch(TakeEvent.Polishing(take))
                 worker.execute {
                     if (take != machine.currentTake) return@execute
+                    val polishStarted = SystemClock.elapsedRealtime()
                     val polished = polish(polisher, outcome.text, settings.polishMinWords, !settings.capitalizeFirstWord)
-                    main.post { answerPolished(polished, take) }
+                    val polishMs = if (polished is PolishOutcome.SkippedShort) null else SystemClock.elapsedRealtime() - polishStarted
+                    capture.polished(take, settings.polishModel, clampTimeoutS(settings.polishTimeoutS), polishMs)
+                    main.post { answerPolished(polished, outcome.text, take) }
                 }
             }
         }
@@ -287,6 +316,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             val planned = delivery(start, fields.focused(), settings.noFieldMode)
             // No input connection is the same as no field.
             decision = if (planned != Delivery.Insert || fields.insert(finished)) planned else delivery(null, null, settings.noFieldMode)
+            landed = if (decision is Delivery.Drop) "" else finished
             when (decision) {
                 Delivery.Insert -> Unit
                 is Delivery.Clipboard -> {
@@ -313,11 +343,12 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             is SttOutcome.Text -> if (outcome.text.isBlank()) {
                 silent(take)
             } else {
-                dispatch(TakeEvent.Transcript(outcome.text, take))
+                land(take, outcome.text, LogOutcome.PolishOff, outcome.text)
             }
             SttOutcome.Silence -> silent(take)
             is SttOutcome.Failure -> {
                 Log.d(TAG, outcome.detail)
+                if (live(take)) capture.failed(take, outcome.detail)
                 dispatch(TakeEvent.Failure(outcome.bar, take))
             }
         }
@@ -325,13 +356,13 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
 
     private fun silent(take: Int) {
         if (take == machine.currentTake) pill.flash(getString(R.string.pill_silence), flashMs(false))
-        dispatch(TakeEvent.Transcript("", take))
+        land(take, "", LogOutcome.Silence, "")
     }
 
-    private fun answerPolished(outcome: PolishOutcome, take: Int) {
+    private fun answerPolished(outcome: PolishOutcome, raw: String, take: Int) {
         when (outcome) {
-            is PolishOutcome.Text -> dispatch(TakeEvent.Transcript(outcome.text, take))
-            is PolishOutcome.SkippedShort -> dispatch(TakeEvent.Transcript(outcome.raw, take))
+            is PolishOutcome.Text -> land(take, outcome.text, LogOutcome.Cleaned, raw)
+            is PolishOutcome.SkippedShort -> land(take, outcome.raw, LogOutcome.SkippedShort, raw)
             is PolishOutcome.Fallback -> {
                 Log.d(TAG, outcome.detail)
                 // deliver() shows this beside its own notice.
@@ -340,18 +371,34 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
                     outcome.blocked -> getString(R.string.pill_polish_blocked)
                     else -> outcome.notice ?: getString(R.string.pill_polish_failed)
                 }
-                dispatch(TakeEvent.Transcript(outcome.raw, take))
+                val logged = if (outcome.blocked) LogOutcome.CleanupBlocked else LogOutcome.CleanupFailed
+                land(take, outcome.raw, logged, raw, outcome.detail)
             }
         }
     }
 
-    private fun transcriber(current: () -> Boolean): Transcriber {
+    /** Whether [Take] still waits on [take]: only then does its answer land, and only then is it logged. */
+    private fun live(take: Int) = take == machine.currentTake && machine.state is TakeState.Working
+
+    private fun land(take: Int, text: String, outcome: LogOutcome, raw: String, detail: String? = null) {
+        val logged = live(take)
+        landed = ""
+        dispatch(TakeEvent.Transcript(text, take))
+        if (logged) capture.finish(take, outcome, raw, landed, detail)
+    }
+
+    private fun transcriber(trace: SttTrace, note: (String) -> Unit, current: () -> Boolean): Transcriber {
         val threshold = settings.noSpeechThreshold
         val timeoutMs = clampTimeoutS(settings.sttTimeoutS) * MILLIS_PER_SECOND.toInt()
         val allowInsecureHttp = settings.allowInsecureHttp
-        fun client(baseUrl: String, token: String) = SttClient(
-            baseUrl = baseUrl, allowInsecureHttp = allowInsecureHttp, model = settings.sttModel, token = token,
-            timeoutMs = timeoutMs, scored = threshold > 0f, current = current, note = { Log.i(TAG, it) },
+        // The log names a lane by its code and the default endpoint by its host alone.
+        fun client(baseUrl: String, token: String, lane: String? = null) = trace.wrap(
+            lane?.let { "lane $it" } ?: endpointHost(baseUrl) ?: "default",
+            SttClient(
+                baseUrl = baseUrl, allowInsecureHttp = allowInsecureHttp, model = settings.sttModel, token = token,
+                timeoutMs = timeoutMs, scored = threshold > 0f, current = current,
+                note = { Log.i(TAG, it); note(lane?.let { code -> "$it (lane $code)" } ?: it) },
+            ),
         )
         val sttToken = settings.sttToken
         val tokens = mutableMapOf<String, String>()
@@ -362,11 +409,11 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
                     settings.sttBaseUrl, sttToken, url, settings.laneToken(code), settings.laneInheritsToken(code),
                 )
                 tokens[code] = token
-                code to client(url, token)
+                code to client(url, token, code)
             }
         }.toMap()
         val tokenless = tokens.filterValues { it.isBlank() }.keys
-        return Routed(client(settings.sttBaseUrl, sttToken), lanes, tokenless, sttToken.isNotBlank(), current) { Log.i(TAG, it) }
+        return Routed(client(settings.sttBaseUrl, sttToken), lanes, tokenless, sttToken.isNotBlank(), current) { Log.i(TAG, it); note(it) }
     }
 
     private fun polisher(current: () -> Boolean): Polisher? {

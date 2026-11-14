@@ -17,6 +17,13 @@
     <string name="settings_no_field_mode">No text field, or the field changed</string>
     <string name="settings_no_field_refuse">Refuse</string>
     <string name="settings_no_field_clipboard">Copy to the clipboard</string>
+    <string name="dictation_log_category">Dictation log</string>
+    <string name="dictation_log">Keep a dictation log</string>
+    <string name="dictation_log_summary">Off by default. Keeps each take\'s text, outcome, retries and connection failures on this phone for 30 days, never audio or tokens, excluded from backup and transfer. Turning off deletes the log.</string>
+    <string name="dictation_log_delete">Delete the dictation log</string>
+    <string name="dictation_log_delete_summary">Also stops takes already in progress from writing to it.</string>
+    <string name="dictation_log_delete_confirm">Remove every dictation log entry? Text already typed into apps is unchanged.</string>
+    <string name="dictation_log_storage_failed">The dictation log could not be updated. Try again.</string>
     <string name="pill_stop">■ Stop</string>
     <string name="pill_retry">↻ Retry</string>
     <string name="pill_cancel">Cancel dictation</string>

@@ -1,6 +1,6 @@
 # Play Data safety form — voxdroid
 
-Draft for version 0.5.0, updated for Easy start on 2026-11-14; definitions reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
+Draft for version 0.5.0, updated for Easy start and the unreleased dictation log on 2026-11-14; definitions reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
 on 2026-11-13. This records implementation behavior; no Console submission has been made. The owner
 must reconcile the actual form and all distributed versions before a Play release. The public policy is
 [`docs/privacy.md`](../privacy.md).
@@ -11,7 +11,7 @@ must reconcile the actual form and all distributed versions before a Play releas
 | --- | --- | --- |
 | Collect any required data types? | **Yes** | Dictated and explicitly shared received audio goes to configured speech servers; optional cleanup and read aloud send chosen text to configured servers. |
 | All user data encrypted in transit? | **No** | HTTPS uses Android verification, but the user can explicitly enable remote HTTP. Loopback HTTP is allowed. |
-| Deletion mechanism? | **Local transcript deletion exists; remote deletion is not provided** | Voice messages → Delete all and turning remembering off delete local records. Voxdroid cannot delete data retained by user-configured servers. Do not promise end-to-end deletion in the Console. |
+| Deletion mechanism? | **Local transcript deletion exists; remote deletion is not provided** | Voice messages → Delete all and turning remembering off delete local caption records; Delivery → Delete the dictation log and turning the log off delete local dictation records. Voxdroid cannot delete data retained by user-configured servers. Do not promise end-to-end deletion in the Console. |
 | Independent security review? | **No** | No independent certification is claimed. |
 
 ## Data types
@@ -50,7 +50,7 @@ Reassess the exception against this disclosed, expected transfer before submitti
 do not treat this draft as a Google determination. No advertising/analytics recipient is added.
 
 **Ephemeral:** do not carry forward the old blanket Yes. Imported encoded audio touches a file;
-optional remembered captions retain raw/displayed text for 30 days, and the user's speech/cleanup
+optional remembered captions and the optional dictation log retain transcript text for 30 days, and the user's speech/cleanup
 servers can retain requests under their own policies. Their behavior is not verified by the app.
 The final form must reflect those conditions, not infer server ephemerality from in-memory WAV.
 
@@ -60,6 +60,17 @@ and displayed text, cleanup outcome, write time and key digest, with no audio or
 They are excluded from backup/transfer. Reads never extend the 30-day expiry. Delete all and off
 invalidate writers already in flight; expiry is pruned when opened/accessed (`CaptionCache`).
 Re-transcribe requires a fresh share; expired source grants are not retained.
+
+**Dictation log (reviewed 2026-11-14):** the optional Delivery → Keep a dictation log, off by
+default, keeps one text record per take on the device for 30 days: raw/delivered transcript,
+outcome, fixed failure details, retry and connection events, cleanup model/timeout, language
+sent/detected, answering lane or host, stage durations and app version. No audio, tokens or
+server replies. It is app-private, excluded from backup and device transfer, never transmitted and
+not exported by encrypted settings backup (`DictationLog`, `DictationCapture`). Conclusion: Play
+counts data as collected only when it is transmitted off the device, so this local-only log adds
+no data type and changes no Collected/Shared answer above. It does add local transcript retention,
+so the Ephemeral paragraph and the deletion row cover it. Reassess if a viewer or report ever
+exports or sends log records.
 
 ## Other data and accessibility
 

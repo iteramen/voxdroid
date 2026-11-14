@@ -306,7 +306,8 @@ class SttClientTest {
         assertEquals("requests ${server.requests.size}", 2, server.requests.size)
         assertEquals(server.requests[0].body, server.requests[1].body)
         assertTrue(server.requests[1].body, server.requests[1].body.contains("name=\"vad\"\r\n\r\ntrue\r\n"))
-        assertTrue(notes.toString(), notes.isEmpty())
+        assertEquals(notes.toString(), 1, notes.size)
+        assertTrue(notes.toString(), notes[0].startsWith("stt transport: ") && notes[0].endsWith("; resent once"))
     }
 
     @Test

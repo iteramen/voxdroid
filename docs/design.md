@@ -61,6 +61,7 @@ Logic that needs no Android lives in plain functions and classes, so the JVM tes
 | `Pill.kt`, `PillPlacement.kt`, `Cue.kt`, `Tone.kt` | the overlay, its placement and drag, haptic cues; the cue tones, their mute policy (`audible`) and `TonePlayer` |
 | `Settings.kt`, `SettingsStore.kt` | the two preference files |
 | `CaptionCache.kt` | the opt-in, 30-day voice-message transcript cache ([below](#caption-cache)) |
+| `DictationLog.kt`, `DictationCapture.kt` | the opt-in, 30-day dictation log: storage and record format; the take's record as it is built ([below](#dictation-log)) |
 | `CaptionProcessor.kt`, `CaptionAudio.kt`, `CaptionMediaDecoder.kt` | voice-message processing: acquisition, fingerprint, Ogg/Opus decode, 16 kHz WAV, STT and cleanup; used by the private caption controller ([below](#voice-message-processing)) |
 | `SettingsActivity.kt`, `Readiness.kt`, `EndpointProbe.kt` | the launcher: a status card whose button fixes the first problem (`problems`), the settings page rows, the privacy row |
 | `SectionActivity.kt`, `SectionFragment.kt`, `TryActivity.kt` | one page per `res/xml/section_*.xml`, a language's filled in code (`languagePage`); a field for a first take |
@@ -69,7 +70,8 @@ Logic that needs no Android lives in plain functions and classes, so the JVM tes
 **Threads.** No coroutines and no background jobs. The main looper (`main`) runs the service
 callbacks, every `Take` transition, the pill and the tick, hold and cap timers. One single-thread
 executor (`worker`) runs STT, lanes and cleanup on blocking `HttpURLConnection` and posts each
-result back. `voxdroid-recorder` reads the microphone; each request has a watchdog timer (`Http.kt`
+result back. A second single-thread executor (`logWriter`) writes dictation log records.
+`voxdroid-recorder` reads the microphone; each request has a watchdog timer (`Http.kt`
 — `boundedPost`). `SettingsActivity` probes on its own executor, only while resumed.
 
 ## The take is a state machine
@@ -276,6 +278,44 @@ Dictation, its microphone and field delivery do not use it (`CaptionPolicyTest`)
   sidecar, keeps the old record and returns `Failed`. One process-wide lock orders every
   operation, so a ticket check and its write cannot interleave with Delete all.
 
+### Dictation log
+
+`DictationLog.kt` stores the optional per-take log; `DictationCapture` builds the record of the
+take in flight from the service's existing call points. The Delivery page's **Keep a dictation
+log** switch (off by default) and **Delete the dictation log** (with confirmation) control it.
+A later viewer reads `DictationLog.entries`.
+
+- **Where.** `filesDir/dictation_log/`, excluded whole from cloud backup and device transfer
+  (`res/xml/data_extraction_rules.xml`), sidecars included. It holds `state` and one
+  `<random UUID>.json` per take. On and off, Delete all, fencing by a `state` epoch, sidecar writes
+  and the process-wide lock work as in the [caption cache](#caption-cache).
+- **Record** (`DictationEntry`, format 1): id, take time, app version (`versionLine`), outcome
+  (`LogOutcome`: `Cleaned`, `CleanupFailed`, `CleanupBlocked`, `SkippedShort`, `PolishOff`,
+  `Silence`, `SttFailed`, `RecordingFailed`), raw and delivered text (either may be empty;
+  delivered is empty when delivery dropped it), a failure detail, cleanup model and timeout, the
+  language sent (`languageSent`: a code, `auto` or `auto:<candidates>`), the language detected
+  (first scored reply, code and probability), the lane or host that answered last (`SttTrace`,
+  `endpointHost`), STT and cleanup milliseconds, and events (`LogEvent`: `Retry`, `SttFailed`,
+  `Transport`, `Note`). A field a stage did not produce is absent; a cleanup skipped as too short
+  has no duration. No audio, token, endpoint userinfo or query, response body or exception text:
+  details are the clients' fixed classifications, and `safeDetail` strips URL userinfo and queries,
+  bearer values and `name=secret` pairs and caps the length before anything is stored.
+- **Capture.** `transcribe` opens the record (`attempt`) while the log is on, taking a ticket;
+  a Retry of the same take adds a `Retry` event to the open record. Client and routing notes
+  (`note`) become `Transport` events for a connection failure and its resend (`SttClient.send`),
+  `Note` events otherwise. A failed STT attempt is saved at once and stays open, so a successful
+  Retry rewrites the same record with the failure kept among its events. `land` saves the final
+  outcome only when `Take` accepted the answer; every capture call names its take and is ignored
+  for any take but the open one, so a late answer of a cancelled or earlier take writes nothing.
+  A cancelled take, or one superseded by a new trigger, is dropped unwritten. A recording failure
+  is a record of its own with a fixed detail, never the exception's text.
+- **Off and Delete all** also call every open `DictationCapture` (`DictationLog.onDelete`), which
+  drops the take it holds in memory; a write already queued carries the old ticket and gets
+  `Stale` or `Disabled`.
+- **Expiry.** 30 days from the take time (`DICTATION_LOG_TTL_MS`). A prune runs when the service
+  connects and when the settings screen opens (`openDictationLog`), at every `put` and every
+  `entries`, and drops expired, future-dated, corrupt and foreign files.
+
 ### Private caption integration
 
 `CaptionController` owns one `CaptionSession` on the accessibility service's main thread and a
@@ -421,7 +461,9 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
   permissions, `PolishPromptTest` reads the prompt file. The caption cache and the voice-message
   pipeline run behind a fake decoder, STT and cleanup, on synthetic Ogg headers and PCM;
   `CaptionPolicyTest` reads the backup rules and limits foundation callers to the explicit
-  caption integration; import code cannot record or deliver text to a field.
+  caption integration; import code cannot record or deliver text to a field. `DictationLogTest`
+  covers the log's format, capture outcomes, Retry, stale takes, expiry, deletion, the backup
+  rules and redaction.
 - **On a handset:** the manual checklist in [testing.md](testing.md), against the debug APK,
   before a PR that touches the service.
 - **CI** ([.github/workflows/](../.github/workflows/)): `ci.yml` runs the gate
@@ -434,7 +476,8 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 ## Not built yet
 
 - The Google Play listing.
-- Read-aloud, always-on transcription, and an opt-in capture log of takes.
+- Read-aloud and always-on transcription.
+- A viewer and reporting for the dictation log; the log itself is captured and stored.
 - Handset acceptance of the private caption integration, including app-version-specific selection,
   cache reuse and origin invalidation; see [testing.md](testing.md#private-caption-integration).
 

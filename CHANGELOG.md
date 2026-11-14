@@ -3,6 +3,18 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Added
+- Optional dictation log under Delivery, off by default: one text record per take that ends with
+  text, silence or a failure, with its retries and connection failures, kept on the phone for 30
+  days and excluded from backup and device transfer. No audio or tokens. Turning it off or Delete
+  the dictation log erases every record and the take in flight. A viewer comes later.
+
+Changed
+- The privacy policy describes the dictation log; the speech client logs a fixed category when a
+  request got no response and was resent once.
+
 ## 0.5.0 — 2026-11-14
 
 Added

@@ -288,17 +288,28 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   request begun before either cannot write afterwards (`CaptionCache.kt` — `begin`, `put`).
 - The voice-message spool directory, `filesDir/caption_spool/`, is excluded whole the same way
   ([Imported voice messages](#imported-voice-messages)).
+- The dictation log is off until the user enables **Delivery → Keep a dictation log**
+  (`DictationLog`, `DictationCapture`, `SectionFragment`). Its directory, `filesDir/dictation_log/`,
+  is excluded whole from cloud backup and device transfer, write sidecars included. A record is
+  text only: raw and delivered transcript, outcome, fixed failure details, retry and connection
+  events, cleanup model and timeout, language sent and detected, the answering lane or host, stage
+  durations and app version. No audio, token, endpoint userinfo or query, response body or raw
+  exception text; details pass `safeDetail` before they are stored. Records expire 30 days after the take; turning the log
+  off or Delete all removes every record, drops the take held in memory, and a take begun before
+  either cannot write afterwards (`DictationLog.kt` — `begin`, `put`).
 
 **In scope:** a token in a log, an error string, an automatic backup or a device transfer, or in
 plaintext in an explicit configuration export; a caption record
 or spool file in a backup or a device transfer; a caption record outliving 30 days, or written by
-a request begun before Delete all or turning off. **Out of scope:**
+a request begun before Delete all or turning off; the same for a dictation log record, or audio,
+a token or a response body in one. **Out of scope:**
 the other preferences file, which holds the addresses, languages and glossary and is backed up; a
 rooted device or a debugger attached to the app's process.
 
 ### Logs
 
-At every log level, voxdroid logs no transcript or token. The two `Log.d` failure lines retain
+At every log level, voxdroid writes no transcript or token to logcat; the opt-in dictation log
+above is a separate app-private file. The two `Log.d` failure lines retain
 only fixed stage/status and failure classifications (`VoxdroidA11yService.kt` — `answer`,
 `answerPolished`). STT/cleanup response bodies are replaced by a fixed omission marker;
 transport exceptions are classified by type without reading their message. Unknown exceptions

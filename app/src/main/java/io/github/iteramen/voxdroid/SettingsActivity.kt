@@ -71,7 +71,10 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<View>(R.id.row_backup).setOnClickListener {
             startActivity(Intent(this, ConfigBackupActivity::class.java))
         }
-        worker.execute { openCaptionCache(applicationContext) }
+        worker.execute {
+            openCaptionCache(applicationContext)
+            openDictationLog(applicationContext)
+        }
     }
 
     override fun onResume() {

@@ -53,6 +53,7 @@ class SectionFragment : PreferenceFragmentCompat() {
         number(KEY_POLISH_TIMEOUT)
         number(KEY_VOLUME_HOLD)
         noFieldRows()
+        dictationLogRows()
         captionRows()
         readAloudRows()
     }
@@ -131,6 +132,28 @@ class SectionFragment : PreferenceFragmentCompat() {
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(R.string.caption_delete_all) { _, _ ->
                     if (!cache.deleteAll()) android.widget.Toast.makeText(requireContext(), R.string.caption_storage_failed, android.widget.Toast.LENGTH_LONG).show()
+                }.show()
+            true
+        }
+    }
+
+    /** The switch is the log's own `state` file, not a preference; off and Delete all erase the entries and the take in flight. */
+    private fun dictationLogRows() {
+        val enable = findPreference<SwitchPreferenceCompat>(KEY_DICTATION_LOG) ?: return
+        val log = openDictationLog(requireContext())
+        enable.isChecked = log.enabled
+        enable.setOnPreferenceChangeListener { _, value ->
+            log.setEnabled(value == true).also {
+                if (!it) Toast.makeText(requireContext(), R.string.dictation_log_storage_failed, Toast.LENGTH_LONG).show()
+            }
+        }
+        findPreference<Preference>(KEY_DELETE_DICTATION_LOG)?.setOnPreferenceClickListener {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.dictation_log_delete)
+                .setMessage(R.string.dictation_log_delete_confirm)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.dictation_log_delete) { _, _ ->
+                    if (!log.deleteAll()) Toast.makeText(requireContext(), R.string.dictation_log_storage_failed, Toast.LENGTH_LONG).show()
                 }.show()
             true
         }
@@ -393,6 +416,8 @@ class SectionFragment : PreferenceFragmentCompat() {
         private const val KEY_VOLUME_HOLD = "volume_hold_ms"
         private const val KEY_NO_FIELD_MODE = "no_field_mode"
         private const val NO_FIELD_ROW_PREFIX = "no_field_"
+        private const val KEY_DICTATION_LOG = "dictation_log"
+        private const val KEY_DELETE_DICTATION_LOG = "delete_dictation_log"
         private const val KEY_CATEGORY_LANGUAGES = "category_languages"
         private const val LANGUAGE_ROW_PREFIX = "language_"
         private const val LANE_PREFIX = "lane_base_url_"
