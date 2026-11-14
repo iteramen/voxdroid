@@ -42,6 +42,11 @@ Changed
   its own URL or *Use the English/default TTS token* is on.
 - The dictation log stores a detected language only when it is a language code and a score; the
   token box opts out of Android autofill.
+- The privacy policy, the security policy and the Play accessibility declaration now describe the
+  floating control's check of the screen in front (the app, its focused field, the lock screen)
+  on every screen change, and that read aloud re-reads the block you chose while it speaks. With
+  *Floating 🎤 control* and read aloud both off, that check no longer runs. The plain-http
+  switch and its confirmation name read aloud among what they cover.
 
 ## 0.5.0 — 2026-11-14
 

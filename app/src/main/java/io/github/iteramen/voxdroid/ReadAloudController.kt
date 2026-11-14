@@ -67,6 +67,8 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     val busy: Boolean get() = active || picker != null
 
     fun observe(event: AccessibilityEvent?) {
+        // With neither control on there is nothing to place, so no window is looked at.
+        if (!prefs.enabled && !Settings(service).triggerButton) return
         val root = service.getRootInActiveWindow(0)
         val context = controlContext(root)
         if (context != ReadControlContext.External) {
@@ -126,8 +128,10 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
 
     @SuppressLint("RtlHardcoded") // Physical screen corners must not mirror with UI language.
     private fun showGlyph() {
-        val context = controlContext(service.getRootInActiveWindow(0))
         val microphone = Settings(service).triggerButton
+        // As in observe: with neither control on, no window is looked at.
+        if (!microphone && !prefs.enabled) { hideGlyph(); return }
+        val context = controlContext(service.getRootInActiveWindow(0))
         val speaker = prefs.enabled && context == ReadControlContext.External
         if (context == ReadControlContext.Hidden || (!microphone && !speaker)) { hideGlyph(); return }
         if (glyphContext != context) hideGlyph()

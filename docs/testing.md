@@ -149,20 +149,21 @@ Replace them with yours. A row that uses an `http://` endpoint and does not name
 - [ ] sideload the debug APK: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 - [ ] in WSL, `~/Android/Sdk/build-tools/36.0.0/aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` lists
       `android.permission.RECORD_AUDIO`, `android.permission.INTERNET`,
-      `android.permission.FOREGROUND_SERVICE` and `android.permission.FOREGROUND_SERVICE_MICROPHONE`
-      as `uses-permission` lines, and one more pair of lines for
+      `android.permission.FOREGROUND_SERVICE`, `android.permission.FOREGROUND_SERVICE_MICROPHONE` and
+      `android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK` as `uses-permission` lines, and one more pair of lines for
       `io.github.iteramen.voxdroid.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (a `permission:` and a
       `uses-permission:`), AndroidX's own signature-level permission. The debug APK also lists
       `android.permission.WRITE_SECURE_SETTINGS` (`SelfEnable`, debug only); the release build's
       merged manifest does not
 - [ ] in WSL, `~/Android/Sdk/build-tools/36.0.0/aapt2 dump xmltree --file AndroidManifest.xml
-      app/build/outputs/apk/debug/app-debug.apk` lists exactly six components, with these
+      app/build/outputs/apk/debug/app-debug.apk` lists exactly these components, with these
       `android:exported` and `android:permission` values: activities `SettingsActivity`
-      (exported, the launcher), `SectionActivity` and `TryActivity` (not exported); service
+      (exported, the launcher), `SectionActivity`, `TryActivity`, `ConfigBackupActivity` and
+      `DictationLogActivity` (not exported) and `CaptionReceiveActivity` (exported); service
       `VoxdroidA11yService` (exported, `android.permission.BIND_ACCESSIBILITY_SERVICE`); provider
       `androidx.startup.InitializationProvider` (not exported); receiver
       `androidx.profileinstaller.ProfileInstallReceiver` (exported, `android.permission.DUMP`). A
-      seventh component, or an exported one without its permission, fails the row; `SECURITY.md`'s
+      component beyond these, or an exported one without its permission, fails the row; `SECURITY.md`'s
       Components section is the same list
 - [ ] optional, and not before the Settings rows for the microphone below, which need it ungranted:
       `adb shell pm grant io.github.iteramen.voxdroid android.permission.RECORD_AUDIO` — the
@@ -1132,3 +1133,13 @@ do not create one tab per test run. UIAutomator remains unsuitable during active
   and still opens the policy URL in the browser. Internal sub-pages retain their chevrons.
 - [ ] Large fonts and landscape do not clip the backup actions or overlap the toolbar.
   Backup screenshot protection remains enabled; no export/restore is needed for these checks.
+
+### Floating control context check
+
+The control decides where it may show from every accessibility event (`ReadAloudController.observe`).
+
+| Check | Expected |
+| --- | --- |
+| *Floating 🎤 control* and read aloud both off | No floating control over any app. Turning *Floating 🎤 control* back on shows it on returning to another app. |
+| *Floating 🎤 control* on: a field marked as a password field focused, the lock screen, voxdroid's own pages | The control is hidden; it returns on leaving. On the Try page with its field focused, only 🎤 shows. |
+| *Floating 🎤 control* and read aloud on, in another app | 🎤 and 🔊 show together and both act. |
