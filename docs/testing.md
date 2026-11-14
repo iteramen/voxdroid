@@ -62,21 +62,31 @@ This is protocol regression evidence, not a live Groq account qualification.
   newly started take records normally while logging is on.
 
 `DictationLogTest` covers the record format, capture outcomes, Retry, stale takes, expiry,
-deletion, backup rules and redaction on the JVM. These rows need a handset and have not been run.
-There is no viewer yet: inspect records with `adb shell run-as <debug package> ls files/dictation_log`
-and `cat` of one entry on a debug build, then delete transient copies.
+deletion, backup rules and redaction on the JVM; `DictationLogViewTest` covers the viewer's
+newest-first order, empty states and the display and Copy text of cleaned, silent, failed and
+retried entries, credentials excluded. These rows need a handset and have not been run. Check
+records in *Delivery → Show the dictation log*, or with `adb shell run-as <debug package> ls
+files/dictation_log` and `cat` of one entry on a debug build, then delete transient copies.
 
 | Check | Expected |
 | --- | --- |
 | Fresh install, Delivery page | *Keep a dictation log* is off; a take creates no `files/dictation_log` entry. |
 | Switch on, one cleaned take | One record: raw and delivered text, `Cleaned`, language sent, answering host, STT and cleanup milliseconds, app version. |
-| Silent take, and a take with the STT server down | A `Silence` record with empty text; a `SttFailed` record with a fixed detail and no text. Both visible to the later viewer. |
+| Silent take, and a take with the STT server down | A `Silence` record with empty text; a `SttFailed` record with a fixed detail and no text. Both listed in the viewer, each text shown as *(no text)*. |
 | STT server down, then up, Retry | One record, rewritten to the final outcome, still listing the `SttFailed` event and a `Retry` event. |
 | Connection dropped mid-upload (server killed after accept) | A `Transport` event on that take's record; no other take's record changes. |
 | Switch off while a take is in STT | Every record gone; the late answer still lands in the field but writes no record, even after switching on again before it arrives. |
 | Delete the dictation log, confirm | Confirmation dialog first; every record gone, switch stays on, an in-flight take writes nothing. Cancel deletes nothing. |
 | Retention | A record dated over 30 days earlier (clock moved forward, or a planted entry) is gone after the service restarts or the settings open. |
 | Backup | `adb shell bmgr backupnow` with the log on: no `dictation_log` file in the backup set; device transfer excluded by the packaged rules. |
+| Viewer list | *Show the dictation log* with the log off says it is off; on and empty, says no takes in 30 days. After three takes: newest at the top, each row its time, outcome and text on at most two lines. |
+| Viewer detail | Tap a cleaned take: raw and delivered text, outcome, details (no token, URL path or query), events or *None*. A retried take lists its `SttFailed` and `Retry` events in order. |
+| Copy | In an entry, Copy: Android's copy confirmation shows no transcript preview; pasting gives the report (metadata, events, raw and delivered text) with no token. |
+| Large text and long transcripts | Font size and display size at maximum: list rows and the entry stay readable, the entry scrolls to Copy, nothing clipped. A take of several minutes scrolls whole in the entry. |
+| Rotation | Portrait: raw above delivered. Landscape at default font: side by side. Rotating keeps the list or the open entry. |
+| Delete all while viewer is open | The Delete row sits under the viewer in the same task, so this needs a second voxdroid window (split screen, where the launcher offers one); mark it unreachable on a device without. Open an entry, Delete the dictation log in the other window: the entry turns to *deleted or expired* at once; back shows the empty list. Without a second window: Delete all, then reopen the viewer: empty. |
+| Switch off while viewer is open | Same with *Keep a dictation log* off: the open list or entry empties at once; reopening the viewer says the log is off. No `files/dictation_log` entry remains. |
+| Expiry while viewer is open | With an entry open, move the clock past its 30 days, leave and return to the app: the entry turns to *deleted or expired*. |
 
 ## Encrypted configuration migration (0.3.0)
 

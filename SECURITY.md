@@ -220,6 +220,9 @@ scope:** clipboard managers and clipboard sync capturing the text once you chose
 
 Caption Copy is a separate explicit action, marked sensitive (`CaptionPanel`). Android and any
 clipboard manager may still retain that text; closing the caption does not clear the clipboard.
+Dictation log Copy is the same kind of explicit, sensitive-marked action, one entry at a time
+(`DictationLogActivity`); its report text omits unknown details and any answering name that is
+not a lane or a bare host (`DictationLogView.kt`).
 
 ### Network
 

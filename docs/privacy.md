@@ -133,7 +133,9 @@ messages; a stage that did not run leaves its fields empty. Records are deleted 
 dictation, checked whenever the app or the service starts and at every write. *Delete the
 dictation log* (after a confirmation) and turning the switch off erase every record and the
 dictation still in progress, and a dictation already running cannot write afterwards. It is not
-sent anywhere, and uninstalling the app removes it.
+sent anywhere, and uninstalling the app removes it. *Show the dictation log* displays the records;
+an entry's **Copy** writes that entry's texts and details to the clipboard only when you tap it,
+marked sensitive so Android shows no preview; clipboard managers may still retain it.
 
 **Backup and restore** lets you explicitly save a password-protected configuration file, including
 your API tokens, using Android's document picker. It includes speech/cleanup, language/lane,

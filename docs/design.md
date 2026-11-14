@@ -61,7 +61,7 @@ Logic that needs no Android lives in plain functions and classes, so the JVM tes
 | `Pill.kt`, `PillPlacement.kt`, `Cue.kt`, `Tone.kt` | the overlay, its placement and drag, haptic cues; the cue tones, their mute policy (`audible`) and `TonePlayer` |
 | `Settings.kt`, `SettingsStore.kt` | the two preference files |
 | `CaptionCache.kt` | the opt-in, 30-day voice-message transcript cache ([below](#caption-cache)) |
-| `DictationLog.kt`, `DictationCapture.kt` | the opt-in, 30-day dictation log: storage and record format; the take's record as it is built ([below](#dictation-log)) |
+| `DictationLog.kt`, `DictationCapture.kt`, `DictationLogActivity.kt`, `DictationLogView.kt` | the opt-in, 30-day dictation log: storage and record format; the take's record as it is built; the viewer and its display and Copy text ([below](#dictation-log)) |
 | `CaptionProcessor.kt`, `CaptionAudio.kt`, `CaptionMediaDecoder.kt` | voice-message processing: acquisition, fingerprint, Ogg/Opus decode, 16 kHz WAV, STT and cleanup; used by the private caption controller ([below](#voice-message-processing)) |
 | `SettingsActivity.kt`, `Readiness.kt`, `EndpointProbe.kt` | the launcher: a status card whose button fixes the first problem (`problems`), the settings page rows, the privacy row |
 | `SectionActivity.kt`, `SectionFragment.kt`, `TryActivity.kt` | one page per `res/xml/section_*.xml`, a language's filled in code (`languagePage`); a field for a first take |
@@ -282,8 +282,8 @@ Dictation, its microphone and field delivery do not use it (`CaptionPolicyTest`)
 
 `DictationLog.kt` stores the optional per-take log; `DictationCapture` builds the record of the
 take in flight from the service's existing call points. The Delivery page's **Keep a dictation
-log** switch (off by default) and **Delete the dictation log** (with confirmation) control it.
-A later viewer reads `DictationLog.entries`.
+log** switch (off by default) and **Delete the dictation log** (with confirmation) control it;
+**Show the dictation log** opens the viewer.
 
 - **Where.** `filesDir/dictation_log/`, excluded whole from cloud backup and device transfer
   (`res/xml/data_extraction_rules.xml`), sidecars included. It holds `state` and one
@@ -320,6 +320,15 @@ A later viewer reads `DictationLog.entries`.
   connects and when the settings screen opens (`openDictationLog`), at every `put` and every
   `entries`, and drops expired, future-dated, corrupt and foreign files. Writes with expired
   or future timestamps are rejected, so delayed work cannot recreate an expired record.
+- **Viewer.** `DictationLogActivity` (not exported) lists `DictationLog.entries` newest first and,
+  with an entry id, shows one entry: raw and delivered text side by side when the screen is at
+  least 600 dp per unit of font scale, stacked otherwise, `(no text)` for an empty one, the
+  metadata and the events. It re-reads the store at every resume and on `DictationLog.onDelete`,
+  so turning the log off or Delete all empties an open viewer and an expired entry disappears.
+  `DictationLogView.kt` maps an entry to display and Copy text in fixed English; details and
+  events pass `safeDetail` again and the answering name must be a lane, `default` or a bare host,
+  so a record on disk is not trusted to be clean. **Copy** writes that report as a clip marked
+  `EXTRA_IS_SENSITIVE`, so Android shows no preview. Nothing is sent anywhere.
 
 ### Private caption integration
 
@@ -482,7 +491,7 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 
 - The Google Play listing.
 - Always-on transcription.
-- A viewer and reporting for the dictation log; the log itself is captured and stored.
+- A Report action for a dictation log entry in the viewer.
 - Handset acceptance of the private caption integration, including app-version-specific selection,
   cache reuse and origin invalidation; see [testing.md](testing.md#private-caption-integration).
 

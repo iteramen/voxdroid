@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DictationLogActivity sets log_entry_texts' orientation and its two columns' widths for the screen. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+        <TextView android:id="@+id/log_entry_outcome" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceTitleMedium" />
+        <LinearLayout android:id="@+id/log_entry_texts" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical">
+            <LinearLayout android:id="@+id/log_entry_raw_box" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="8dp">
+                <TextView style="@style/Voxdroid.RowTitle" android:layout_marginTop="16dp"
+                    android:text="@string/dictation_log_raw" />
+                <TextView android:id="@+id/log_entry_raw" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:textDirection="firstStrong"
+                    android:textIsSelectable="true" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/log_entry_delivered_box" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="8dp">
+                <TextView style="@style/Voxdroid.RowTitle" android:layout_marginTop="16dp"
+                    android:text="@string/dictation_log_delivered" />
+                <TextView android:id="@+id/log_entry_delivered" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:textDirection="firstStrong"
+                    android:textIsSelectable="true" />
+            </LinearLayout>
+        </LinearLayout>
+        <TextView style="@style/Voxdroid.RowTitle" android:layout_marginTop="16dp"
+            android:text="@string/dictation_log_details" />
+        <TextView android:id="@+id/log_entry_meta" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textIsSelectable="true" />
+        <TextView style="@style/Voxdroid.RowTitle" android:layout_marginTop="16dp"
+            android:text="@string/dictation_log_events" />
+        <TextView android:id="@+id/log_entry_events" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textIsSelectable="true" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/log_entry_copy"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="@string/dictation_log_copy" />
+    </LinearLayout>
+</ScrollView>

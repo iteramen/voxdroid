@@ -9,7 +9,11 @@ Added
 - Optional dictation log under Delivery, off by default: one text record per take that ends with
   text, silence or a failure, with its retries and connection failures, kept on the phone for 30
   days and excluded from backup and device transfer. No audio or tokens. Turning it off or Delete
-  the dictation log erases every record and the take in flight. A viewer comes later.
+  the dictation log erases every record and the take in flight.
+- *Show the dictation log* under Delivery: takes newest first, and per entry the raw and delivered
+  text, outcome, details, retries and connection events. Copy puts the entry on the clipboard as a
+  report, marked sensitive so Android shows no preview. Turning the log off or deleting it empties
+  an open viewer.
 
 Changed
 - The privacy policy describes the dictation log; the speech client logs a fixed category when a

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:minHeight="48dp" android:orientation="vertical"
+    android:paddingHorizontal="16dp" android:paddingVertical="11dp">
+    <TextView android:id="@+id/log_row_title" style="@style/Voxdroid.RowTitle" />
+    <TextView android:id="@+id/log_row_text" style="@style/Voxdroid.RowSummary"
+        android:ellipsize="end" android:maxLines="2" android:textDirection="firstStrong" />
+</LinearLayout>
