@@ -25,6 +25,11 @@ Fixed
 - A speech or cleanup server's reply made of deeply nested JSON no longer crashes the app; it
   is reported as a malformed reply. A reply body is read up to 1 MiB, down from 10, and text
   longer than 100,000 characters is cut before it is typed or copied.
+- After Stop was tapped on a read-aloud notification, switching voxdroid off in Accessibility
+  settings left the service running, a recording in progress included. It now stops with the
+  switch.
+- A microphone that fails to start shows a fixed message on the pill, not the system's error
+  text; a phone that cannot record at 16 kHz is still named as such.
 
 Changed
 - The privacy policy describes the dictation log; the speech client logs a fixed category when a

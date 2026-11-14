@@ -241,9 +241,9 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         } catch (failed: RuntimeException) {
             // IllegalStateException from the recorder, SecurityException from the platform.
             stopForeground(STOP_FOREGROUND_REMOVE)
-            // The log keeps a fixed line: the exception's text is not ours to store.
+            // The log keeps a fixed line, and so does the pill: the platform's text is not ours to store or show.
             capture.recordingFailed(machine.currentTake, if (failed is SecurityException) "mic: refused by the platform" else "mic: unavailable")
-            return failed.message ?: "mic: unavailable"
+            return micFailureBar(failed)
         }
         recorder = rec
         recordingSince = SystemClock.elapsedRealtime()
@@ -471,6 +471,9 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == READ_STOP) readAloud?.cancel()
+        // The notification's Stop arrives as a start. Left started, the service would survive being switched off in
+        // Accessibility settings, recorder included: Android destroys a service only once it is neither bound nor started.
+        stopSelf(startId)
         return START_NOT_STICKY
     }
 
