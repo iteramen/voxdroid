@@ -14,4 +14,16 @@
             android:widgetLayout="@layout/preference_widget_radio" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/dictation_log_category">
+        <SwitchPreferenceCompat
+            android:key="dictation_log"
+            android:persistent="false"
+            android:summary="@string/dictation_log_summary"
+            android:title="@string/dictation_log" />
+        <Preference
+            android:key="delete_dictation_log"
+            android:summary="@string/dictation_log_delete_summary"
+            android:title="@string/dictation_log_delete" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

@@ -84,6 +84,10 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 - **Refused:** a password field; a phone call in progress, unless *Dictate during a call* is on; no
   text field, or a field that changed before the text arrived, unless the Delivery page is set to
   *Copy to the clipboard*.
+- **Dictation log** (Delivery page, off by default): *Keep a dictation log* records each take's
+  raw and delivered text, outcome, retries and connection failures on the phone for 30 days, never
+  audio or tokens, out of backups. Turning it off or *Delete the dictation log* erases it. There is
+  no viewer yet.
 - Drag the pill up or down; it keeps that height above the keyboard. With *Vibrate on start and
   done* on, a click marks a start and a landing, and a double click a failure or a refusal.
   *Tones on start and done* (on by default) beeps for the same moments, at *Tone volume (%)* (5 by
@@ -92,7 +96,8 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 ## Privacy in brief
 
 voxdroid has no server, account, analytics, advertising or crash reporting. Your dictation's audio
-goes only to the servers you configure, is held in memory and is never written to disk. Your bearer tokens stay
+goes only to the servers you configure, is held in memory and is never written to disk; its text is
+kept only if you turn on the dictation log. Your bearer tokens stay
 in app-private storage, out of Android's backups. Plain `http://` to anything but the phone itself
 is refused until you turn on *Allow insecure (http) endpoints*. The full statement is the
 [privacy policy](docs/privacy.md); the threat model and how to report a vulnerability are in
@@ -124,7 +129,7 @@ cancellation checks also passed; the checklist names the remaining handset cases
 Open **Backup and restore → Export encrypted settings** before reinstalling or changing phones.
 The password-protected file includes API tokens, endpoints, languages, cleanup, triggers and cues.
 Keep the file and its passphrase safe; there is no passphrase recovery. Use **Restore encrypted
-settings** on the new installation. Audio and caption history are excluded; accessibility,
+settings** on the new installation. Audio, caption history and the dictation log are excluded; accessibility,
 microphone access and caption consent need enabling separately. Normal updates signed with the
 same key preserve configuration automatically. See [installation and migration](docs/sideload.md#configuration-and-signing-key-changes).
 

@@ -54,6 +54,30 @@ This is protocol regression evidence, not a live Groq account qualification.
 | Compatible self-hosted server | Candidates and long-take VAD still sent; no extra compatibility request. |
 | Cancel before resend | No further audio upload or late delivery. |
 
+## Dictation log (#20)
+
+- [ ] During Recording, Delete all or switch logging off/on before stopping: that take must
+  not create a record. Enabling logging after recording has started applies only to later takes.
+- [ ] After a failed take, Delete all and then Retry: no deleted record returns. A subsequent
+  newly started take records normally while logging is on.
+
+`DictationLogTest` covers the record format, capture outcomes, Retry, stale takes, expiry,
+deletion, backup rules and redaction on the JVM. These rows need a handset and have not been run.
+There is no viewer yet: inspect records with `adb shell run-as <debug package> ls files/dictation_log`
+and `cat` of one entry on a debug build, then delete transient copies.
+
+| Check | Expected |
+| --- | --- |
+| Fresh install, Delivery page | *Keep a dictation log* is off; a take creates no `files/dictation_log` entry. |
+| Switch on, one cleaned take | One record: raw and delivered text, `Cleaned`, language sent, answering host, STT and cleanup milliseconds, app version. |
+| Silent take, and a take with the STT server down | A `Silence` record with empty text; a `SttFailed` record with a fixed detail and no text. Both visible to the later viewer. |
+| STT server down, then up, Retry | One record, rewritten to the final outcome, still listing the `SttFailed` event and a `Retry` event. |
+| Connection dropped mid-upload (server killed after accept) | A `Transport` event on that take's record; no other take's record changes. |
+| Switch off while a take is in STT | Every record gone; the late answer still lands in the field but writes no record, even after switching on again before it arrives. |
+| Delete the dictation log, confirm | Confirmation dialog first; every record gone, switch stays on, an in-flight take writes nothing. Cancel deletes nothing. |
+| Retention | A record dated over 30 days earlier (clock moved forward, or a planted entry) is gone after the service restarts or the settings open. |
+| Backup | `adb shell bmgr backupnow` with the log on: no `dictation_log` file in the backup set; device transfer excluded by the packaged rules. |
+
 ## Encrypted configuration migration (0.3.0)
 
 JVM coverage (`ConfigBackupTest`) checks a typed Unicode/token/lane round-trip, per-export salt and

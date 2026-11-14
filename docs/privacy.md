@@ -115,8 +115,25 @@ settings, the glossary, the other options and how high above the keyboard you la
 pill (`Settings.kt`). The tokens are excluded from Android's cloud backup and from device-to-device
 transfer (`res/xml/data_extraction_rules.xml`); everything else is included in Android's normal
 backup, so it can follow you to a new phone, where the tokens are entered again. Uninstalling the
-app removes both files. Caption transcripts (`captions`) and temporary imported audio
-(`caption_spool`) are excluded from backup and transfer as well, including interrupted-write files.
+app removes both files. Caption transcripts (`captions`), temporary imported audio
+(`caption_spool`) and the dictation log (`dictation_log`) are excluded from backup and transfer as
+well, including interrupted-write files.
+
+**The dictation log, only if you turn it on.** *Delivery → Keep a dictation log* is off by
+default. While on, each dictation that ends with text, silence or a failure leaves one text record
+in voxdroid's private storage (`DictationLog.kt`, `DictationCapture.kt`): the time, the raw
+transcript and the text delivered (either may be empty), the outcome (cleaned, cleanup failed or
+blocked, too short for cleanup, cleanup off, silence, speech or recording failure), a fixed
+failure description, the cleanup model and timeout, the language sent and detected, the language
+lane or the speech server's host name that answered, how long each stage took, and the app
+version. Retries and connection failures of that dictation are listed in its record, so a failed
+attempt stays visible when a Retry succeeds. Cancelling discards the active attempt; an earlier failure already saved for that take remains until expiry or deletion. The log never
+holds audio, tokens, an address's user name, password or query, server replies or raw error
+messages; a stage that did not run leaves its fields empty. Records are deleted 30 days after the
+dictation, checked whenever the app or the service starts and at every write. *Delete the
+dictation log* (after a confirmation) and turning the switch off erase every record and the
+dictation still in progress, and a dictation already running cannot write afterwards. It is not
+sent anywhere, and uninstalling the app removes it.
 
 **Backup and restore** lets you explicitly save a password-protected configuration file, including
 your API tokens, using Android's document picker. It includes speech/cleanup, language/lane,
@@ -134,9 +151,12 @@ For microphone dictation:
 
 - No recording is kept: it is dropped when a dictation finishes or is discarded, and is never
   written to disk.
-- No transcript is kept after it is typed. It exists only in memory and is never written to a file
-  or a database, nor to a log except in the debug-level case under [Logs](#logs).
-- There is no record of what you dictated, or when; no account, no profile.
+- No transcript is kept after it is typed, unless you turn on the
+  [dictation log](#what-stays-on-the-device): then it stays on the phone for 30 days. Otherwise it
+  exists only in memory and is never written to a file or a database. It never reaches logcat; the
+  debug-level line under [Logs](#logs) carries no text.
+- With the dictation log off, there is no record of what you dictated, or when. There is no
+  account and no profile either way.
 - voxdroid has no analytics, telemetry, advertising or crash-reporting code. What ships is the
   app, the Kotlin standard library, AndroidX Preference and Material Components
   (`app/build.gradle.kts` — `dependencies`).
@@ -228,7 +248,9 @@ At the default level, voxdroid logs no transcript and no token. It logs: a langu
 your settings that was dropped as malformed (`Settings.kt` — `warn`); that a language lane returned
 no text and the default server was asked, naming the language code (`Routed.kt`); once, that the
 cleanup pass is on with no address or model (`VoxdroidA11yService.kt` — `POLISH_UNCONFIGURED`);
-the HTTP status when a long recording was resent without `vad` (`SttClient.kt`); and how many
+the HTTP status when a long recording was resent without `vad`, and the fixed failure category
+when a recording got no response and was resent (`SttClient.kt`); that a dictation log record
+could not be saved, by a fixed reason (`VoxdroidA11yService.kt` — `capture`); and how many
 control or format characters were removed from a dictation, never the text (`Commit.kt` —
 `droppedNote`).
 
