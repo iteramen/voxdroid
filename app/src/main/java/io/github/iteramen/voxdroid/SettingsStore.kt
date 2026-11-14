@@ -18,9 +18,9 @@ internal const val LANE_INHERIT_PREFIX = "lane_inherit_token_"
 
 internal fun storedAs(key: String): StoredAs = when (key) {
     "stt_token", "polish_token" -> StoredAs.Secret
-    "stt_timeout_s", "polish_min_words", "polish_timeout_s", "volume_hold_ms" -> StoredAs.Whole
-    "no_speech_threshold" -> StoredAs.Fraction
-    else -> if (key.startsWith(LANE_TOKEN_PREFIX)) StoredAs.Secret else StoredAs.Text
+    "stt_timeout_s", "polish_min_words", "polish_timeout_s", "volume_hold_ms", "tts_timeout_s" -> StoredAs.Whole
+    "no_speech_threshold", "tts_speed" -> StoredAs.Fraction
+    else -> if (key.startsWith(LANE_TOKEN_PREFIX) || TTS_LANGUAGES.any { key == "tts_token_$it" }) StoredAs.Secret else StoredAs.Text
 }
 
 internal enum class NumberProblem {
@@ -28,6 +28,7 @@ internal enum class NumberProblem {
     Negative,
     NotAFraction,
     BelowMinimum,
+    TtsRange,
 }
 
 internal const val MIN_HOLD_MS = 300
@@ -38,6 +39,7 @@ internal fun validateNumber(key: String, raw: String): NumberProblem? = when (st
         null -> NumberProblem.NotANumber
         else -> when {
             key == "volume_hold_ms" && value < MIN_HOLD_MS -> NumberProblem.BelowMinimum
+            key == "tts_timeout_s" && value !in 1..120 -> NumberProblem.TtsRange
             value < 0 -> NumberProblem.Negative
             else -> null
         }
@@ -45,6 +47,8 @@ internal fun validateNumber(key: String, raw: String): NumberProblem? = when (st
     StoredAs.Fraction -> when (val value = fractionOrNull(raw)) {
         null -> NumberProblem.NotANumber
         else -> when {
+            key == "tts_speed" && (!value.isFinite() || value !in 0.25f..4f) -> NumberProblem.TtsRange
+            key == "tts_speed" -> null
             value < 0f -> NumberProblem.Negative
             value > 1f -> NumberProblem.NotAFraction
             else -> null
@@ -96,10 +100,11 @@ internal class SettingsStore(context: Context) : PreferenceDataStore() {
         }
 
     override fun putBoolean(key: String, value: Boolean) {
-        prefs.edit().putBoolean(key, value).apply()
+        (if (key == "tts_enabled") secrets else prefs).edit().putBoolean(key, value).apply()
     }
 
-    override fun getBoolean(key: String, defValue: Boolean): Boolean = prefs.getBoolean(key, defValue)
+    override fun getBoolean(key: String, defValue: Boolean): Boolean =
+        (if (key == "tts_enabled") secrets else prefs).getBoolean(key, defValue)
 
     /** The cue volume's slider; the base class throws on a put. */
     override fun putInt(key: String, value: Int) {

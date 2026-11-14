@@ -20,6 +20,24 @@ class ConfigBackupTest {
         assertFalse(String(encrypted, Charsets.ISO_8859_1).contains("example.invalid"))
     }
 
+    @Test fun floatingCornerSurvivesPortableBackupWithLegacyPositionsStillAccepted() {
+        val corner = mapOf<String, Any>("read_anchor_right" to true, "read_anchor_bottom" to false,
+            "read_anchor_horizontal_dp" to 12f, "read_anchor_vertical_dp" to 24f)
+        val source = ConfigSnapshot(corner, emptyMap())
+        assertEquals(source, ConfigBackup.snapshot(corner, emptyMap<String, Any>()))
+        assertEquals(source, ConfigBackup.decrypt(ConfigBackup.encrypt(source, password), password))
+        ConfigBackup.validate(ConfigSnapshot(mapOf("read_glyph_x" to 10, "read_glyph_y" to 20), emptyMap()))
+    }
+
+    @Test fun invalidOrIncompleteCornerBackupIsRefused() {
+        val corner = mapOf<String, Any>("read_anchor_right" to true, "read_anchor_bottom" to false,
+            "read_anchor_horizontal_dp" to 12f, "read_anchor_vertical_dp" to 24f)
+        for (value in listOf(-1f, Float.NaN, Float.POSITIVE_INFINITY, "12", 12)) {
+            reject { ConfigBackup.validate(ConfigSnapshot(corner + ("read_anchor_horizontal_dp" to value), emptyMap())) }
+        }
+        reject { ConfigBackup.validate(ConfigSnapshot(corner - "read_anchor_right", emptyMap())) }
+    }
+
     @Test fun identicalExportsUseDifferentSaltAndNonce() {
         assertFalse(ConfigBackup.encrypt(snapshot, password).contentEquals(ConfigBackup.encrypt(snapshot, password)))
     }

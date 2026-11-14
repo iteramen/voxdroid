@@ -45,13 +45,13 @@ class RoutedTest {
 
     @Test
     fun aLaneErrorIsNamedForItsLaneAndTheDefaultIsNeverCalled() {
-        val gateway = SttError("stt HTTP 502", "stt HTTP 502: <html>gateway</html>")
+        val gateway = SttError("stt HTTP 502", "stt HTTP 502: response content omitted")
         val routed = routed(lanes = mapOf("he" to broken(gateway)))
 
         val failed = routed.transcribe(wav, HEBREW, null).exceptionOrNull() as SttError
 
         assertEquals("stt[he] HTTP 502", failed.bar)
-        assertEquals("stt[he] HTTP 502: <html>gateway</html>", failed.message)
+        assertEquals("stt[he] HTTP 502: response content omitted", failed.message)
         assertEquals(listOf("lane[he]" to HEBREW), calls)
         assertEquals(emptyList<String>(), notes)
     }
@@ -62,7 +62,7 @@ class RoutedTest {
 
         val failed = routed.transcribe(wav, HEBREW, null).exceptionOrNull() as SttError
 
-        assertEquals("stt[he] boom", failed.bar)
+        assertEquals("stt[he] transport", failed.bar)
         assertEquals(listOf("lane[he]" to HEBREW), calls)
     }
 
@@ -104,14 +104,14 @@ class RoutedTest {
 
     @Test
     fun anAutoTakeWhoseDefaultFailsReturnsThatErrorAndCallsNoLane() {
-        val gateway = SttError("stt HTTP 502", "stt HTTP 502: <html>gateway</html>")
+        val gateway = SttError("stt HTTP 502", "stt HTTP 502: response content omitted")
         val auto = SttLanguage.Auto(listOf("he", "en"))
         val routed = routed(lanes = mapOf("he" to text("from the lane")), default = broken(gateway, "default"))
 
         val failed = routed.transcribe(wav, auto, null).exceptionOrNull() as SttError
 
         assertEquals("stt HTTP 502", failed.bar)
-        assertEquals("stt HTTP 502: <html>gateway</html>", failed.message)
+        assertEquals("stt HTTP 502: response content omitted", failed.message)
         assertEquals(listOf("default" to auto), calls)
     }
 
@@ -128,7 +128,7 @@ class RoutedTest {
 
     @Test
     fun aLaneErrorOnAResentAutoTakeIsNamedForItsLane() {
-        val gateway = SttError("stt HTTP 502", "stt HTTP 502: <html>gateway</html>")
+        val gateway = SttError("stt HTTP 502", "stt HTTP 502: response content omitted")
         val auto = SttLanguage.Auto(listOf("he", "en"))
         val routed = routed(
             lanes = mapOf("he" to broken(gateway)),

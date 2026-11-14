@@ -5,7 +5,7 @@ name: release witness
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feat/read-aloud]
   push:
     branches: [main]
 

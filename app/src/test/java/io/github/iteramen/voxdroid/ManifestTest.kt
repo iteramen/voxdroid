@@ -58,7 +58,7 @@ class ManifestTest {
     }
 
     @Test
-    fun declaresTheMicrophoneTheNetworkAndTheMicrophoneServiceAndNothingElse() {
+    fun declaresOnlyMicrophoneNetworkAndTheTwoForegroundServiceTypes() {
         val elements = DocumentBuilderFactory.newInstance()
             .apply { isNamespaceAware = true }
             .newDocumentBuilder()
@@ -73,11 +73,12 @@ class ManifestTest {
                 "android.permission.INTERNET",
                 "android.permission.FOREGROUND_SERVICE",
                 "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+                "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
             ),
             declared.toSet(),
         )
         // A set hides a duplicate element; the count does not.
-        assertEquals(4, declared.size)
+        assertEquals(5, declared.size)
     }
 
     @Test

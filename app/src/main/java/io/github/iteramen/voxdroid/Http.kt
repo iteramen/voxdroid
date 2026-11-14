@@ -67,12 +67,18 @@ internal const val TAILSCALE_HINT = "Tailscale not connected?"
 internal const val HTTP_OK_FIRST = 200
 internal const val HTTP_OK_LAST = 299
 
-internal fun redact(text: String, token: String) =
-    if (token.isBlank()) text else text.replace(token, REDACTED)
+/** Fixed classifications only: exception messages can contain endpoint, reply or credential data. */
+internal fun causeDetail(cause: Throwable): String = when (cause) {
+    is ResponseTooLarge -> "body over $BODY_LIMIT_BYTES bytes"
+    is MalformedURLException -> "invalid URL"
+    is SocketTimeoutException -> "request timed out"
+    is java.net.ProtocolException -> "invalid HTTP response"
+    is UnknownHostException -> "host unavailable"
+    is ConnectException, is NoRouteToHostException, is PortUnreachableException -> "connection unavailable"
+    else -> "transport failure"
+}
 
-internal fun bodyPrefix(body: String, token: String) = redact(body, token).take(BODY_PREFIX_CHARS)
-
-internal fun causeDetail(cause: Throwable, token: String) = bodyPrefix(cause.toString(), token)
+internal const val RESPONSE_DETAIL = "response content omitted"
 
 internal fun boundedPost(
     url: String,
@@ -82,14 +88,16 @@ internal fun boundedPost(
     body: ByteArray,
     timeoutMs: Int,
     watchdogThread: String,
+    current: () -> Boolean = { true },
 ): Attempt {
+    if (!current()) return Attempt.SendFailed(REQUEST_CANCELLED)
     if (!portInRange(url)) return Attempt.SendFailed("port out of range")
     if (insecureBlocked(url, allowInsecureHttp)) return Attempt.Blocked
     val connection = try {
         // A `file:` or `ftp:` URL opens a non-HttpURLConnection; a direct cast would throw outside this catch.
         (URL(url).openConnection() as? HttpURLConnection) ?: throw IOException("not an http(s) URL")
     } catch (unreachable: IOException) {
-        return Attempt.SendFailed(causeDetail(unreachable, token))
+        return Attempt.SendFailed(causeDetail(unreachable))
     }
     // HttpURLConnection does not bound outputStream.write(body): a peer that never reads would
     // wedge the worker thread, so this watchdog bounds the whole attempt.
@@ -104,6 +112,13 @@ internal fun boundedPost(
         },
         timeoutMs.toLong(),
     )
+    // Generation checks must interrupt blocked I/O too. Disconnect runs on the watchdog,
+    // never the accessibility/main thread. The deadline task still bounds live requests.
+    watchdog.schedule(object : TimerTask() {
+        override fun run() {
+            if (!current()) connection.disconnect()
+        }
+    }, 0L, 50L)
     return try {
         connection.requestMethod = "POST"
         connection.doOutput = true
@@ -120,7 +135,12 @@ internal fun boundedPost(
                 return Attempt.SendFailed(HEADER_REFUSED)
             }
         }
-        connection.outputStream.use { it.write(body) }
+        if (!current()) return Attempt.SendFailed(REQUEST_CANCELLED)
+        connection.outputStream.use {
+            if (!current()) return Attempt.SendFailed(REQUEST_CANCELLED)
+            it.write(body)
+        }
+        if (!current()) return Attempt.SendFailed(REQUEST_CANCELLED)
         // A watchdog disconnect can leave write() returning normally; without this check responseCode would start a second read timeout.
         if (timedOut.get()) throw IOException("timeout after $timeoutMs ms")
         val status = connection.responseCode
@@ -132,16 +152,20 @@ internal fun boundedPost(
                 connection.errorStream
             }
             val bytes = stream?.use { it.readNBytes(BODY_LIMIT_BYTES + 1) } ?: ByteArray(0)
-            if (bytes.size > BODY_LIMIT_BYTES) throw IOException("body over $BODY_LIMIT_BYTES bytes")
+            if (!current()) return Attempt.SendFailed(REQUEST_CANCELLED)
+            if (bytes.size > BODY_LIMIT_BYTES) throw ResponseTooLarge()
             Attempt.Answered(status, bytes.toString(Charsets.UTF_8))
         } catch (truncated: IOException) {
-            Attempt.Unreadable(status, causeDetail(truncated, token))
+            if (!current()) Attempt.SendFailed(REQUEST_CANCELLED)
+            else Attempt.Unreadable(status, causeDetail(truncated))
         }
     } catch (transport: IOException) {
-        if (timedOut.get()) {
+        if (!current()) {
+            Attempt.SendFailed(REQUEST_CANCELLED)
+        } else if (timedOut.get()) {
             Attempt.SendFailed("timeout after $timeoutMs ms", Reach.TimedOut)
         } else {
-            Attempt.SendFailed(causeDetail(transport, token), reachOf(transport))
+            Attempt.SendFailed(causeDetail(transport), reachOf(transport))
         }
     } finally {
         watchdog.cancel()
@@ -149,9 +173,10 @@ internal fun boundedPost(
     }
 }
 
+private class ResponseTooLarge : IOException()
+
 internal const val BODY_LIMIT_BYTES = 10 * 1024 * 1024
 
 private const val CONNECT_TIMEOUT_MS = 5_000
-private const val BODY_PREFIX_CHARS = 200
-private const val REDACTED = "[redacted]"
 private const val HEADER_REFUSED = "the token has a character an HTTP header cannot carry"
+private const val REQUEST_CANCELLED = "request cancelled"

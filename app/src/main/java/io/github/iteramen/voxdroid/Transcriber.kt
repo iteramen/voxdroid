@@ -2,7 +2,7 @@ package io.github.iteramen.voxdroid
 
 data class Transcription(
     val text: String,
-    /** The maximum over segments; null when the server did not score, which is not zero. */
+    /** Duration-weighted segment mean (equal weights if timings are unusable); null when unscored. */
     val noSpeechProb: Float?,
     val detected: Pair<String, Float>? = null,
 )
@@ -29,8 +29,9 @@ fun dictate(
     noSpeechThreshold: Float,
 ): SttOutcome {
     val transcription = transcriber.transcribe(wav, language, prompt).getOrElse { failed ->
-        val detail = failed.message.orEmpty()
-        val bar = (failed as? SttError)?.bar ?: detail.substringBefore(':').trim()
+        val error = failed as? SttError
+        val detail = error?.message ?: "stt transport: ${causeDetail(failed)}"
+        val bar = error?.bar ?: "stt transport"
         return SttOutcome.Failure(bar, detail)
     }
     val prob = transcription.noSpeechProb

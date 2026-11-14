@@ -252,14 +252,43 @@ class SttClientTest {
     }
 
     @Test
-    fun noSpeechProbIsTheMaximumOverTheSegments() {
+    fun scoresWithoutTimingsUseTheMeanRatherThanTheWorstSegment() {
         val server = start(
             reply = """{"text":"x","segments":[{"no_speech_prob":0.03},{"id":1},{"no_speech_prob":0.42}]}""",
         )
 
         val out = client(server.url).transcribe(wav, auto, null)
 
-        assertEquals(0.42f, out.getOrThrow().noSpeechProb!!, 1e-6f)
+        assertEquals(0.225f, out.getOrThrow().noSpeechProb!!, 1e-6f)
+    }
+
+    @Test
+    fun aPauseInALongSpokenTakeDoesNotDiscardTheWholeTranscript() {
+        val server = start(reply = """{"text":"Before the pause. After the pause.","segments":[
+            {"start":0,"end":30,"no_speech_prob":0.02},
+            {"start":30,"end":33,"no_speech_prob":0.95},
+            {"start":33,"end":70,"no_speech_prob":0.03}]}""")
+        val outcome = dictate(client(server.url), wavOfSamples(SIXTY_SECONDS_SAMPLES + 1), auto, null, 0.3f)
+        assertEquals(SttOutcome.Text("Before the pause. After the pause."), outcome)
+    }
+
+    @Test
+    fun mostlySilentTakesStillFailTheGate() {
+        val server = start(reply = """{"text":"Synthetic hallucination","segments":[
+            {"start":0,"end":1,"no_speech_prob":0.02},
+            {"start":1,"end":40,"no_speech_prob":0.95}]}""")
+        assertEquals(SttOutcome.Silence, dictate(client(server.url), wav, auto, null, 0.3f))
+    }
+
+    @Test
+    fun unusableDurationsFallBackToEqualWeightsForAllScoredSegments() {
+        for (timing in listOf("", "\"start\":2,\"end\":1,", "\"start\":0,\"end\":0,")) {
+            endpoint?.stop()
+            val server = start(reply = """{"text":"speech","segments":[
+                {${timing}"no_speech_prob":0.1},
+                {"start":0,"end":0,"no_speech_prob":0.7}]}""")
+            assertEquals(0.4f, client(server.url).transcribe(wav, auto, null).getOrThrow().noSpeechProb!!, 1e-6f)
+        }
     }
 
     @Test
@@ -313,7 +342,7 @@ class SttClientTest {
         val error = client(server.url).transcribe(wav, auto, null).exceptionOrNull()!!
 
         assertEquals("stt response has no text field", (error as SttError).bar)
-        assertTrue(error.message, error.message!!.contains("no speech detected"))
+        assertEquals("stt response has no text field: response content omitted", error.message)
     }
 
     @Test
@@ -395,7 +424,7 @@ class SttClientTest {
         val error = client(server.url).transcribe(wav, auto, null).exceptionOrNull()!!
 
         assertEquals("stt HTTP 500", (error as SttError).bar)
-        assertEquals("stt HTTP 500: {\"error\":\"boom\"}", error.message)
+        assertEquals("stt HTTP 500: response content omitted", error.message)
         assertEquals("a received status must not be retried", 1, server.requests.size)
     }
 
@@ -448,26 +477,47 @@ class SttClientTest {
     }
 
     @Test
-    fun aFailureBodyThatEchoesTheTokenIsRedacted() {
+    fun failureDiagnosticsExcludeResponseTextAndUnrelatedSecrets() {
+        for ((status, body) in listOf(500 to "PRIVATE_TRANSCRIPT OTHER_CREDENTIAL", 200 to "PRIVATE_TRANSCRIPT {broken OTHER_CREDENTIAL")) {
+            val server = start(status = status, reply = body)
+            val error = client(server.url, token = TOKEN).transcribe(wav, auto, null).exceptionOrNull()!!
+            for (marker in listOf("PRIVATE_TRANSCRIPT", "OTHER_CREDENTIAL")) {
+                assertFalse(error.message, error.message!!.contains(marker))
+            }
+            server.stop()
+        }
+    }
+
+    @Test
+    fun transportDiagnosticExcludesRawExceptionContent() {
+        val error = java.net.ProtocolException("PRIVATE_TRANSCRIPT OTHER_CREDENTIAL https://private.invalid/path")
+        val detail = causeDetail(error)
+        assertFalse(detail, detail.contains("PRIVATE_TRANSCRIPT"))
+        assertFalse(detail, detail.contains("OTHER_CREDENTIAL"))
+        assertFalse(detail, detail.contains("private.invalid"))
+    }
+
+    @Test
+    fun aFailureBodyThatEchoesTheTokenIsOmitted() {
         val server = start(status = 500, reply = "upstream rejected: Bearer $TOKEN, again $TOKEN")
 
         val error = client(server.url, token = TOKEN).transcribe(wav, auto, null).exceptionOrNull()!!
 
-        assertEquals("stt HTTP 500: upstream rejected: Bearer [redacted], again [redacted]", error.message)
+        assertEquals("stt HTTP 500: response content omitted", error.message)
     }
 
     @Test
-    fun aTokenStraddlingTheCutLeavesNoFragment() {
+    fun aLongFailureBodyLeavesNoTokenFragment() {
         val server = start(status = 500, reply = "a".repeat(195) + TOKEN)
 
         val error = client(server.url, token = TOKEN).transcribe(wav, auto, null).exceptionOrNull()!!
 
-        assertEquals("stt HTTP 500: " + ("a".repeat(195) + "[redacted]").take(200), error.message)
+        assertEquals("stt HTTP 500: response content omitted", error.message)
         assertFalse(error.message, error.message!!.contains(TOKEN.take(3)))
     }
 
     @Test
-    fun aLaneTokenIsRedactedFromItsOwnFailure() {
+    fun aLaneTokenIsOmittedFromItsOwnFailure() {
         val server = start(status = 500, reply = "echo $TOKEN")
 
         val error = client(server.url, token = TOKEN).transcribe(wav, SttLanguage.Explicit("he"), null)
@@ -477,54 +527,54 @@ class SttClientTest {
     }
 
     @Test
-    fun anEmptyTokenRedactsNothing() {
+    fun anEmptyConfiguredTokenStillOmitsResponseContent() {
         val server = start(status = 500, reply = "echo $TOKEN")
 
         val error = client(server.url, token = "").transcribe(wav, auto, null).exceptionOrNull()!!
 
-        assertEquals("stt HTTP 500: echo $TOKEN", error.message)
+        assertEquals("stt HTTP 500: response content omitted", error.message)
     }
 
     @Test
-    fun aTransportCauseThatQuotesTheTokenIsRedacted() {
+    fun aTransportCauseThatQuotesTheTokenIsClassified() {
         val scheme = "a$TOKEN"
 
         val attempt = boundedPost("$scheme://host/", true, "text/plain", TOKEN, ByteArray(0), TIMEOUT_MS, "t")
 
         val detail = (attempt as Attempt.SendFailed).cause
-        assertTrue(detail, detail.contains("[redacted]"))
+        assertEquals("invalid URL", detail)
         assertFalse(detail, detail.contains(TOKEN, ignoreCase = true))
     }
 
     @Test
-    fun aMalformedJsonReplyLogsOnlyTheBodyPrefix() {
+    fun aMalformedJsonReplyOmitsTheBody() {
         val body = """{"text":"${"a".repeat(210)} $SENTINEL"""
         val server = start(reply = body)
 
         val error = client(server.url).transcribe(wav, auto, null).exceptionOrNull()!!
 
-        assertEquals("stt JSON: " + body.take(200), error.message)
+        assertEquals("stt JSON: response content omitted", error.message)
         assertFalse(error.message, error.message!!.contains(SENTINEL))
     }
 
     @Test
-    fun anExceptionDetailIsCutAtTheBodyPrefix() {
+    fun anExceptionDetailUsesOnlyItsFixedClassification() {
         val cause = java.net.ProtocolException("Unexpected status line: ${"a".repeat(300)} $SENTINEL")
 
-        val detail = causeDetail(cause, "")
+        val detail = causeDetail(cause)
 
-        assertEquals(cause.toString().take(200), detail)
+        assertEquals("invalid HTTP response", detail)
         assertFalse(detail, detail.contains(SENTINEL))
     }
 
     @Test
-    fun aMalformedUrlSendFailureIsCutAtTheBodyPrefix() {
+    fun aMalformedUrlSendFailureOmitsTheUrl() {
         val scheme = "a".repeat(300) + SENTINEL.replace("_", "")
 
         val attempt = boundedPost("$scheme://host/", true, "text/plain", "", ByteArray(0), TIMEOUT_MS, "t")
 
         val detail = (attempt as Attempt.SendFailed).cause
-        assertEquals(200, detail.length)
+        assertEquals("invalid URL", detail)
         assertFalse(detail, detail.contains(SENTINEL.replace("_", ""), ignoreCase = true))
     }
 

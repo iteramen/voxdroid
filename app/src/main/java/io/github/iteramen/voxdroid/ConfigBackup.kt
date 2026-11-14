@@ -22,18 +22,21 @@ internal object ConfigBackup {
     private const val VERSION = 1
     private const val HEADER_SIZE = 40 // magic, version, work factor, salt, nonce
     private val text = setOf("stt_base_url", "stt_model", "stt_prompt", "polish_base_url", "polish_model",
-        "chip_languages", "no_field_mode")
+        "chip_languages", "no_field_mode") + TTS_LANGUAGES.flatMap { listOf("tts_url_$it", "tts_model_$it", "tts_voice_$it") }
     private val flags = setOf("allow_insecure_http", "polish_enabled", "capitalize_first_word", "strip_terminal_period",
-        "trigger_volume", "trigger_button", "allow_during_call", "haptic_cues", "audio_cues")
+        "trigger_volume", "trigger_button", "allow_during_call", "haptic_cues", "audio_cues", "tts_inherit_token_he", "tts_inherit_token_ru",
+        "read_anchor_right", "read_anchor_bottom")
     private val whole = setOf("stt_timeout_s", "polish_min_words", "polish_timeout_s", "volume_hold_ms",
-        "cue_volume", "pill_bottom_above_keyboard")
+        "cue_volume", "pill_bottom_above_keyboard", "tts_timeout_s", "read_glyph_x", "read_glyph_y")
+    private val margins = setOf("read_anchor_horizontal_dp", "read_anchor_vertical_dp")
+    private val anchorKeys = margins + setOf("read_anchor_right", "read_anchor_bottom")
     private val language = Regex("[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*")
 
     private fun lane(key: String, prefix: String): Boolean = key.startsWith(prefix) && language.matches(key.removePrefix(prefix))
 
     fun allowed(key: String, secret: Boolean): Boolean = if (secret) {
-        key in setOf("stt_token", "polish_token") || lane(key, "lane_token_")
-    } else key in text || key in flags || key in whole || key == "no_speech_threshold" ||
+        key in setOf("stt_token", "polish_token") || lane(key, "lane_token_") || TTS_LANGUAGES.any { key == "tts_token_$it" }
+    } else key in text || key in flags || key in whole || key in margins || key in setOf("no_speech_threshold", "tts_speed") ||
         lane(key, "lane_base_url_") || lane(key, "lane_inherit_token_") || lane(key, "explicit_")
 
     fun snapshot(settings: Map<String, *>, secrets: Map<String, *>): ConfigSnapshot = ConfigSnapshot(
@@ -42,6 +45,8 @@ internal object ConfigBackup {
     ).also(::validate)
 
     fun validate(snapshot: ConfigSnapshot) {
+        val presentAnchor = snapshot.settings.keys.intersect(anchorKeys)
+        require(presentAnchor.isEmpty() || presentAnchor == anchorKeys)
         for ((secret, entries) in listOf(false to snapshot.settings, true to snapshot.secrets)) {
             require(entries.size <= 1024)
             for ((key, value) in entries) {
@@ -53,8 +58,11 @@ internal object ConfigBackup {
                         require(value is Int && value >= 0)
                         if (key == "cue_volume") require(value <= 100)
                         if (key == "volume_hold_ms") require(value >= MIN_HOLD_MS)
+                        if (key == "tts_timeout_s") require(value in 1..120)
                     }
+                    key in margins -> require(value is Float && value.isFinite() && value >= 0f)
                     key == "no_speech_threshold" -> require(value is Float && value.isFinite() && value in 0f..1f)
+                    key == "tts_speed" -> require(value is Float && value.isFinite() && value in 0.25f..4f)
                 }
                 if (key == "no_field_mode") require(value in setOf("refuse", "clipboard"))
             }
