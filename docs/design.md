@@ -481,7 +481,7 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 ## Not built yet
 
 - The Google Play listing.
-- Read-aloud and always-on transcription.
+- Always-on transcription.
 - A viewer and reporting for the dictation log; the log itself is captured and stored.
 - Handset acceptance of the private caption integration, including app-version-specific selection,
   cache reuse and origin invalidation; see [testing.md](testing.md#private-caption-integration).

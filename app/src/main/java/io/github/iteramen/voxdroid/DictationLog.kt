@@ -70,7 +70,7 @@ data class DictationEntry(
 
 private const val LOG_LANGUAGE = """[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*"""
 private const val LOG_STAGE = """(?:stt(?:\[$LOG_LANGUAGE\])?|polish)"""
-private const val LOG_CAUSE = """(?:invalid URL|request timed out|invalid HTTP response|host unavailable|connection unavailable|transport failure|request cancelled|body over [0-9]{1,9} bytes|timeout after [0-9]{1,6} ms|the token has a character an HTTP header cannot carry)"""
+private const val LOG_CAUSE = """(?:invalid URL|port out of range|request timed out|invalid HTTP response|host unavailable|connection unavailable|transport failure|request cancelled|body over [0-9]{1,9} bytes|timeout after [0-9]{1,6} ms|the token has a character an HTTP header cannot carry)"""
 private val SAFE_DETAILS = listOf(
     """$LOG_STAGE transport: $LOG_CAUSE(?:; resent once)?(?: \(lane $LOG_LANGUAGE\))?""",
     """$LOG_STAGE HTTP [1-5][0-9]{2}(?:: no token sent)?(?:: response content omitted)?""",
