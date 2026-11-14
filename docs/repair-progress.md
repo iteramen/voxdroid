@@ -13,13 +13,15 @@ ideas and Play account submission are outside this wave.
   a new 70-second live microphone acceptance run.
 - [x] #52: PR #76 merged as `f71b00b`, four exact-head checks green. Strict-provider
   loopback regression, cancellation and bounded retry cases pass; no live Groq account claim.
-- [ ] #44 / PR #45: reconcile the Telegram share-start notice with current main,
-  test the bounded handoff/cancellation rules and verify prepared handset fixtures.
+- [x] #44 / PR #45 merged as `9807937`, all four checks green at `e121b47`.
   Native downloaded/undownloaded and source-departure cases now pass. Fixed a second native
   failure: Android suppressed Toasts with notifications disabled; a separate overlay now shows
-  the full guidance. Await final exact-head CI and merge; see docs/testing.md for boundaries.
+  the full guidance. See docs/testing.md for handset evidence and boundaries.
 - [ ] #53: explicit easy-start setup and guide, preserving existing settings unless
   the user deliberately applies the preset; provider data flow and token setup clear.
+  Implemented and native-tested with synthetic settings/tokens only: Cancel unchanged;
+  Apply sets the advertised defaults, clears old default tokens, disables lane inheritance,
+  preserves unrelated settings/dedicated tokens and refreshes the page. Await final CI/merge.
 - [ ] Release: all exact-head checks green, relevant native acceptance recorded,
   version/changelog updated, signed APK verified and installed as an update (no uninstall).
 
