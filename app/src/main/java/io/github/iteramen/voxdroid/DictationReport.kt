@@ -44,7 +44,7 @@ internal class ReportDraft : ViewModel() {
     var cursor = 0
         private set
 
-    /** False in a preview recreated after its process died: the edits went with it. */
+    /** False until a draft exists and once it is dropped; so also in a preview recreated after its process died, whose edits went with it. */
     val held: Boolean get() = text != null
 
     fun keep(text: String, cursor: Int) {

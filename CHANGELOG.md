@@ -13,13 +13,12 @@ Added
 - *Show the dictation log* under Delivery: takes newest first, and per entry the raw and delivered
   text, outcome, details, retries and connection events. Copy puts the entry on the clipboard as a
   report, marked sensitive so Android shows no preview. Turning the log off or deleting it empties
-  an open viewer.
+  an open viewer. The log screens show no thumbnail in Recents.
 - **Report** on a dictation log entry: an editable preview of the report, then *Continue to
   GitHub* opens the browser at a pre-filled voxdroid issue for you to submit. The text travels in
   the link, under 8 KiB, with long texts cut and marked. Nothing is sent before Continue, and the
   app never posts or signs in. Copy and Report share one text, with an empty Expected block; a
   report too long for the link starts from that text shortened.
-- The dictation log screens no longer leave a thumbnail of the transcript in Recents.
 - A *Cleanup miss* issue template.
 
 Changed

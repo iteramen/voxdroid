@@ -340,7 +340,7 @@ log** switch (off by default) and **Delete the dictation log** (with confirmatio
   text, language, expected); turning a report into a bench item stays manual. `reportDraft` fits
   the draft to a link under 8 KiB once percent-encoded (`REPORT_URL_MAX`): it drops the events
   first, then cuts both texts to one shared length, and says so in the body each time. Metadata
-  values are bounded, so the text always keeps over half the link. Nothing leaves the phone until
+  values are bounded, so a long take still gets about half the link. Nothing leaves the phone until
   **Continue to GitHub**, which opens
   `github.com/iteramen/voxdroid/issues/new?template=cleanup-miss.md` with the title (`reportTitle`,
   the outcome only) and the edited text in the query (`reportUrl`), through an intent whose
