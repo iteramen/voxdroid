@@ -63,7 +63,7 @@ class DictationLogTest {
     /** With no candidates sent, the server picks the key this string is built from. */
     @Test
     fun aDetectedLanguageTheServerInventedIsNotStored() {
-        val invented = DictationEntry(ID, T0, "v", LogOutcome.Cleaned, sttDetected = "sk-test-0000secret 0.99")
+        val invented = DictationEntry(ID, T0, "v", LogOutcome.Cleaned, sttDetected = "Bearer sk-test-0000secret 0.99")
         assertFalse(invented.toJson().has("stt_detected"))
         assertFalse(invented.copy(sttDetected = "en" + "-aaaaaaaa".repeat(900) + " 0.99").toJson().has("stt_detected"))
         assertEquals("positive control", "he 0.93", invented.copy(sttDetected = "he 0.93").toJson().getString("stt_detected"))

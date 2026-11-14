@@ -500,7 +500,8 @@ configuration/tokens are included in explicit encrypted settings export; enable 
 The consent bit lives in backup-excluded `secrets.xml`, so Android cloud/device restore cannot
 re-enable screen-text access without a new opt-in; the voice-message caption switch is stored the
 same way (`SettingsStore.kt` — `isConsent`). A read-aloud language without a server of its own
-uses the English server and is never sent that language's own token (`ReadAloud.kt` — `endpoint`).
+uses the English server, and a token entered for that language is refused there rather than sent
+(`ReadAloud.kt` — `endpoint`).
 
 The opt-in `.readaloudtest` debug package adds metadata-only service diagnostics: own control
 bounds, candidate lengths/bounds, active/picker/playback/screen-awake flags, a count of tolerated
