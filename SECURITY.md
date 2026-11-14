@@ -173,6 +173,12 @@ the platform's own media extractor and codecs, which voxdroid cannot patch.
 
 ### STT and cleanup endpoints
 
+A structured HTTP 400 rejection of the optional `language_candidates` field can cause a
+bounded compatibility resend without that field or optional VAD. It uses the same endpoint
+and credential and honors cancellation; it never changes saved settings or switches providers.
+The error body is inspected only for fixed rejection fields and is never shown or logged.
+No new data recipient, permission or accessibility capability is introduced.
+
 - The transcript the server returns is **typed into the focused field**. One sanitising pass runs
   first: every `\n`, U+2028 and U+2029 becomes a space; control characters, every Unicode format
   character (category `Cf`, from a Unicode 16.0 table in the code rather than the device's ICU)

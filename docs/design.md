@@ -11,8 +11,9 @@ Kotlin sources are in [`app/src/main/java/io/github/iteramen/voxdroid/`](../app/
 ## Goals
 
 - **Any OpenAI-compatible server.** `/audio/transcriptions` for speech, `/chat/completions` for
-  cleanup. `language_candidates` is an optional whisper.cpp server extension; servers without it
-  ignore the field.
+  cleanup. `language_candidates` is an optional whisper.cpp server extension. A structured
+  HTTP 400 rejection of that field triggers one retry with standard fields, retaining the
+  user's configured languages and explicit-language requests.
 - **Keep the keyboard.** Text goes in through the service's own input connection
   (`flagInputMethodEditor`, `AccessibilityService.getInputMethod`; both Android 13).
 - **Detect, then route.** The keyboard's language when the user marked it explicit, otherwise
@@ -94,8 +95,16 @@ The start field is kept through an Error, so a Retry delivers into it.
    `response_format`, the language fields, `prompt` (the glossary, when set), and `vad=true` on a
    take over 60 s, re-sent without it on a non-2xx reply (`SttClient.kt` — `transcribe`, `send`).
    `response_format` is `verbose_json` while the no-speech threshold is above 0, else `json`. One
-   resend when no status came back (transport failure or timeout); any status is final. Line
-   breaks in `text` become spaces.
+   resend when no status came back (transport failure or timeout). An HTTP 400 with error code
+   `unknown_param`/`unknown_parameter` and `param=language_candidates` (or Groq's exact
+   ``unknown param `language_candidates` `` message with empty param) drops candidates and VAD
+   for one compatibility retry. Each protocol fallback removes a field permanently for that
+   take: at most two protocol resends if VAD is rejected first. Other statuses are final once
+   the existing VAD fallback is exhausted. Cancellation prevents resends; endpoint, token,
+   explicit language, model and prompt do not change. No provider body is shown or logged.
+   Candidate constraints are unavailable on this standard-fields retry; configured languages
+   still govern explicit selection and routing, and routing still requires server confidence.
+   Line breaks in `text` become spaces.
 3. **No-speech gate** (`Transcriber.kt` — `dictate`): the duration-weighted mean of scored
    `segments[].no_speech_prob` above the threshold (default 0.3) is silence, matching byovox.
    If any scored segment lacks usable start/end timing, or total duration is zero/non-finite,

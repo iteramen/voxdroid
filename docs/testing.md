@@ -1,5 +1,19 @@
 # Manual checklist
 
+## Strict STT provider compatibility (#52)
+
+JVM loopback tests reproduce Groq's structured unknown-candidates HTTP 400 and verify a
+same-endpoint/token standard-fields retry, intact language list, long-take VAD interaction,
+cancellation, bounded repeated rejection, explicit language and unrelated-error behavior.
+This is protocol regression evidence, not a live Groq account qualification.
+
+| Check | Expected |
+| --- | --- |
+| Strict provider, Auto with several configured languages | Retry succeeds without deleting the list; provider detects language without candidate constraints. |
+| Explicit language | Standard `language` field retained; configured language selection still works. |
+| Compatible self-hosted server | Candidates and long-take VAD still sent; no extra compatibility request. |
+| Cancel before resend | No further audio upload or late delivery. |
+
 ## Encrypted configuration migration (0.3.0)
 
 JVM coverage (`ConfigBackupTest`) checks a typed Unicode/token/lane round-trip, per-export salt and

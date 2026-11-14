@@ -105,6 +105,83 @@ class SttClientTest {
     }
 
     @Test
+    fun aStrictProviderCanRejectCandidatesWithoutErasingTheUsersLanguages() {
+        val server = start(first = 400 to UNKNOWN_CANDIDATES, reply = """{"text":"hello"}""")
+        val language = SttLanguage.Auto(listOf("en", "he", "ru"))
+        assertEquals("hello", client(server.url, token = "synthetic-token").transcribe(wav, language, "Acme").getOrThrow().text)
+        assertEquals(2, server.requests.size)
+        assertTrue(server.requests.first().body.contains("name=\"language_candidates\""))
+        val retry = server.requests.last()
+        assertFalse(retry.body.contains("name=\"language"))
+        assertTrue(retry.body.contains("name=\"prompt\"\r\n\r\nAcme"))
+        assertEquals("Bearer synthetic-token", retry.authorization)
+        assertEquals(server.requests.first().path, retry.path)
+        assertEquals(listOf("en", "he", "ru"), language.candidates)
+        assertFalse(notes.joinToString().contains("unknown param"))
+    }
+
+    @Test
+    fun candidateRejectionAlsoRemovesTheOptionalVadExtensionForLongTakes() {
+        val server = start(first = 400 to UNKNOWN_CANDIDATES)
+        client(server.url).transcribe(wavOfSamples(SIXTY_SECONDS_SAMPLES + 1), SttLanguage.Auto(listOf("en")), null).getOrThrow()
+        assertEquals(2, server.requests.size)
+        assertFalse(server.requests.last().body.contains("name=\"vad\""))
+        assertFalse(server.requests.last().body.contains("name=\"language_candidates\""))
+    }
+
+    @Test
+    fun compatibilityRetryIsBoundedAndDoesNotEchoTheProviderBody() {
+        val server = start(status = 400, reply = UNKNOWN_CANDIDATES)
+        val error = client(server.url).transcribe(wav, SttLanguage.Auto(listOf("en")), null).exceptionOrNull()!!
+        assertEquals(2, server.requests.size)
+        assertFalse(error.message!!.contains("unknown param"))
+    }
+
+    @Test
+    fun cancellationPreventsTheCompatibilityResend() {
+        val server = start(first = 400 to UNKNOWN_CANDIDATES)
+        val result = client(server.url, current = { server.requests.isEmpty() }).transcribe(wav, SttLanguage.Auto(listOf("en")), null)
+        assertTrue(result.isFailure)
+        assertEquals(1, server.requests.size)
+    }
+
+    @Test
+    fun aVadRejectionFollowedByACandidateRejectionStopsAfterTwoProtocolResends() {
+        val server = start(first = 500 to "vad unavailable", status = 400, reply = UNKNOWN_CANDIDATES)
+        assertTrue(client(server.url).transcribe(wavOfSamples(SIXTY_SECONDS_SAMPLES + 1), SttLanguage.Auto(listOf("en")), null).isFailure)
+        assertEquals(3, server.requests.size)
+        assertTrue(server.requests[1].body.contains("name=\"language_candidates\""))
+        assertFalse(server.requests[2].body.contains("name=\"language_candidates\""))
+    }
+
+    @Test
+    fun aStructuredUnknownParameterCanAlsoIdentifyTheRejectedExtension() {
+        val server = start(first = 400 to """{"error":{"code":"unknown_parameter","param":"language_candidates","message":"private diagnostic"}}""")
+        client(server.url).transcribe(wav, SttLanguage.Auto(listOf("en")), null).getOrThrow()
+        assertEquals(2, server.requests.size)
+        assertFalse(notes.joinToString().contains("private diagnostic"))
+    }
+
+    @Test
+    fun unrelatedErrorsAndExplicitLanguagesDoNotTriggerCompatibilityResends() {
+        val cases = listOf(
+            401 to UNKNOWN_CANDIDATES,
+            400 to """{"error":{"code":"unknown_param","param":"model","message":"unknown param `model`"}}""",
+            400 to """{"error":{"message":"unknown param `language_candidates`"}}""",
+            400 to "not JSON language_candidates",
+        )
+        for ((status, body) in cases) {
+            val server = start(status = status, reply = body)
+            assertTrue(client(server.url).transcribe(wav, SttLanguage.Auto(listOf("en")), null).isFailure)
+            assertEquals(1, server.requests.size)
+            server.stop()
+        }
+        val server = start(status = 400, reply = UNKNOWN_CANDIDATES)
+        assertTrue(client(server.url).transcribe(wav, SttLanguage.Explicit("he"), null).isFailure)
+        assertEquals(1, server.requests.size)
+    }
+
+    @Test
     fun theBearerIsSentWhenTheTokenIsSet() {
         val server = start()
 
@@ -810,6 +887,7 @@ class SttClientTest {
     private fun wavOfSamples(samples: Int) = wav(ByteArray(samples * 2))
 
     private companion object {
+        const val UNKNOWN_CANDIDATES = """{"error":{"message":"unknown param `language_candidates`","type":"invalid_request_error","param":"","code":"unknown_param"}}"""
         const val TAILNET_URL = "http://100.64.0.1/v1"
         const val SIXTY_SECONDS_SAMPLES = 60 * 16_000
         const val RATE_OFFSET = 24
