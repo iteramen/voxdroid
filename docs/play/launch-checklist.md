@@ -7,6 +7,9 @@ account registration, submission, price or release rollout has been made.
 
 ## Prepared in the repository
 
+- Optional [Easy start guide](../easy-start.md) and in-app Groq preset. Reassess the Data safety
+  transfer exception for this explicitly selected hosted provider; the preset is not reviewer access.
+
 - [English listing text](listing/en-US/full-description.txt), short description
   and title. Accessibility is the primary purpose; external server setup and
   app/language limitations are prominent. No bundled hosting or universal-app

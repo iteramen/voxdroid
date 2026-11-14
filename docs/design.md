@@ -28,6 +28,14 @@ stop, a cancel or the 5-minute cap).
 
 ## Architecture
 
+**Easy start** is an explicit Speech-page action, not a default configuration. `EasyStart` produces
+a Groq speech/cleanup snapshot after a destination/data-flow confirmation. `ConfigBackupStore`
+applies it with the existing credential-first transaction while no operation is active. Old default
+tokens are removed and lane token inheritance is disabled; unrelated settings and dedicated lane/TTS
+tokens remain. The user enters their key separately into both token fields. Applying the preset
+does not create an account, read the clipboard or send audio. The in-app guide links to the
+published [setup guide](easy-start.md).
+
 Configuration migration is explicit: `ConfigBackupActivity` uses the Android document picker to
 write/read a password-protected `.vdxb` file. `ConfigBackup` defines the allowed typed settings and
 tokens, bounded binary format, PBKDF2 key derivation and authenticated AES-GCM envelope.

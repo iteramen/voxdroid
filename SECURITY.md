@@ -173,6 +173,15 @@ the platform's own media extractor and codecs, which voxdroid cannot patch.
 
 ### STT and cleanup endpoints
 
+**Optional hosted preset:** Speech → Easy start with Groq requires confirmation naming
+`api.groq.com`, audio/glossary and transcript transfers, and the affected settings. It is never
+applied on install/upgrade. `EasyStart` clears default speech/cleanup tokens, retains dedicated
+lane/TTS tokens, and disables lane inheritance before a new default token can be entered.
+`ConfigBackupStore.restore` supplies the existing credential-first transaction and rollback;
+active dictation/caption/narration refuses application. Consent, permissions, caches and narration
+configuration are unchanged. Groq is an explicit external recipient, not a Voxdroid server;
+no remote retention/deletion guarantee is made.
+
 A structured HTTP 400 rejection of the optional `language_candidates` field can cause a
 bounded compatibility resend without that field or optional VAD. It uses the same endpoint
 and credential and honors cancellation; it never changes saved settings or switches providers.

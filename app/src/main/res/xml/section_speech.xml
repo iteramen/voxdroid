@@ -2,6 +2,20 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <Preference
+        android:key="easy_start"
+        android:persistent="false"
+        android:title="@string/easy_start_title"
+        android:summary="@string/easy_start_summary"
+        app:singleLineTitle="false" />
+
+    <Preference
+        android:key="easy_start_guide"
+        android:persistent="false"
+        android:title="@string/easy_start_guide_title"
+        android:summary="@string/easy_start_guide_summary"
+        app:singleLineTitle="false" />
+
     <EditTextPreference
         android:defaultValue=""
         android:dialogMessage="@string/settings_stt_base_url_hint"

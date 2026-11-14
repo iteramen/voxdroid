@@ -179,6 +179,12 @@ voxdroid does not implement that route.
 
 ## Read aloud for access to written text
 
+The optional Speech → Easy start with Groq preset changes destinations only after confirmation.
+It discloses that Groq receives audio/glossary for speech and transcript text for cleanup, including
+selected voice notes if captions are separately enabled. It adds no Android permission or background
+accessibility behavior, never enables captions/narration, and never applies on install/upgrade.
+Include this optional hosted-provider route in reviewer instructions and the Data safety review.
+
 An additional off-by-default accommodation reads a user-chosen visible text block aloud through
 their configured TTS server. This supports people who have difficulty seeing or reading text.
 The speaker press outlines visible read-only blocks; the subsequent block tap authorizes its

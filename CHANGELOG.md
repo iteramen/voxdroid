@@ -5,6 +5,11 @@ build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+Added
+- Optional Easy start with Groq under Speech, with a setup guide and explicit destination
+  confirmation. Fills speech/cleanup settings; users enter their own key. Existing installations
+  are not switched automatically, and old default tokens cannot follow the new endpoints.
+
 Fixed
 - Standard STT providers that explicitly reject `language_candidates` get a bounded retry
   with standard fields, without requiring the configured language list to be deleted.

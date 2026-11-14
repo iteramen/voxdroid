@@ -8,6 +8,11 @@ requires the information needed to review restricted functionality.
 
 ## Provision before filing App access
 
+The optional [Easy start with Groq](../easy-start.md) route is available to users, but does not
+replace reviewer access: reviewers still need supplied credentials/quota and any narration backend.
+The preset's confirmation discloses Groq as the speech/cleanup recipient; include this route when
+reviewing the listing and Data safety draft. Do not ask a reviewer to create a personal Groq account.
+
 - A dedicated review service reachable over normal public HTTPS, with a valid
   certificate, predictable availability and the actual STT/TTS functionality.
 - Review-only, revocable credentials if authentication is used; sufficient quota
