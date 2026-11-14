@@ -3,7 +3,7 @@
 The wording voxdroid gives Play for its `AccessibilityService`. Statements about the service cite
 the code by file and symbol; statements about Play cite the Play page they rest on.
 
-Submission preparation resumed on 2026-11-13 for version 0.4.3. This is a draft,
+Submission preparation resumed on 2026-11-13 and updated for version 0.5.0 on 2026-11-14. This is a draft,
 not a filed or approved declaration. The [reviewer access and video plan](reviewer-access.md)
 and [launch checklist](launch-checklist.md) track the remaining submission steps.
 

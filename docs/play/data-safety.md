@@ -1,6 +1,6 @@
 # Play Data safety form — voxdroid
 
-Draft for version 0.4.3, reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
+Draft for version 0.5.0, updated for Easy start on 2026-11-14; definitions reviewed against [Play's current definitions](https://support.google.com/googleplay/android-developer/answer/10787469)
 on 2026-11-13. This records implementation behavior; no Console submission has been made. The owner
 must reconcile the actual form and all distributed versions before a Play release. The public policy is
 [`docs/privacy.md`](../privacy.md).

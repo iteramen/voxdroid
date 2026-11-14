@@ -17,13 +17,17 @@ ideas and Play account submission are outside this wave.
   Native downloaded/undownloaded and source-departure cases now pass. Fixed a second native
   failure: Android suppressed Toasts with notifications disabled; a separate overlay now shows
   the full guidance. See docs/testing.md for handset evidence and boundaries.
-- [ ] #53: explicit easy-start setup and guide, preserving existing settings unless
+- [x] #53: PR #77 merged as `4a0867d`, four checks green at `993d6e2`. Explicit easy-start
+  setup and guide, preserving existing settings unless
   the user deliberately applies the preset; provider data flow and token setup clear.
   Implemented and native-tested with synthetic settings/tokens only: Cancel unchanged;
   Apply sets the advertised defaults, clears old default tokens, disables lane inheritance,
-  preserves unrelated settings/dedicated tokens and refreshes the page. Await final CI/merge.
-- [ ] Release: all exact-head checks green, relevant native acceptance recorded,
-  version/changelog updated, signed APK verified and installed as an update (no uninstall).
+  preserves unrelated settings/dedicated tokens and refreshes the page.
+
+Release target: **0.5.0 / versionCode 10**. The
+[release](https://github.com/iteramen/voxdroid/releases/tag/v0.5.0) is the delivery record for
+signed artifacts, checksum/provenance verification and the in-place handset installation receipt.
+Those later stages are recorded there after they happen, not inferred from this source checklist.
 
 This checklist tracks work, not an assertion that unchecked handset cases passed.
 
