@@ -44,9 +44,7 @@ attacker who is not that user.
 - The start field's node is held from the start until the take ends, or through a failure until a
   retry delivers or the take is cancelled (`VoxdroidA11yService.kt` — `startField`, `ended`). The
   accessibility node cache is switched off when the service connects and again after every field
-  lookup (`VoxdroidA11yService.kt` — `onServiceConnected`; `FieldAccess.kt` — `focused`). The
-  per-event lookups for the floating control and captions, below, do not switch it off again
-  themselves.
+  lookup (`VoxdroidA11yService.kt` — `onServiceConnected`; `FieldAccess.kt` — `focused`).
 - The service subscribes to window, window-state, content, scroll, click and long-click events.
   Caption observation uses these only when captions are enabled and dictation is idle in a
   supported foreground app (`CaptionController.observe`). While the floating 🎤 control or read

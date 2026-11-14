@@ -106,7 +106,7 @@ The manifest capabilities and the code's narrower access rules:
   source is foreground. Routine header inspection skips the message list. Selected-message
   metadata is inspected only in selected mode; no composer or unselected message text is read.
 - **No retained accessibility tree.** The node cache is disabled when the service connects and
-  after each field lookup; the floating-control and caption lookups do not switch it off again themselves. Dictation holds its start field through delivery/cancel/retry. Captions keep
+  after each field lookup. Dictation holds its start field through delivery/cancel/retry. Captions keep
   only RAM origin metadata and temporary nodes. Read aloud holds bounded candidate nodes only during explicit selection; no tree is persisted.
 - **No gestures, screenshots, magnification, fingerprint gestures or touch exploration.** The
   capabilities are `canRetrieveWindowContent` and `canRequestFilterKeyEvents`, and the flags
