@@ -33,7 +33,7 @@ key can hold it. voxdroid asks for no storage, contacts, location, phone-state o
 ## The microphone
 
 Holding volume-down or tapping the floating 🎤 control starts a dictation; recording begins
-after the short start tone when cue tones are on, at once otherwise. Recording stops
+after the short start tone when one plays, at once otherwise. Recording stops
 when you press volume-down, tap the control or the pill's Stop, or by itself after 5 minutes
 (`VoxdroidA11yService.kt` — `CAP_MS`); the audio is then sent for transcription (below).
 
@@ -132,7 +132,8 @@ version. Retries and connection failures of that dictation are listed in its rec
 attempt stays visible when a Retry succeeds. Cancelling discards the active attempt; an earlier failure already saved for that take remains until expiry or deletion. The log never
 holds audio, tokens, an address's user name, password or query, server replies or raw error
 messages; a stage that did not run leaves its fields empty. Records are deleted 30 days after the
-dictation, checked whenever the app or the service starts and at every write. *Delete the
+dictation, checked whenever the app or the service starts, at every write and whenever the log is
+shown. *Delete the
 dictation log* (after a confirmation) and turning the switch off erase every record and the
 dictation still in progress, and a dictation already running cannot write afterwards. It is not
 sent anywhere unless you report an entry (below), and uninstalling the app removes it. *Show the dictation log* displays the records;
@@ -220,7 +221,7 @@ voxdroid sends to `https://` addresses, and to plain `http://` only on the phone
 (loopback), unless you turn on **Allow insecure (http) endpoints** on the Speech page. That switch
 is off by default and asks you to confirm before it turns on (`Endpoints.kt` — `insecureBlocked`).
 While it is off, an `http://` address to any other host is refused when you enter it, before every
-request, and by the status check — for the speech server, every lane and the cleanup server alike.
+request, and by the status check — for the speech server, every lane, the cleanup server and the read-aloud server alike.
 With it on, your audio, glossary, transcript, text you choose to read aloud and bearer tokens cross the network unencrypted to an
 `http://` server; unless that path is protected otherwise, for example by Tailscale or WireGuard,
 anyone who can observe it can read them. HTTPS uses Android's own certificate checks.
@@ -236,7 +237,9 @@ voxdroid's accessibility service reaches the following, and only when stated
   start. Dictation is refused in a password field, and text is never typed or copied into one. A
   dictation whose field changed is not typed: it is dropped, or copied to the clipboard if you
   chose that. The lookup fetches the active window's root without prefetching its contents and
-  asks it for the focused field only; the accessibility node cache is off, and the field is held
+  asks it for the focused field; where an app answers nothing while the keyboard is in use, it
+  visits at most 500 of the window's elements to find the focused editable one. The accessibility
+  node cache is switched off afterwards, and the field is held
   until the dictation is typed or cancelled, including through an error and its retry
   (`FieldAccess.kt` — `focused`; `VoxdroidA11yService.kt` — `startField`).
 - **The character before the cursor, and any selected text**, read when the text is typed, to
@@ -246,11 +249,14 @@ voxdroid's accessibility service reaches the following, and only when stated
   `onKeyEvent`).
 - **The keyboard window's position**, to place the pill above it (`Pill.kt` — `keyboardTop`).
 - **Where the floating control may show**, on every screen change while the floating 🎤 control
-  or read aloud is on: which app is in front, whether its focused field is editable, a password
-  field or voxdroid's own Try field, and whether the phone is locked. The control hides over a
-  password field, on the lock screen and on voxdroid's own pages. Nothing of this is kept, logged
-  or sent, and with both switches off the check does not run (`ReadAloudController.kt` —
-  `observe`, `controlContext`).
+  or read aloud is on: which app is in front, whether its focused field is editable, marked as a
+  password field or voxdroid's own Try field, and whether the phone is locked. The control hides
+  over a field marked as a password field, on the lock screen and on voxdroid's own pages, except
+  that 🎤 stays on the Try page while its field is focused. The same check stops read aloud when
+  the control must hide; while read aloud is choosing or speaking, the block you chose is also
+  re-read on each screen change, to stop when it changes. Nothing of this is written to storage,
+  logged or sent, and with both switches off the check does not run (`ReadAloudController.kt` —
+  `observe`, `showGlyph`, `controlContext`).
 - **Foreground caption context**, only with captions enabled and dictation idle: supported-app
   conversation header, selected-note metadata, control resource IDs and native Share controls.
   Window, window-state, content, scroll, click and long-click events keep selection and result lifetimes bounded. No

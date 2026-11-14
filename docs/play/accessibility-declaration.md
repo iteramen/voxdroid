@@ -68,10 +68,12 @@ The feature ships in 0.3.0. Its hearing-accessibility purpose does not establish
   the clipboard if the user chose that mode.
 - **Checks where its floating control may show**, on every subscribed event while the floating 🎤
   control or read aloud is on: the active window's package, whether its focused field is
-  editable, a password field or voxdroid's own Try field, and whether the keyguard is locked. The
-  control is hidden over a password field, on the lock screen and on voxdroid's own pages. None
-  of it is stored, logged or sent; with both switches off the check does not run
-  (`ReadAloudController.kt` — `observe`, `controlContext`; `ReadControlContext.kt`).
+  editable, marked as a password field (`isPassword`) or voxdroid's own Try field (by view id), and
+  whether the keyguard is locked. The control is hidden over a field marked as a password field,
+  on the lock screen and on voxdroid's own pages, except that 🎤 stays on the Try page while its
+  field is focused; hiding it also ends a narration or a block picker. None of it is written to
+  storage, logged or sent; with both switches off the check does not run
+  (`ReadAloudController.kt` — `observe`, `showGlyph`, `controlContext`; `ReadControlContext.kt`).
 - **Types the transcript** once, through the service's own input connection, into the field
   captured at the start. To decide whether a space goes in front, it reads the character before
   the cursor and any selection through that connection; that text only builds the string to type
@@ -100,14 +102,14 @@ The feature ships in 0.3.0. Its hearing-accessibility purpose does not establish
 The manifest capabilities and the code's narrower access rules:
 
 - **Bounded event use.** Window, window-state, content, scroll, click and long-click events are
-  subscribed to; long-click is how a voice note is selected in both supported apps. Besides
-  captions, the events drive the floating-control check above and re-place the pill while a
-  dictation runs. Caption observation acts only when enabled, dictation is idle and the supported
+  subscribed to; no event type is acted on by itself: each prompts a re-read of the bounded state
+  below. Besides captions, the events drive the floating-control check above, bound a narration's
+  lifetime and re-place the pill while a dictation runs. Caption observation acts only when enabled, dictation is idle and the supported
   source is foreground. Routine header inspection skips the message list. Selected-message
   metadata is inspected only in selected mode; no composer or unselected message text is read.
 - **No retained accessibility tree.** The node cache is disabled when the service connects and
   after each field lookup. Dictation holds its start field through delivery/cancel/retry. Captions keep
-  only RAM origin metadata and temporary nodes. Read aloud holds bounded candidate nodes only during explicit selection; no tree is persisted.
+  only RAM origin metadata and temporary nodes. Read aloud holds bounded candidate nodes during explicit selection, then the one chosen block and its text until the narration ends, refreshing that block on each event; no tree is persisted.
 - **No gestures, screenshots, magnification, fingerprint gestures or touch exploration.** The
   capabilities are `canRetrieveWindowContent` and `canRequestFilterKeyEvents`, and the flags
   `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,

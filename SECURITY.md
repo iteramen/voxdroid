@@ -34,7 +34,8 @@ attacker who is not that user.
   whether it is a password field, and its identity (`FieldAccess.kt` — `focused`). The lookup
   fetches the active window's root with `getRootInActiveWindow(0)`, no prefetch flag set, and asks
   it for the focused input node. When that answers nothing while the keyboard has an input
-  started, as with Compose, it walks at most 500 nodes for the focused editable one (`WALK_CAP`).
+  started, as with Compose, it visits at most 500 nodes, fetching each one's children, for the focused editable one
+  (`WALK_CAP`).
   voxdroid reads no text of the field itself.
 - A password field is judged three ways: the field's masking (`isPassword`), a password input type
   on its node, or one in the keyboard's editor info, where Compose puts it. A take is refused in
@@ -49,10 +50,15 @@ attacker who is not that user.
   Caption observation uses these only when captions are enabled and dictation is idle in a
   supported foreground app (`CaptionController.observe`). While the floating 🎤 control or read
   aloud is on, every event also re-reads the floating control's context: the active window's
-  package, whether its focused field is editable, a password field or voxdroid's own Try field (by
-  view id), and whether the keyguard is locked. That decides only whether the control is shown;
-  none of it is stored, logged or sent, and with both off no window is looked at
-  (`ReadAloudController.kt` — `observe`, `controlContext`; `ReadControlContext.kt`). While a take runs, a window change
+  package, whether its focused field is editable, marked as a password field (`isPassword`) or
+  voxdroid's own Try field (by view id), and whether the keyguard is locked. That decides whether
+  the control is shown, and ends a narration or a block picker when the control must hide. While
+  read aloud is choosing or speaking, each event also checks that the source window and package
+  are unchanged and refreshes the one chosen block (its text, bounds and visibility), to stop when
+  it changes. None of it is written to storage, logged or sent, and with both off no window is
+  looked at
+  (`ReadAloudController.kt` — `observe`, `showGlyph`, `controlContext`, `selectionStillCurrent`;
+  `ReadControlContext.kt`). While a take runs, a window change
   re-places the pill from the keyboard window's
   bounds; `keyboardTop` fetches every interactive window's info and uses the `TYPE_INPUT_METHOD`
   window's alone (`Pill.kt` — `keyboardTop`, `follow`).
@@ -66,7 +72,8 @@ attacker who is not that user.
   press while idle is re-applied as a volume step. The only state kept is two booleans
   (`VoxdroidA11yService.kt` — `onKeyEvent`; `VolumeGesture.kt`).
 - Dictation stores how high above the keyboard the pill was last dropped (`Settings.pillSaved`),
-  and the floating control the corner it was last dragged to (`ReadAloudSettings.position`).
+  and the floating control the screen corner nearest where it was last placed and its distance
+  from that corner (`ReadAloudSettings.position`).
   Captions add transient origin/selection state in memory and optional transcript records below.
 - `res/xml/a11y_entry.xml` declares `canRetrieveWindowContent`, `canRequestFilterKeyEvents`, the
   flags `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
@@ -275,7 +282,8 @@ submitted issue being public.
 
 - While "Allow insecure (http) endpoints" is off, the default, plain `http://` to a non-loopback
   host is refused: when it is entered (`Endpoints.kt` — `validateBaseUrl`), before every send to
-  STT, a lane or cleanup, with no connection opened (`Http.kt` — `boundedPost`), and in the status
+  STT, a lane or cleanup, with no connection opened (`Http.kt` — `boundedPost`), before every
+  read-aloud request (`ReadAloud.kt` — `endpoint`, `ttsSynthesize`), and in the status
   probe (`EndpointProbe.kt` — `probe`), all through one rule (`Endpoints.kt` — `insecureBlocked`,
   `isCleartextToRemoteHost`). The rule reads a URL as `java.net.URL`, which is what connects, reads
   it: only `https://`, or `http://` to a loopback host that `URI` reads the same, passes; a string
@@ -289,7 +297,8 @@ submitted issue being public.
   turning it off asks nothing (`SectionFragment.kt` — `insecureSwitch`). With it on, a cleartext
   STT endpoint is named on the status card, and every cleartext base URL under its own row.
 - HTTPS uses the platform's verification: there is no custom `TrustManager`, `HostnameVerifier` or
-  network security config. Redirects are not followed and a reply is capped at 1 MiB (`Http.kt` —
+  network security config. Redirects are not followed and a text reply is capped at 1 MiB, read-aloud audio at 12 MiB
+  (`ReadAloud.kt` — `TTS_MAX_AUDIO`; `Http.kt` —
   `boundedPost`, `BODY_LIMIT_BYTES`). The status probe sends no token, and a token is sent only when
   set.
 
@@ -353,7 +362,7 @@ token cross it in clear, and anyone on the path can replace the reply with text 
 
 **In scope:** a token in a log, an error string, an automatic backup or a device transfer, or in
 plaintext in an explicit configuration export; a caption record
-or spool file in a backup or a device transfer; a caption record outliving 30 days, or written by
+or spool file in a backup or a device transfer; a caption record read back after 30 days, or written by
 a request begun before Delete all or turning off; the same for a dictation log record, or audio,
 a token or a response body in one. **Out of scope:**
 the other preferences file, which holds the addresses, languages and glossary and is backed up; a
@@ -410,13 +419,15 @@ scope:** the shell or the system broadcasting to `ProfileInstallReceiver`.
 - GitHub release APKs are built by `release.yml` from the tag, signed with a key used only for
   GitHub releases (SHA-256 certificate fingerprint in [docs/sideload.md](docs/sideload.md)), and
   published with `SHA256SUMS` and a build-provenance attestation. The key lives in the
-  repository's Actions secrets and, during a release job, in the runner's temp directory from
-  the step before the build to the cleanup step that always runs (`release.yml`).
+  repository's Actions secrets and, during a release job, in the runner's temp directory, with its
+  password in `keystore.properties` in the workspace, from the step before the build to the cleanup
+  step that always runs (`release.yml`).
 - CI runs the gate (`lint testDebugUnitTest assembleDebug`), the release witness and the
   dependency audit, all with `contents: read`, each action they name pinned by commit SHA
-  (`ci.yml`, `release-witness.yml`, `dependency-audit.yml`). The docs-freshness and
-  issue-intake workflows are ouro templates, pinned by release tag; they hold no secret, and
-  docs-freshness reads only. The audit runs OSV-Scanner over a lockfile of the runtime classpaths and
+  (`ci.yml`, `release-witness.yml`, `dependency-audit.yml`). The two ouro
+  templates differ: docs-freshness names its actions by tag (`actions/checkout@v7`, the ouro action
+  by release tag) and reads only; issue-intake names no action and uses the job's `GITHUB_TOKEN`
+  with `issues: write` to label a new issue. The audit runs OSV-Scanner over a lockfile of the runtime classpaths and
   blocks on any known vulnerability; build tooling is outside its scope. An exception is an
   `osv-scanner.toml` `[[IgnoredVulns]]` entry with `id`, `reason` and `ignoreUntil`.
 - Debug builds are signed with the Android Gradle plugin's debug key. Release artifacts are

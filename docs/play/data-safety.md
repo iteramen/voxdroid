@@ -50,7 +50,7 @@ Reassess the exception against this disclosed, expected transfer before submitti
 do not treat this draft as a Google determination. No advertising/analytics recipient is added.
 
 **Ephemeral:** do not carry forward the old blanket Yes. Imported encoded audio touches a file;
-optional remembered captions and the optional dictation log retain transcript text for 30 days (an expired record is never shown; its file goes at the next start or use), and the user's speech/cleanup
+optional remembered captions and the optional dictation log retain transcript text for 30 days (an expired record is never shown; its file goes at the next start or use), and the user's speech, cleanup and read-aloud
 servers can retain requests under their own policies. Their behavior is not verified by the app.
 The final form must reflect those conditions, not infer server ephemerality from in-memory WAV.
 
