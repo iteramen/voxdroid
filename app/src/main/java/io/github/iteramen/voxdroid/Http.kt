@@ -1,5 +1,7 @@
 package io.github.iteramen.voxdroid
 
+import org.json.JSONException
+import org.json.JSONTokener
 import java.io.IOException
 import java.net.ConnectException
 import java.net.HttpURLConnection
@@ -79,6 +81,18 @@ internal fun causeDetail(cause: Throwable): String = when (cause) {
 }
 
 internal const val RESPONSE_DETAIL = "response content omitted"
+
+/**
+ * [body] as JSON. Android's org.json recurses once per nesting level and has no limit, so a few kilobytes of `[` end in a
+ * StackOverflowError, which no caller's `catch (JSONException)` sees and which would take the process down. It is malformed
+ * input like any other.
+ */
+@Throws(JSONException::class)
+internal fun parseJson(body: String, parse: (String) -> Any? = { JSONTokener(it).nextValue() }): Any? = try {
+    parse(body)
+} catch (tooDeep: StackOverflowError) {
+    throw JSONException("nesting too deep")
+}
 
 internal fun boundedPost(
     url: String,

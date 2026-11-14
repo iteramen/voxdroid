@@ -21,6 +21,11 @@ Added
   report too long for the link starts from that text shortened.
 - A *Cleanup miss* issue template.
 
+Fixed
+- A speech or cleanup server's reply made of deeply nested JSON no longer crashes the app; it
+  is reported as a malformed reply. A reply longer than 100,000 characters is cut before it is
+  typed or copied.
+
 Changed
 - The privacy policy describes the dictation log; the speech client logs a fixed category when a
   request got no response and was resent once.

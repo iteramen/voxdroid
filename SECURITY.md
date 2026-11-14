@@ -200,10 +200,15 @@ No new data recipient, permission or accessibility capability is introduced.
   `laneToken`, `sameServer`).
 - A blank or discarded take never reaches the cleanup endpoint (`VoxdroidA11yService.kt` —
   `transcribe`).
+- A reply cannot take the service down by its shape or size. A body is read up to 10 MiB
+  (`Http.kt` — `BODY_LIMIT_BYTES`); JSON nested deeply enough to overflow the parser's stack is
+  reported as malformed like any other (`parseJson`: Android's `org.json` recurses per level with
+  no limit of its own); and the text is cut to 100,000 UTF-16 units before it is typed or copied
+  (`Commit.kt` — `MAX_TYPED_CHARS`), under what one clipboard or input transaction carries.
 
 **In scope:** a control or format character (bidi override, zero-width, tag) reaching the field; a
 newline, U+2028 or U+2029 typed as a line break; a blank or discarded take sent to cleanup; a lane
-sent a token the rule above does not give it. **Out of scope:** that a malicious endpoint can type
+sent a token the rule above does not give it; a reply that crashes the app or the service. **Out of scope:** that a malicious endpoint can type
 arbitrary text into the field. **You are trusting that server as much as your own keyboard**, and
 every lane is one more such server. Dropping every format character has a cost: the subdivision
 flags (England, Scotland, Wales) degrade to a plain black flag, and the Arabic number signs and

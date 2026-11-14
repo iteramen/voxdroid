@@ -215,7 +215,8 @@ fixes Compose's later answers, so the field compares equal at delivery.
   `field changed` notice. The mode is `no_field_mode`: `refuse` (default) or `clipboard`.
 - **Text** (`Commit.kt` — `finish`): `sanitize` turns `\n`, U+2028 and U+2029 into spaces and
   drops control characters, format (`Cf`, a Unicode 16.0 table in the code) characters except
-  U+200C–U+200F, and unpaired surrogates, logging only the count (`droppedNote`); then trim, and
+  U+200C–U+200F, and unpaired surrogates, logging only the count (`droppedNote`); then trim, cut
+  to 100,000 UTF-16 units (`MAX_TYPED_CHARS`, never inside a surrogate pair), and
   one terminal `.` comes off (never from `..`) while `strip_terminal_period` is on.
 - **Insert** (`FieldAccess.kt` — `insert`): one leading space when the character before the
   cursor is not whitespace, then one `commitText`. No input connection re-plans as no field.
