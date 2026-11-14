@@ -39,9 +39,9 @@ class HostileReplyTest {
         assertTrue(typed.endsWith("a."))
     }
 
-    /** The body limit is the only bound on what a shallow reply costs to parse: millions of empty objects fit in ten megabytes. */
+    /** Nothing else bounds what a shallow reply costs to parse, so raising the limit needs the handset row for it run again. */
     @Test
-    fun theBodyLimitKeepsAShallowReplySmallEnoughToParse() {
+    fun theReplyBodyLimitIsNoMoreThanOneMebibyte() {
         assertTrue(BODY_LIMIT_BYTES <= 1024 * 1024)
     }
 

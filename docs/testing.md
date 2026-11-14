@@ -318,7 +318,7 @@ Against a working STT endpoint:
       tests cannot show this: only Android's `org.json` overflows, and a build without `parseJson`
       dies on the same stub)
 - [ ] the same stub answering `{"text":"","segments":[{},{},…]}` padded to just under 1 MiB: the
-      pill reads `silence` or an `stt` failure, and the service is still on
+      pill reads `silence`, and the service is still on
 - [ ] the same stub answering `{"text": "…"}` with 500,000 letters, Cleanup off, Delivery set to
       *Copy to the clipboard* and no field focused: the pill reads `copied to the clipboard`, the
       clip holds 100,000 characters, and the service is still on

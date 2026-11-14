@@ -189,10 +189,7 @@ internal fun boundedPost(
 
 private class ResponseTooLarge : IOException()
 
-/**
- * Ten times a five-minute take's `verbose_json`. The limit is what bounds the parse: a megabyte of `{},` is a few hundred
- * thousand objects, where ten were millions and an OutOfMemoryError no caller catches.
- */
+/** Well over a five-minute take's `verbose_json`. It is also what bounds a shallow reply's parse: every `{}` in the body becomes an object. */
 internal const val BODY_LIMIT_BYTES = 1024 * 1024
 
 private const val CONNECT_TIMEOUT_MS = 5_000
