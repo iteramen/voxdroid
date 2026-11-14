@@ -127,7 +127,7 @@ blocked, too short for cleanup, cleanup off, silence, speech or recording failur
 failure description, the cleanup model and timeout, the language sent and detected, the language
 lane or the speech server's host name that answered, how long each stage took, and the app
 version. Retries and connection failures of that dictation are listed in its record, so a failed
-attempt stays visible when a Retry succeeds. A dictation you cancel is not recorded. The log never
+attempt stays visible when a Retry succeeds. Cancelling discards the active attempt; an earlier failure already saved for that take remains until expiry or deletion. The log never
 holds audio, tokens, an address's user name, password or query, server replies or raw error
 messages; a stage that did not run leaves its fields empty. Records are deleted 30 days after the
 dictation, checked whenever the app or the service starts and at every write. *Delete the

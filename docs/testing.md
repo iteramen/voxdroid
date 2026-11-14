@@ -56,6 +56,11 @@ This is protocol regression evidence, not a live Groq account qualification.
 
 ## Dictation log (#20)
 
+- [ ] During Recording, Delete all or switch logging off/on before stopping: that take must
+  not create a record. Enabling logging after recording has started applies only to later takes.
+- [ ] After a failed take, Delete all and then Retry: no deleted record returns. A subsequent
+  newly started take records normally while logging is on.
+
 `DictationLogTest` covers the record format, capture outcomes, Retry, stale takes, expiry,
 deletion, backup rules and redaction on the JVM. These rows need a handset and have not been run.
 There is no viewer yet: inspect records with `adb shell run-as <debug package> ls files/dictation_log`

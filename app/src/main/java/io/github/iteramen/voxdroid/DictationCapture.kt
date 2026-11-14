@@ -37,15 +37,14 @@ class DictationCapture(
 
     fun drop() = synchronized(this) { open = null }
 
-    /** Each STT attempt, before it is sent: a new take opens a record while the log is on, the open take again is a Retry. */
+    /** Called once at the actual take start, before recording. Later attempts cannot acquire fresh consent. */
+    fun begin(take: Int) = synchronized(this) { open = opened(take) }
+
+    /** Each STT attempt, before it is sent. A deleted, disabled or finished take stays forgotten, including on Retry. */
     fun attempt(take: Int, sttLanguage: String) = synchronized(this) {
-        val draft = open?.takeIf { it.take == take }
-        if (draft == null) {
-            open = opened(take)?.also { it.sttLanguage = sttLanguage }
-            return@synchronized
-        }
+        val draft = open?.takeIf { it.take == take } ?: return@synchronized
         draft.attempts++
-        draft.events += LogEvent(now(), LogEventKind.Retry, "attempt ${draft.attempts}")
+        if (draft.attempts > 1) draft.events += LogEvent(now(), LogEventKind.Retry, "attempt ${draft.attempts}")
         draft.sttLanguage = sttLanguage
         draft.sttDetected = null
         draft.sttServedBy = null
@@ -53,7 +52,6 @@ class DictationCapture(
     }
 
     fun recordingFailed(take: Int, detail: String) = synchronized(this) {
-        open = opened(take)
         finish(take, LogOutcome.RecordingFailed, "", "", detail)
     }
 
@@ -109,7 +107,7 @@ class DictationCapture(
     }
 
     private class Draft(val take: Int, val ticket: DictationLogTicket, val id: String, val atMs: Long) {
-        var attempts = 1
+        var attempts = 0
         val events = mutableListOf<LogEvent>()
         var sttLanguage: String? = null
         var sttDetected: String? = null

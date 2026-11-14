@@ -68,21 +68,26 @@ data class DictationEntry(
     val events: List<LogEvent> = emptyList(),
 )
 
-private val USERINFO = Regex("""(?i)\b([a-z][a-z0-9+.-]*://)[^/\s@]*@""")
-private val QUERY = Regex("""(?i)(\b[a-z][a-z0-9+.-]*://[^\s?#]*)[?#]\S*""")
-private val BEARER = Regex("""(?i)\bbearer\s+\S+""")
-private val SECRET_PARAM = Regex("""(?i)\b(token|key|api[_-]?key|secret|password|auth)=[^\s&]+""")
+private const val LOG_LANGUAGE = """[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*"""
+private const val LOG_STAGE = """(?:stt(?:\[$LOG_LANGUAGE\])?|polish)"""
+private const val LOG_CAUSE = """(?:invalid URL|request timed out|invalid HTTP response|host unavailable|connection unavailable|transport failure|request cancelled|body over [0-9]{1,9} bytes|timeout after [0-9]{1,6} ms|the token has a character an HTTP header cannot carry)"""
+private val SAFE_DETAILS = listOf(
+    """$LOG_STAGE transport: $LOG_CAUSE(?:; resent once)?(?: \(lane $LOG_LANGUAGE\))?""",
+    """$LOG_STAGE HTTP [1-5][0-9]{2}(?:: no token sent)?(?:: response content omitted)?""",
+    """$LOG_STAGE HTTP [1-5][0-9]{2} body unreadable: $LOG_CAUSE""",
+    """$LOG_STAGE: (?:no endpoint configured|insecure endpoint blocked)""",
+    """$LOG_STAGE (?:JSON|response is not an object|response has no (?:text|content) field|response segments is not an array|response no_speech_prob is not a number): response content omitted""",
+    """polish returned (?:incomplete|empty) content""",
+    """stt: the server rejected language candidates; resent with standard fields(?: \(lane $LOG_LANGUAGE\))?""",
+    """stt: the server refused vad \(HTTP [1-5][0-9]{2}\); resent the take without it(?: \(lane $LOG_LANGUAGE\))?""",
+    """stt\[$LOG_LANGUAGE\] lane returned nothing; retrying the default endpoint""",
+    """attempt [1-9][0-9]{0,8}""",
+    """mic: (?:permission missing|refused by the platform|unavailable)""",
+).map(::Regex)
 
-/**
- * A failure or event line as stored: details are fixed classifications already, and this removes URL userinfo and
- * queries, bearer values and `name=secret` pairs a future detail might carry, then bounds the length.
- */
-internal fun safeDetail(text: String): String = text
-    .replace(USERINFO, "$1")
-    .replace(QUERY, "$1")
-    .replace(BEARER, "Bearer [removed]")
-    .replace(SECRET_PARAM, "$1=[removed]")
-    .take(MAX_DETAIL_CHARS)
+/** Only complete, known diagnostic shapes survive. Unknown text is omitted, never guessed safe by redaction. */
+internal fun safeDetail(text: String): String =
+    if (text.length <= MAX_DETAIL_CHARS && SAFE_DETAILS.any { it.matches(text) }) text else "diagnostic detail omitted"
 
 internal fun DictationEntry.toJson(): JSONObject = JSONObject()
     .put("v", DICTATION_LOG_FORMAT)
@@ -144,7 +149,7 @@ enum class LogWrite {
     Saved,
     Disabled,
     Stale,
-    /** An id that is not a random UUID. */
+    /** An invalid id or a timestamp outside the current retention window. */
     Invalid,
     TooLarge,
     Failed,
@@ -207,10 +212,12 @@ class DictationLog internal constructor(
     /** Writes or replaces the entry with [DictationEntry.id], so a take's later attempt updates its own record. */
     fun put(ticket: DictationLogTicket, entry: DictationEntry): LogWrite = synchronized(LOCK) {
         try {
-            prune(now())
+            val time = now()
+            prune(time)
             val epoch = epoch() ?: return LogWrite.Disabled
             if (epoch != ticket.epoch) return LogWrite.Stale
             if (!UUID_TEXT.matches(entry.id)) return LogWrite.Invalid
+            if (entry.atMs < 0 || entry.atMs > time || time - entry.atMs >= DICTATION_LOG_TTL_MS) return LogWrite.Invalid
             val bytes = entry.toJson().toString().toByteArray(Charsets.UTF_8)
             if (bytes.size > MAX_DICTATION_RECORD_BYTES) return LogWrite.TooLarge
             writeAtomically(File(dir, entry.id + ENTRY_SUFFIX), bytes)

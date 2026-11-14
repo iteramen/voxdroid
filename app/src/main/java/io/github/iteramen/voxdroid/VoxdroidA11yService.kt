@@ -222,8 +222,10 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         pill.show(state, (SystemClock.elapsedRealtime() - recordingSince) / MILLIS_PER_SECOND)
     }
 
-    override fun startTone(take: Int): Boolean =
-        tones.play(Tone.Start) { dispatch(TakeEvent.StartToneEnded(take)) }
+    override fun startTone(take: Int): Boolean {
+        capture.begin(take)
+        return tones.play(Tone.Start) { dispatch(TakeEvent.StartToneEnded(take)) }
+    }
 
     override fun startRecording(): String? {
         // A microphone foreground service without RECORD_AUDIO throws a SecurityException on Android 14+,
@@ -383,8 +385,12 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private fun land(take: Int, text: String, outcome: LogOutcome, raw: String, detail: String? = null) {
         val logged = live(take)
         landed = ""
-        dispatch(TakeEvent.Transcript(text, take))
-        if (logged) capture.finish(take, outcome, raw, landed, detail)
+        try {
+            dispatch(TakeEvent.Transcript(text, take))
+            if (logged) capture.finish(take, outcome, raw, landed, detail)
+        } finally {
+            landed = ""
+        }
     }
 
     private fun transcriber(trace: SttTrace, note: (String) -> Unit, current: () -> Boolean): Transcriber {

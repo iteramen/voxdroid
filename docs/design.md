@@ -298,23 +298,28 @@ A later viewer reads `DictationLog.entries`.
   `endpointHost`), STT and cleanup milliseconds, and events (`LogEvent`: `Retry`, `SttFailed`,
   `Transport`, `Note`). A field a stage did not produce is absent; a cleanup skipped as too short
   has no duration. No audio, token, endpoint userinfo or query, response body or exception text:
-  details are the clients' fixed classifications, and `safeDetail` strips URL userinfo and queries,
-  bearer values and `name=secret` pairs and caps the length before anything is stored.
-- **Capture.** `transcribe` opens the record (`attempt`) while the log is on, taking a ticket;
+  `safeDetail` accepts only complete, known diagnostic shapes; unknown text is replaced by
+  an omission marker instead of attempting partial secret redaction.
+- **Capture.** `startTone` opens the record (`begin`) at take start, before recording, taking
+  a ticket only if logging is already on. `transcribe` updates that record (`attempt`);
   a Retry of the same take adds a `Retry` event to the open record. Client and routing notes
   (`note`) become `Transport` events for a connection failure and its resend (`SttClient.send`),
   `Note` events otherwise. A failed STT attempt is saved at once and stays open, so a successful
   Retry rewrites the same record with the failure kept among its events. `land` saves the final
   outcome only when `Take` accepted the answer; every capture call names its take and is ignored
   for any take but the open one, so a late answer of a cancelled or earlier take writes nothing.
-  A cancelled take, or one superseded by a new trigger, is dropped unwritten. A recording failure
+  Cancelling or superseding a take drops its unfinished attempt; an already-saved failure
+  remains until expiry or deletion. A recording failure
   is a record of its own with a fixed detail, never the exception's text.
 - **Off and Delete all** also call every open `DictationCapture` (`DictationLog.onDelete`), which
   drops the take it holds in memory; a write already queued carries the old ticket and gets
-  `Stale` or `Disabled`.
+  `Stale` or `Disabled`. Neither the first transcription nor Retry acquires a new ticket;
+  turning logging on during recording affects only subsequent takes. The temporary delivered
+  text bridge is cleared immediately after capture, including when logging is off.
 - **Expiry.** 30 days from the take time (`DICTATION_LOG_TTL_MS`). A prune runs when the service
   connects and when the settings screen opens (`openDictationLog`), at every `put` and every
-  `entries`, and drops expired, future-dated, corrupt and foreign files.
+  `entries`, and drops expired, future-dated, corrupt and foreign files. Writes with expired
+  or future timestamps are rejected, so delayed work cannot recreate an expired record.
 
 ### Private caption integration
 

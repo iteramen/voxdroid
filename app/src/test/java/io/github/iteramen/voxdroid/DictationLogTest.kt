@@ -52,6 +52,7 @@ class DictationLogTest {
     @Test
     fun isOffByDefaultAndCapturesNothing() {
         assertFalse(log.enabled)
+        capture.begin(1)
         capture.attempt(1, "en")
         assertFalse("no record is opened while off", capture.holding)
         capture.finish(1, LogOutcome.PolishOff, "hello", "hello")
@@ -92,6 +93,7 @@ class DictationLogTest {
     @Test
     fun aCleanedTakeRecordsItsStagesAndMetadata() {
         on()
+        capture.begin(1)
         capture.attempt(1, "auto:en,he")
         capture.stt(1, "en 0.97", "stt.example", 800)
         capture.polished(1, "llama", 20, 300)
@@ -118,6 +120,7 @@ class DictationLogTest {
     @Test
     fun aSilentTakeIsRecordedWithEmptyText() {
         on()
+        capture.begin(1)
         capture.attempt(1, "en")
         capture.stt(1, null, "stt.example", 400)
         capture.finish(1, LogOutcome.Silence, "", "")
@@ -133,6 +136,7 @@ class DictationLogTest {
     @Test
     fun aFailedTakeIsRecordedAtOnceWithoutInventedText() {
         on()
+        capture.begin(1)
         capture.attempt(1, "he")
         capture.failed(1, "stt HTTP 502: response content omitted")
 
@@ -149,6 +153,7 @@ class DictationLogTest {
     @Test
     fun aRecordingFailureIsItsOwnRecord() {
         on()
+        capture.begin(1)
         capture.recordingFailed(1, "mic: permission missing")
 
         val saved = log.entries().single()
@@ -161,6 +166,7 @@ class DictationLogTest {
     @Test
     fun aFailedAttemptThenASuccessfulRetryIsOneRecordKeepingTheFailure() {
         on()
+        capture.begin(1)
         capture.attempt(1, "en")
         capture.note(1, "stt transport: connection unavailable; resent once")
         capture.failed(1, "stt transport: connection unavailable")
@@ -185,6 +191,7 @@ class DictationLogTest {
     @Test
     fun disconnectsAndProtocolNotesAttachToTheirTake() {
         on()
+        capture.begin(1)
         capture.attempt(1, "auto:en,he")
         capture.note(1, "stt transport: request timed out; resent once (lane he)")
         capture.note(1, "stt: the server rejected language candidates; resent with standard fields")
@@ -199,7 +206,9 @@ class DictationLogTest {
     @Test
     fun aStaleTakesLateCallbacksTouchNothing() {
         on()
+        capture.begin(1)
         capture.attempt(1, "en")
+        capture.begin(2)
         capture.attempt(2, "he")
         capture.note(1, "stt transport: request timed out; resent once")
         capture.stt(1, "en 0.99", "old.example", 9_999)
@@ -222,6 +231,7 @@ class DictationLogTest {
     @Test
     fun aDroppedTakeIsNotRecorded() {
         on()
+        capture.begin(1)
         capture.attempt(1, "en")
         capture.drop()
         capture.finish(1, LogOutcome.PolishOff, "cancelled", "cancelled")
@@ -260,7 +270,7 @@ class DictationLogTest {
     @Test
     fun futureDatedForeignAndStrayFilesArePruned() {
         val ticket = on()
-        assertEquals(LogWrite.Saved, log.put(ticket, entry(atMs = T0 + 1)))
+        assertEquals(LogWrite.Invalid, log.put(ticket, entry(atMs = T0 + 1)))
         File(dir, "notes.txt").writeText("stray")
         File(dir, "$OTHER_ID.json").writeText(entry().toJson().toString())
         assertTrue(log.prune())
@@ -272,6 +282,7 @@ class DictationLogTest {
     fun deleteAllErasesEveryEntryStaysOnAndFencesEarlierTickets() {
         val ticket = on()
         assertEquals(LogWrite.Saved, log.put(ticket, entry()))
+        capture.begin(1)
         capture.attempt(1, "en")
 
         assertTrue(log.deleteAll())
@@ -287,8 +298,10 @@ class DictationLogTest {
     @Test
     fun switchingOffDeletesEverythingAndAnInFlightTakeCannotRecreateIt() {
         on()
+        capture.begin(1)
         capture.attempt(1, "en")
         capture.failed(1, "stt HTTP 500: response content omitted")
+        capture.begin(2)
         capture.attempt(2, "en")
         assertEquals(1, log.entries().size)
 
@@ -311,6 +324,7 @@ class DictationLogTest {
         val deferred = DictationCapture(log, "v", { time }, write = { queued += it }, unsaved = { unsaved += it })
         try {
             on()
+            deferred.begin(1)
             deferred.attempt(1, "en")
             deferred.finish(1, LogOutcome.PolishOff, "in flight", "in flight")
             assertTrue(log.setEnabled(false))
@@ -357,15 +371,15 @@ class DictationLogTest {
         for (secret in listOf("user", "hunter2", "gsk_secret", "frag", "gsk_token", "abc")) {
             assertFalse("'$secret' survived: $safe", safe.contains(secret))
         }
-        assertTrue("positive control: the fixed words stay, $safe", safe.startsWith("stt transport: https://stt.example/v1"))
-        assertEquals(MAX_DETAIL_CHARS, safeDetail("x".repeat(MAX_DETAIL_CHARS + 50)).length)
+        assertEquals("diagnostic detail omitted", safe)
+        assertEquals("diagnostic detail omitted", safeDetail("x".repeat(MAX_DETAIL_CHARS + 50)))
 
         val ticket = on()
         val stored = entry().copy(detail = leaky, events = listOf(LogEvent(T0, LogEventKind.Transport, leaky)))
         assertEquals(LogWrite.Saved, log.put(ticket, stored))
         val bytes = File(dir, ID + DictationLog.ENTRY_SUFFIX).readText()
         assertFalse(bytes, bytes.contains("hunter2") || bytes.contains("gsk_"))
-        assertTrue("positive control: the record holds the detail", bytes.contains("stt.example"))
+        assertTrue("positive control: the record holds the omission marker", bytes.contains("diagnostic detail omitted"))
     }
 
     @Test
@@ -401,6 +415,7 @@ class DictationLogTest {
     @Test
     fun deletingBeforeRetryNeverAcquiresNewConsentForTheOldTake() {
         on()
+        capture.begin(1)
         capture.attempt(1, "en")
         capture.failed(1, "stt HTTP 502: response content omitted")
         assertTrue(log.deleteAll())
@@ -421,6 +436,47 @@ class DictationLogTest {
     fun unknownDiagnosticsAreOmittedRatherThanPartiallyRedacted() {
         for (detail in listOf("Authorization: Basic c2VjcmV0", "server said private transcript", "credential: private-value")) {
             assertEquals("diagnostic detail omitted", safeDetail(detail))
+        }
+    }
+
+    @Test
+    fun privacyChangesDuringRecordingFenceTheFirstTranscription() {
+        for (change in listOf("delete", "off-on", "enable")) {
+            assertTrue(log.setEnabled(change != "enable"))
+            val machine = Take(object : TakeHost {
+                override fun startTone(take: Int): Boolean { capture.begin(take); return false }
+                override fun startRecording(): String? = null
+                override fun stopRecording() = ByteArray(0)
+                override fun armCap() = Unit
+                override fun cancelCap() = Unit
+                override fun transcribe(wav: ByteArray, take: Int) = capture.attempt(take, "en")
+                override fun deliver(text: String) = Unit
+                override fun ended() = Unit
+            })
+            machine.on(TakeEvent.Trigger)
+            assertEquals(TakeState.Recording, machine.state)
+            when (change) {
+                "delete" -> assertTrue(log.deleteAll())
+                "off-on" -> { assertTrue(log.setEnabled(false)); assertTrue(log.setEnabled(true)) }
+                "enable" -> assertTrue(log.setEnabled(true))
+            }
+            machine.on(TakeEvent.Trigger)
+            capture.finish(machine.currentTake, LogOutcome.PolishOff, "pre-change take", "pre-change take")
+            assertEquals(change, emptyList<DictationEntry>(), log.entries())
+        }
+    }
+
+    @Test
+    fun knownDiagnosticShapesSurviveButAdditionalContentDoesNot() {
+        for (detail in listOf(
+            "stt[he] HTTP 401: no token sent: response content omitted",
+            "stt transport: timeout after 15000 ms; resent once (lane he)",
+            "polish HTTP 502 body unreadable: connection unavailable",
+            "stt: the server refused vad (HTTP 400); resent the take without it",
+            "polish returned incomplete content",
+        )) {
+            assertEquals(detail, safeDetail(detail))
+            assertEquals("diagnostic detail omitted", safeDetail(detail + " private token"))
         }
     }
 
