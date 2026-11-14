@@ -69,8 +69,17 @@ server replies. It is app-private, excluded from backup and device transfer, nev
 not exported by encrypted settings backup (`DictationLog`, `DictationCapture`). Conclusion: Play
 counts data as collected only when it is transmitted off the device, so this local-only log adds
 no data type and changes no Collected/Shared answer above. It does add local transcript retention,
-so the Ephemeral paragraph and the deletion row cover it. Reassess if a viewer or report ever
-exports or sends log records.
+so the Ephemeral paragraph and the deletion row cover it.
+
+**Viewer Copy (reviewed 2026-11-14):** Copy explicitly exports one entry to Android's clipboard,
+marked sensitive to suppress the system's text preview. Voxdroid makes no network request for
+this action. Clipboard managers or sync may independently retain/transmit the copied text;
+deleting the app's log cannot recall those copies. Under the [current definitions](https://support.google.com/googleplay/android-developer/answer/10787469),
+on-device transfers to another app can count as sharing, with an exception for a specific
+user-initiated transfer the user reasonably expects. This draft applies that exception to the
+labelled Copy action; it does not add a collection recipient or change the declared categories.
+This is an implementation-based interpretation, not a Google approval. Reassess the separate
+GitHub browser report flow when it is implemented.
 
 ## Other data and accessibility
 
