@@ -6,6 +6,8 @@ build-provenance attestation are published from it on GitHub Releases.
 ## Unreleased
 
 Fixed
+- Standard STT providers that explicitly reject `language_candidates` get a bounded retry
+  with standard fields, without requiring the configured language list to be deleted.
 - Long dictations with a short pause use byovox's duration-weighted no-speech score
   instead of discarding the whole take because one segment looks silent.
 - Settings follow setup order; Backup and restore uses the standard back arrow,
