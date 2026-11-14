@@ -6,7 +6,6 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.Toast
 import java.io.InputStream
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -24,6 +23,11 @@ internal class CaptionController(
     private val cache = openCaptionCache(service)
     private val session = CaptionSession(SystemClock::elapsedRealtime)
     private val panel = CaptionPanel(service, { cancel() }, ::refresh)
+    // Android suppresses background toasts when notifications are disabled. This fixed-text
+    // accessibility overlay has its own lifetime and never replaces the dictation pill.
+    private val noticePill: Pill by lazy {
+        Pill(service, settings, {}, {}, { noticePill.hide() })
+    }
     private var lastOrigin: CaptionOrigin? = null
     private var lastOriginAt = 0L
     private var ticket: CaptionTicket? = null
@@ -77,6 +81,7 @@ internal class CaptionController(
             val receiver = packageName == service.packageName && (CaptionReceiveActivity.active || session.phase == CaptionPhase.Returning)
             if (session.active && (chooser || receiver) && session.phase in HANDOFF_PHASES) {
                 if (chooser && session.phase == CaptionPhase.Selected) session.share(session.id())
+                if (chooser) session.chooserOpened(session.id())
                 return
             }
             cancel(reason = "source_departed")
@@ -145,10 +150,25 @@ internal class CaptionController(
         session.share(id)
         val action = selection.share ?: selection.overflow
         if (action?.performAction(AccessibilityNodeInfo.ACTION_CLICK) != true) {
-            cancel(clearOrigin = false); notice(R.string.caption_share_unavailable); return true
+            cancel(clearOrigin = false)
+            notice(if (source == CaptionApp.Telegram) R.string.caption_download_first else R.string.caption_share_unavailable)
+            return true
         }
         if (source == CaptionApp.WhatsApp) awaitWhatsAppShare(id, 0)
+        else main.postDelayed({ checkTelegramShare(id) }, CaptionSession.SHARE_START_MS)
         return true
+    }
+
+    private fun checkTelegramShare(id: Long) {
+        if (!session.current(id) || session.phase != CaptionPhase.Sharing) return
+        val root = service.getRootInActiveWindow(0)
+        // Also check the live root: an already-open chooser may precede its accessibility event.
+        if (root?.packageName?.toString() in CHOOSERS) { session.chooserOpened(id); return }
+        val origin = session.currentOrigin
+        val sameSource = origin != null && CaptionAccessibility.source(root) == origin.source && root?.windowId == origin.window
+        if (!session.expireStalledShare(id)) return
+        cancel(reason = "native_share_not_started")
+        if (sameSource) notice(R.string.caption_download_first)
     }
 
     private fun awaitWhatsAppShare(id: Long, attempt: Int) {
@@ -257,6 +277,7 @@ internal class CaptionController(
                 CaptionOutcome.Unsupported, CaptionOutcome.Malformed -> R.string.caption_unsupported
                 CaptionOutcome.TimedOut -> R.string.caption_timeout
                 CaptionOutcome.Cancelled -> R.string.caption_cancelled
+                CaptionOutcome.ReadFailed -> R.string.caption_read_failed
                 else -> R.string.caption_failed
             }))
         }
@@ -276,6 +297,7 @@ internal class CaptionController(
     }
 
     fun cancel(clearOrigin: Boolean = true, clearRefresh: Boolean = true, reason: String = "cancelled") {
+        noticePill.hide()
         if (session.active) diagnosticNote = reason
         processor.cancel()
         session.invalidate()
@@ -293,7 +315,7 @@ internal class CaptionController(
     fun preferencesChanged() { if (!enabled()) cancel() }
     private fun notice(text: Int) {
         diagnosticNote = service.resources.getResourceEntryName(text)
-        Toast.makeText(service, text, Toast.LENGTH_LONG).show()
+        noticePill.flash(service.getString(text), flashMs(true), maxLines = 5)
     }
 
     companion object {

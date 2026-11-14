@@ -63,6 +63,65 @@ class CaptionSessionTest {
         assertFalse(session.returned(id, origin))
     }
 
+    @Test fun aNativeShareClickThatNeverOpensSharingExpiresAndRevokesItsReceiver() {
+        val id = session.select(origin)
+        assertTrue(session.share(id))
+        clock += CaptionSession.SHARE_START_MS - 1
+        assertFalse(session.expireStalledShare(id))
+        clock++
+        assertTrue(session.expireStalledShare(id))
+        assertFalse(session.current(id))
+        assertNull("an unavailable note cannot hand off audio later", session.receive(origin.source))
+    }
+
+    @Test fun choosingAShareTargetDoesNotCountAsAStalledNativeShare() {
+        val id = session.select(origin)
+        session.share(id)
+        session.chooserOpened(id)
+        clock += CaptionSession.SHARE_START_MS
+        assertFalse(session.expireStalledShare(id))
+        assertEquals(id, session.receive(origin.source))
+    }
+
+    @Test fun anAlreadyStartedReceiverIsNotCancelledByTheShareWatchdog() {
+        val id = session.select(origin)
+        session.share(id)
+        session.receive(origin.source)
+        clock += CaptionSession.SHARE_START_MS
+        assertFalse(session.expireStalledShare(id))
+        assertTrue(session.current(id))
+    }
+
+    @Test fun aSupersededOrCancelledShareCannotExpireANewRequest() {
+        val old = session.select(origin)
+        session.share(old)
+        session.invalidate()
+        val replacement = session.select(origin)
+        clock += CaptionSession.SHARE_START_MS
+        assertFalse(session.expireStalledShare(old))
+        assertTrue(session.current(replacement))
+    }
+
+    @Test fun theShareStartDeadlineBeginsAtTheButtonNotAtSelection() {
+        val id = session.select(origin)
+        clock += 20_000
+        assertTrue(session.share(id))
+        clock += CaptionSession.SHARE_START_MS - 1
+        assertFalse(session.expireStalledShare(id))
+        clock++
+        assertTrue(session.expireStalledShare(id))
+    }
+
+    @Test fun anOldChooserEventCannotMaskAReplacementThatNeverShares() {
+        val old = session.select(origin)
+        session.share(old)
+        val replacement = session.select(origin)
+        session.share(replacement)
+        assertFalse(session.chooserOpened(old))
+        clock += CaptionSession.SHARE_START_MS
+        assertTrue(session.expireStalledShare(replacement))
+    }
+
     @Test fun equalChatTitlesAreNotEnoughWhenTheSourceViewChanges() {
         val id = session.select(origin)
         session.receive(origin.source)

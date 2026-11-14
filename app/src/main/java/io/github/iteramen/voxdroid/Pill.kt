@@ -38,6 +38,7 @@ class Pill(
         main.removeCallbacks(hideLater)
         val v = view ?: attach()
         val line = v.findViewById<TextView>(R.id.pill_line)
+        line.maxLines = 2
         val primary = v.findViewById<Button>(R.id.pill_primary)
         val dot = v.findViewById<View>(R.id.pill_dot)
         // ✕ while recording, on an error and on a notice; not once Stop has handed the take on.
@@ -70,10 +71,13 @@ class Pill(
         keepScreenOn(keepsScreenOn(state))
     }
 
-    fun flash(message: String, durationMs: Long) {
+    fun flash(message: String, durationMs: Long, maxLines: Int = 2) {
         val v = view ?: attach()
         keepScreenOn(false)
-        v.findViewById<TextView>(R.id.pill_line).text = message
+        v.findViewById<TextView>(R.id.pill_line).apply {
+            this.maxLines = maxLines
+            text = message
+        }
         v.findViewById<Button>(R.id.pill_primary).visibility = View.GONE
         v.findViewById<Button>(R.id.pill_cancel).visibility = View.VISIBLE
         tint(v.findViewById(R.id.pill_dot), R.color.dot_idle)
