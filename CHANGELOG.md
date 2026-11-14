@@ -3,7 +3,7 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
-## Unreleased
+## 0.6.0 — 2026-11-15
 
 Added
 - Optional dictation log under Delivery, off by default: one text record per take that ends with
