@@ -116,6 +116,10 @@ The start field is kept through an Error, so a Retry delivers into it.
 
 ## Triggers and the pill
 
+Caption refusals and share-start failures use a separate non-focusable `Pill` overlay for four
+seconds, with room for the full guidance. They do not depend on Android notification permission
+or replace the recording/error pill. Caption cancellation and service destruction remove it.
+
 - **Volume-down hold** (`onKeyEvent`, `VolumeGesture`). With the trigger on, every volume-down
   event is consumed and every other key returns `false`. A hold of `volume_hold_ms` (default 500,
   floor 300) starts a take; a press while recording stops it on key-down; a short press otherwise

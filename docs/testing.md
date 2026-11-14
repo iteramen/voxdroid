@@ -1,5 +1,28 @@
 # Manual checklist
 
+## Telegram missing-download delivery check — 2026-11-14
+
+Reconciled PR #45 with current main, including narration and the #36/#52 speech fixes.
+All JVM tests, lint and the isolated debug build pass. Prepared ecosystem-bot fixtures only;
+no production credentials copied, microphone permission not granted, synthetic loopback STT/cleanup.
+
+- Downloaded five-second note: native Share chooser remained eligible beyond four seconds;
+  choosing the isolated target reached `Shown`, with one normalized-WAV STT request and one cleanup
+  request. No clipboard or composer action. This checks handoff/processing, not real-server quality.
+- Undownloaded received note: visible native download arrow; Share opened no chooser. After four
+  seconds the session was revoked, dictation stayed idle, and STT/cleanup request counts did not change.
+- **Found and fixed during handset testing:** Android suppressed the original background Toast
+  because notifications were disabled. Replaced it with a separate accessibility-overlay pill.
+  Repeated with notifications still disabled: full download/retry text was visibly readable at the
+  phone's existing large font setting. No notification or microphone grant was needed.
+- Leaving Telegram before the deadline cancelled the pending guidance and made no request.
+  JVM cases additionally fence stale callbacks, replacement sessions, started receivers and chooser waits.
+
+UIAutomator reconnects the accessibility service on this phone and invalidates active sessions.
+Only idle fixture discovery used it; active handoffs used screenshots and the isolated service's
+metadata-only diagnostics. The same-note download-and-retry case is separate from the successful
+downloaded fixture above and is not claimed here.
+
 ## Strict STT provider compatibility (#52)
 
 JVM loopback tests reproduce Groq's structured unknown-candidates HTTP 400 and verify a
