@@ -7,11 +7,13 @@ import android.text.InputType
 import android.view.View
 import android.view.WindowManager
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import java.util.concurrent.Executors
 
@@ -45,9 +47,14 @@ class ConfigBackupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        setContentView(R.layout.config_backup)
+        setContentView(R.layout.section)
+        layoutInflater.inflate(R.layout.config_backup, findViewById<FrameLayout>(R.id.section_content), true)
+        findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setTitle(R.string.backup_title)
+            setNavigationContentDescription(R.string.backup_back)
+            setNavigationOnClickListener { finish() }
+        }
         status = findViewById(R.id.backup_status)
-        findViewById<View>(R.id.backup_back).setOnClickListener { finish() }
         findViewById<View>(R.id.backup_export).setOnClickListener { password(true) { chars ->
             work {
                 val bytes = try {
