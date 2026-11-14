@@ -1,6 +1,6 @@
 # Privacy policy — voxdroid
 
-**Effective: 2026-11-12.**
+**Effective: 2026-11-14.**
 
 voxdroid is an Android accessibility service that dictates into the text field you are typing in,
 with your own keyboard staying up. You hold volume-down or tap the floating 🎤 control, speak,
@@ -58,7 +58,14 @@ tap ✕, when the screen turns off and when a new dictation starts (`Take.kt` �
 ## Where the audio goes
 
 voxdroid ships with no server address: every address below is blank until you set it
-(`Settings.kt` — `sttBaseUrl`, `polishBaseUrl`, `laneBaseUrl`). Once you do:
+(`Settings.kt` — `sttBaseUrl`, `polishBaseUrl`, `laneBaseUrl`). You can enter addresses or explicitly
+choose **Speech → Easy start with Groq**. Its confirmation names `api.groq.com` as the speech
+and cleanup destination and enables cleanup. It clears both old default tokens; you supply your
+own Groq key. Custom language servers and their dedicated tokens remain, but speech-token sharing
+with them is disabled. Installing/upgrading or cancelling the dialog changes nothing. Narration
+and caption consent remain unchanged (`EasyStart`, `SectionFragment`, `ConfigBackupStore`).
+Groq is an independent third party with its own [data policies](https://console.groq.com/docs/your-data).
+Voxdroid does not control remote retention. Once configured:
 
 - **Your speech server.** The recording is uploaded to the address you set,
   `POST {address}/audio/transcriptions` — once, or twice to that same address when no response
@@ -67,7 +74,10 @@ voxdroid ships with no server address: every address below is blank until you se
   to skip silence; if the server answers such an upload with an HTTP error, the recording is sent
   once more without it (`SttClient.kt` — `transcribe`, `isLongTake`). When the language is set
   explicitly (below), its two-letter code goes as the `language` field; otherwise the list of
-  candidate language codes may go as `language_candidates`.
+  candidate language codes may go as `language_candidates`. A recognized HTTP 400 rejection
+  of that extension causes a bounded retry without candidates or optional VAD at the same
+  endpoint with the same token. A prior VAD rejection can mean two protocol resends in total;
+  each transport attempt can also retry once if no status arrives. Cancellation stops new resends.
 - **A language lane.** If you set a separate server address for a language and that language is
   sent explicitly, the recording goes to that lane. If the lane answers with no text, the same
   recording goes once more to your default speech server (`Routed.kt`). On auto-detect the
@@ -94,7 +104,7 @@ voxdroid ships with no server address: every address below is blank until you se
   stops when the screen goes to the background.
 
 voxdroid contacts no server operated by its developer, and no address other than the ones you
-set. The servers you configure keep or delete what they receive under their own policies, which
+set or explicitly choose through the preset. The servers you configure keep or delete what they receive under their own policies, which
 voxdroid neither sets nor sees; check the policy of any server you did not set up yourself.
 
 ## What stays on the device

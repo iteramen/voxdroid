@@ -42,9 +42,12 @@ in the Messages row (`SttClient`, `PolishClient`, `TtsClient`).
 
 **Shared:** the draft relies on the explicit user-initiated transfer exception, not merely on the
 developer running no server. The user configures destinations, enables captions with a data-flow
-disclosure, selects a note and chooses the native Share target. No developer-chosen third party,
-advertising recipient or analytics service receives the data. If this expected-transfer condition
-changes, reassess the answer rather than carrying it forward.
+disclosure, selects a note and chooses the native Share target. The optional Easy start preset
+now offers a developer-suggested third party, **Groq**, through an explicit confirmation naming
+the recipient and audio/glossary/transcript transfers. It never runs on install/upgrade and requires
+the user's own API key. The previous assertion of no developer-chosen recipient no longer applies.
+Reassess the exception against this disclosed, expected transfer before submitting the Console form;
+do not treat this draft as a Google determination. No advertising/analytics recipient is added.
 
 **Ephemeral:** do not carry forward the old blanket Yes. Imported encoded audio touches a file;
 optional remembered captions retain raw/displayed text for 30 days, and the user's speech/cleanup

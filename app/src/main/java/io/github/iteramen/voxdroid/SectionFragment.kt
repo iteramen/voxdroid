@@ -30,6 +30,7 @@ class SectionFragment : PreferenceFragmentCompat() {
         // inflates, and a box inflated without one reads and writes the default file untyped.
         preferenceManager.preferenceDataStore = SettingsStore(requireContext())
         setPreferencesFromResource(requireArguments().getInt(ARG_XML), rootKey)
+        easyStartRows()
 
         baseUrl(KEY_STT_BASE_URL, EndpointKind.Stt)
         insecureSwitch()
@@ -54,6 +55,37 @@ class SectionFragment : PreferenceFragmentCompat() {
         noFieldRows()
         captionRows()
         readAloudRows()
+    }
+
+    private fun easyStartRows() {
+        findPreference<Preference>("easy_start")?.setOnPreferenceClickListener {
+            MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.easy_start_title)
+                .setMessage(R.string.easy_start_confirm)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.easy_start_apply) { _, _ ->
+                    if (CaptionServiceBridge.controller?.configurationBusy() == true) {
+                        Toast.makeText(requireContext(), R.string.backup_busy, Toast.LENGTH_LONG).show()
+                    } else {
+                        try {
+                            val store = ConfigBackupStore(requireContext())
+                            store.restore(EasyStart.configuration(store.snapshot()))
+                            Toast.makeText(requireContext(), R.string.easy_start_applied, Toast.LENGTH_LONG).show()
+                            requireActivity().recreate()
+                        } catch (_: Exception) {
+                            Toast.makeText(requireContext(), R.string.easy_start_failed, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }.show()
+            true
+        }
+        findPreference<Preference>("easy_start_guide")?.setOnPreferenceClickListener {
+            try {
+                startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(EasyStart.GUIDE_URL)))
+            } catch (_: android.content.ActivityNotFoundException) {
+                Toast.makeText(requireContext(), R.string.easy_start_no_browser, Toast.LENGTH_LONG).show()
+            }
+            true
+        }
     }
 
     private fun readAloudRows() {

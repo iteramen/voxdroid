@@ -1,5 +1,22 @@
 # Manual checklist
 
+## Easy start qualification — 2026-11-14
+
+`EasyStartTest` checks endpoint/model defaults, removal of old default tokens, disabled language
+lane token inheritance, and preservation of unrelated settings/dedicated tokens. Existing
+`ConfigBackupTest` covers the reused credential-first write transaction and rollback.
+
+Native test used the separately identified `io.github.iteramen.voxdroid.readaloudtest` APK, with
+synthetic preferences/tokens only and no production setting access. Passed at the existing large
+font setting: Speech-page preset visible; destination/data-flow dialog present; Cancel preserves
+the complete preference/secret snapshot; Apply writes the expected models/URLs and enables cleanup;
+old default tokens absent; custom lane URL/dedicated token retained with inheritance off; narration
+settings/token/consent and unrelated speech/language/trigger settings unchanged; Speech page refreshes.
+No account signup, real API key, clipboard read or real Groq transcription was performed.
+
+Remaining manual account-specific check: paste a Groq key into both token fields and dictate a
+short non-sensitive phrase. The guide explains authentication/quota errors and custom-lane overrides.
+The installation/upgrade path never invokes the preset.
 ## Telegram missing-download delivery check — 2026-11-14
 
 Reconciled PR #45 with current main, including narration and the #36/#52 speech fixes.

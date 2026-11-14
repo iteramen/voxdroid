@@ -3,7 +3,7 @@
 voxdroid is an Android dictation app, made first for people whose hands hurt or do not obey (RSI,
 motor impairment) and for anyone who would rather talk than type. It runs as an accessibility
 service, so your own keyboard stays up: hold volume-down or tap the floating 🎤 control, speak,
-stop, and the text lands at the cursor. Your speech goes to a speech-to-text server you run, never
+stop, and the text lands at the cursor. Your speech goes to a speech-to-text server you choose, never
 to one voxdroid runs. Its desktop sibling is [byovox](https://github.com/iteramen/byovox).
 
 ## What you need
@@ -23,7 +23,8 @@ What voxdroid sends to the speech server: the recording as `file` (16 kHz mono W
 `language_candidates`, the glossary as `prompt` if you set one, and `vad=true` on a take longer than
 60 seconds (sent once more without it if the server answers that with an HTTP error).
 `language_candidates` is an optional whisper.cpp server extension, not in upstream whisper.cpp;
-servers without it ignore the field. The reply needs `text`; `segments[].no_speech_prob` feeds the
+some servers ignore it; a recognized HTTP 400 rejection triggers a bounded standard-fields retry.
+The reply needs `text`; `segments[].no_speech_prob` feeds the
 no-speech gate and `language_probabilities` the auto-detect routing below.
 
 ## Install
@@ -37,6 +38,11 @@ no-speech gate and `language_probabilities` the auto-detect routing below.
   `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
 
 ## Set up
+
+For hosted speech, choose **Speech → Easy start with Groq** and follow the
+[Easy start guide](docs/easy-start.md). After confirmation it fills the speech/cleanup settings;
+you create a Groq key and paste it into both token fields. Existing installations never switch
+automatically. You can also configure your own servers as below.
 
 Open voxdroid. The status card at the top lists what is still missing, and its button fixes the
 first item:

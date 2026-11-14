@@ -5,6 +5,11 @@ build-provenance attestation are published from it on GitHub Releases.
 
 ## Unreleased
 
+Added
+- Optional Easy start with Groq under Speech, with a setup guide and explicit destination
+  confirmation. Fills speech/cleanup settings; users enter their own key. Existing installations
+  are not switched automatically, and old default tokens cannot follow the new endpoints.
+
 Fixed
 - A Telegram voice note whose Share tap never opens sharing now shows download/retry guidance
   after four seconds, rather than silently waiting. Missing Share and unreadable audio also have

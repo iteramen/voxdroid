@@ -183,4 +183,13 @@
     <string name="caption_delete_confirm">Remove every remembered voice-message caption? Your messaging apps and their audio are unchanged.</string>
     <string name="caption_storage_failed">Caption storage could not be updated. Try again.</string>
     <string name="section_privacy_summary">Opens the privacy policy web page</string>
+    <string name="easy_start_title">Easy start with Groq</string>
+    <string name="easy_start_summary">Set up speech and cleanup; bring your own Groq API key</string>
+    <string name="easy_start_confirm">Use Groq for speech and cleanup?\n\nYour recordings and glossary will go to api.groq.com; transcripts will also go there for cleanup. Groq is a third-party service with its own terms, data policy and usage limits.\n\nThis replaces the speech and cleanup endpoints/models, enables cleanup, and clears both old tokens. You must paste your Groq key into Speech → STT token and Cleanup → Cleanup token.\n\nCustom language servers and their own tokens stay configured and can still receive audio. Sharing the speech token with those servers is turned off. Read aloud and other settings stay unchanged. Export a backup first if you want to keep the old setup.</string>
+    <string name="easy_start_apply">Use Groq</string>
+    <string name="easy_start_applied">Preset applied. Paste your Groq key into both Speech → STT token and Cleanup → Cleanup token. See the Easy start guide for steps.</string>
+    <string name="easy_start_failed">Setup could not be saved. Check your settings and try again.</string>
+    <string name="easy_start_guide_title">Easy start guide</string>
+    <string name="easy_start_guide_summary">Opens a web page with account, API key and first-dictation steps</string>
+    <string name="easy_start_no_browser">No browser is available to open the guide.</string>
 </resources>
