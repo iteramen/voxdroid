@@ -321,7 +321,8 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   permission or accessibility grant is exported or imported. Existing local caption state is not
   changed by a configuration restore.
 
-- The tokens live in the `secrets` preferences file alone and are never logged (`Settings.kt`;
+- The tokens live in the `secrets` preferences file alone, with the caption and read-aloud
+  opt-ins beside them, and are never logged (`Settings.kt`;
   `SettingsStore.kt` — `storedAs`). STT and cleanup failure details retain only fixed stage/status and failure classifications,
   never response bodies or raw exception text (`Http.kt` — `RESPONSE_DETAIL`, `causeDetail`). A token the HTTP stack refuses as a header value fails
   the request with fixed text, before anything is sent (`Http.kt` — `HEADER_REFUSED`).
@@ -511,7 +512,10 @@ reaches the service as a start; the service stops itself again at once (`onStart
 generated audio never enter files, caption history, the clipboard or dictation logs. TTS
 configuration/tokens are included in explicit encrypted settings export; enable consent is not.
 The consent bit lives in backup-excluded `secrets.xml`, so Android cloud/device restore cannot
-re-enable screen-text access without a new opt-in.
+re-enable screen-text access without a new opt-in; the voice-message caption switch is stored the
+same way (`SettingsStore.kt` — `isConsent`). A read-aloud language without a server of its own
+uses the English server, and a token entered for that language is refused there rather than sent
+(`ReadAloud.kt` — `endpoint`).
 
 The opt-in `.readaloudtest` debug package adds metadata-only service diagnostics: own control
 bounds, candidate lengths/bounds, active/picker/playback/screen-awake flags, a count of tolerated

@@ -128,6 +128,10 @@ Handset checklist (record actual results below; these rows alone are not passes)
 | Busy restore | Refused while a dictation or caption is active; active configuration untouched. |
 | Cancel/recreate picker | Cancelling/rotating/leaving does not write plaintext or change settings; retry available. |
 | Signed reinstall | Public APK hash/certificate checked; encrypted backup recovered before old signer removed; restore succeeds. Android grants/caption consent separately enabled. |
+| Consent off a backup | Turn on *Enable voice-message captions* and read aloud, then on a debug build `adb shell "run-as <package> sh -c 'grep -l voice_captions shared_prefs/*.xml'"` and the same for `tts_enabled`: each names `shared_prefs/secrets.xml` only. |
+| Upgrade over a build that stored caption consent in `voxdroid.xml` | Captions are off after the upgrade; once the service has connected, the command above no longer names `voxdroid.xml`; turning the switch on shows the disclosure again and captions then work. |
+| Read-aloud language token without its own URL | Hebrew with a voice and a token, no Hebrew base URL, the token switch off: reading Hebrew is refused with a message naming the missing URL, and the English server receives no request. |
+| Token box and autofill | Enter a token on the Speech page with an autofill service enabled: no offer to save it. |
 
 Everything here needs a handset; the JVM tests (`./gradlew testDebugUnitTest`) cover the logic
 that runs without one. Run this against the debug APK (`./gradlew assembleDebug`) before a PR that

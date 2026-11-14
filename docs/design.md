@@ -241,9 +241,10 @@ is declared content, never instructions.
 
 ## Settings and storage
 
-Two app-private `SharedPreferences` files (`Settings.kt`): `secrets` for the tokens alone,
-`voxdroid` for everything else. `SettingsStore`, the pages' `PreferenceDataStore`, routes tokens
-to `secrets` (`storedAs`) and stores numbers typed. `res/xml/data_extraction_rules.xml` keeps
+Two app-private `SharedPreferences` files (`Settings.kt`): `secrets` for the tokens and the two
+disclosed opt-ins (`voice_captions`, `tts_enabled`), `voxdroid` for everything else. `SettingsStore`,
+the pages' `PreferenceDataStore`, routes tokens (`storedAs`) and those switches (`isConsent`)
+to `secrets` and stores numbers typed. `res/xml/data_extraction_rules.xml` keeps
 `secrets.xml` out of cloud backup and device transfer; `voxdroid` is backed up. Values are read
 when a take needs them. Defaults (`Settings.kt`, `res/xml/section_*.xml`): URLs blank, model
 `whisper-1`, timeouts 30 s (STT) and 20 s (cleanup), threshold 0.3, cleanup on, http off.
