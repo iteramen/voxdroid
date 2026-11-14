@@ -156,9 +156,11 @@
     <string name="caption_close">Close</string>
     <string name="caption_retranscribe">Re-transcribe</string>
     <string name="caption_finish_dictation">Finish the current dictation first.</string>
-    <string name="caption_select_one">Select exactly one voice message.</string>
+    <string name="caption_select_one">Select exactly one downloaded voice message.</string>
     <string name="caption_select_again">Clear the selection, then select the voice message again.</string>
     <string name="caption_share_unavailable">This selection cannot be shared safely. Try the native Share action.</string>
+    <string name="caption_download_first">Sharing didn’t open. Check the note is downloaded in Telegram, then retry.</string>
+    <string name="caption_read_failed">Could not read the audio. Download the note and share it again.</string>
     <string name="caption_select_refresh">Select the same voice message and tap Voxdroid again to request a fresh transcript.</string>
     <string name="caption_receive_refused">Enable voice-message captions and Accessibility, select one Telegram or WhatsApp voice message, then tap Voxdroid and choose Caption with Voxdroid.</string>
     <string name="caption_silence">No speech found.</string>

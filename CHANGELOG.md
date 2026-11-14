@@ -6,6 +6,11 @@ build-provenance attestation are published from it on GitHub Releases.
 ## Unreleased
 
 Fixed
+- A Telegram voice note whose Share tap never opens sharing now shows download/retry guidance
+  after four seconds, rather than silently waiting. Missing Share and unreadable audio also have
+  actionable notices. Waiting in an open chooser is unaffected; no audio is auto-downloaded.
+- Caption notices use a floating overlay, so Android cannot silently suppress them when
+  notifications are disabled. Full guidance wraps independently of the dictation pill.
 - Standard STT providers that explicitly reject `language_candidates` get a bounded retry
   with standard fields, without requiring the configured language list to be deleted.
 - Long dictations with a short pause use byovox's duration-weighted no-speech score

@@ -11,10 +11,13 @@ ideas and Play account submission are outside this wave.
   regressions failed before the fix; all JVM tests, lint and debug build pass afterward.
   Weighted speech/pause and mostly-silent fixtures cover the pipeline; this does not claim
   a new 70-second live microphone acceptance run.
-- [ ] #52: support standard external STT providers without requiring users to erase
-  their language list; retain compatible self-hosted behavior and credential boundaries.
+- [x] #52: PR #76 merged as `f71b00b`, four exact-head checks green. Strict-provider
+  loopback regression, cancellation and bounded retry cases pass; no live Groq account claim.
 - [ ] #44 / PR #45: reconcile the Telegram share-start notice with current main,
   test the bounded handoff/cancellation rules and verify prepared handset fixtures.
+  Native downloaded/undownloaded and source-departure cases now pass. Fixed a second native
+  failure: Android suppressed Toasts with notifications disabled; a separate overlay now shows
+  the full guidance. Await final exact-head CI and merge; see docs/testing.md for boundaries.
 - [ ] #53: explicit easy-start setup and guide, preserving existing settings unless
   the user deliberately applies the preset; provider data flow and token setup clear.
 - [ ] Release: all exact-head checks green, relevant native acceptance recorded,

@@ -116,6 +116,10 @@ The start field is kept through an Error, so a Retry delivers into it.
 
 ## Triggers and the pill
 
+Caption refusals and share-start failures use a separate non-focusable `Pill` overlay for four
+seconds, with room for the full guidance. They do not depend on Android notification permission
+or replace the recording/error pill. Caption cancellation and service destruction remove it.
+
 - **Volume-down hold** (`onKeyEvent`, `VolumeGesture`). With the trigger on, every volume-down
   event is consumed and every other key returns `false`. A hold of `volume_hold_ms` (default 500,
   floor 300) starts a take; a press while recording stops it on key-down; a short press otherwise
@@ -277,6 +281,14 @@ Select one downloaded note, tap the floating 🎤 control, and choose **Caption 
 Android's chooser. The controller invokes Telegram Share or WhatsApp's overflow → Share; it never
 chooses a recipient, taps Send, inserts into the composer or records the microphone. Normal
 volume-down dictation is unchanged, and the floating 🎤 control still stops an active dictation.
+
+A Telegram Share click is not proof that sharing opened: an undownloaded note can expose an
+enabled Share control and then stay in Telegram. A four-second start check invalidates a request
+that reaches neither the native chooser nor the receiver. It shows download/retry guidance only
+while the original source window is still foreground. A chooser event or live chooser root
+suppresses that check, so the user can choose a target within the normal handoff deadline. Stale,
+cancelled, superseded and already-reading requests are untouched (`CaptionSession`,
+`CaptionController.checkTelegramShare`). No download control is clicked automatically.
 
 `CaptionReceiveActivity` accepts only one content URI/read grant from the selected source's known
 provider authority and owning package, within a 30-second selection/handoff session. It opens the

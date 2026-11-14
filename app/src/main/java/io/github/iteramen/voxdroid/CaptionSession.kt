@@ -25,6 +25,8 @@ internal class CaptionSession(private val now: () -> Long) {
     @Volatile private var generation = 0L
     @Volatile private var origin: CaptionOrigin? = null
     private var expiresAt = 0L
+    private var shareStartedAt = 0L
+    private var chooserSeen = false
     var phase: CaptionPhase? = null
         private set
 
@@ -36,11 +38,26 @@ internal class CaptionSession(private val now: () -> Long) {
         origin = value
         phase = CaptionPhase.Selected
         expiresAt = now() + HANDOFF_MS
+        chooserSeen = false
         return generation
     }
 
     fun current(id: Long): Boolean = generation == id && origin != null
     fun id(): Long = generation
+
+    /** Opening the native chooser proves Share worked; taking time to choose a target is not a failure. */
+    fun chooserOpened(id: Long): Boolean {
+        if (!current(id) || phase != CaptionPhase.Sharing) return false
+        chooserSeen = true
+        return true
+    }
+
+    /** Revoke a successful native click that never reached the chooser or receiver. */
+    fun expireStalledShare(id: Long): Boolean {
+        if (!current(id) || phase != CaptionPhase.Sharing || chooserSeen || now() - shareStartedAt < SHARE_START_MS) return false
+        invalidate()
+        return true
+    }
 
     /** Losing the selection before sharing must revoke eligibility to receive an audio grant. */
     fun selectionLost() { if (phase == CaptionPhase.Selected) invalidate() }
@@ -48,6 +65,7 @@ internal class CaptionSession(private val now: () -> Long) {
     fun share(id: Long): Boolean {
         if (!current(id) || phase != CaptionPhase.Selected || now() >= expiresAt) return false
         phase = CaptionPhase.Sharing
+        shareStartedAt = now()
         return true
     }
 
@@ -88,6 +106,7 @@ internal class CaptionSession(private val now: () -> Long) {
     }
 
     companion object {
+        const val SHARE_START_MS = 4_000L
         const val HANDOFF_MS = 30_000L
         const val RETURN_MS = 3_000L
     }

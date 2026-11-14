@@ -1,5 +1,28 @@
 # Manual checklist
 
+## Telegram missing-download delivery check — 2026-11-14
+
+Reconciled PR #45 with current main, including narration and the #36/#52 speech fixes.
+All JVM tests, lint and the isolated debug build pass. Prepared ecosystem-bot fixtures only;
+no production credentials copied, microphone permission not granted, synthetic loopback STT/cleanup.
+
+- Downloaded five-second note: native Share chooser remained eligible beyond four seconds;
+  choosing the isolated target reached `Shown`, with one normalized-WAV STT request and one cleanup
+  request. No clipboard or composer action. This checks handoff/processing, not real-server quality.
+- Undownloaded received note: visible native download arrow; Share opened no chooser. After four
+  seconds the session was revoked, dictation stayed idle, and STT/cleanup request counts did not change.
+- **Found and fixed during handset testing:** Android suppressed the original background Toast
+  because notifications were disabled. Replaced it with a separate accessibility-overlay pill.
+  Repeated with notifications still disabled: full download/retry text was visibly readable at the
+  phone's existing large font setting. No notification or microphone grant was needed.
+- Leaving Telegram before the deadline cancelled the pending guidance and made no request.
+  JVM cases additionally fence stale callbacks, replacement sessions, started receivers and chooser waits.
+
+UIAutomator reconnects the accessibility service on this phone and invalidates active sessions.
+Only idle fixture discovery used it; active handoffs used screenshots and the isolated service's
+metadata-only diagnostics. The same-note download-and-retry case is separate from the successful
+downloaded fixture above and is not claimed here.
+
 ## Strict STT provider compatibility (#52)
 
 JVM loopback tests reproduce Groq's structured unknown-candidates HTTP 400 and verify a
@@ -619,6 +642,10 @@ remains unchecked until all its cases have evidence for both apps):
       equality as durable chat identity.
 - [ ] Multiple selection, selected non-voice content, unknown selection count, an undownloaded
       note and unsolicited shares refuse locally; no accidental microphone/dictation start.
+- [ ] Undownloaded Telegram note: after selecting it and tapping Voxdroid, a native Share action
+      that opens neither chooser nor receiver shows download/retry guidance within four seconds.
+      Download manually, select again and retry: normal captioning works. An already-open chooser,
+      started receiver, chat/app switch, lock or replacement request produces no stale notice.
 - [ ] Cleanup failure shows the raw result with fallback notice; silence/unsupported media/errors
       remain private and never enter the composer.
 - [ ] Delete all and off/on during a delayed request leave no late cache record; captions/spool
@@ -769,6 +796,22 @@ WhatsApp lock rerun. Equal-header mutation, format/size/duration and backup-poli
 coverage; actual source scrolling with an unchanged chat header and the shared lock handler have
 handset evidence. Those are stated separately from the unrun exact fixture cases.
 
+### Telegram undownloaded-note feedback: issue #44 (2026-11-08)
+
+On the installed 0.3.0 release, scrolled the owner's explicitly prepared Telegram test conversation
+to older voice notes. Selected one wholly visible voice row and inspected only voice/control
+metadata. The selected toolbar exposed an enabled, clickable Share action. Tapping that native
+Share control left Telegram foreground with no Android share chooser. No Play, Download,
+recipient or transcription target was selected. The source's accessibility labels did not expose
+an explicit download-state marker, so the fix treats this as failed sharing and advises checking
+download availability instead of claiming it measured file state.
+
+The stalled-share session regression failed first (12 focused tests, one failure), then passed
+after the deadline/invalidation implementation. Added cases cover time actually spent in an open
+chooser, an already-started receiver, cancellation/supersession, the deadline starting at Share
+rather than selection, and stale chooser events. This is source/logic validation; the new notice
+has not yet been checked on a signed handset build. The installed app remains 0.3.0. A signed
+candidate still needs the checklist row above, including the manually downloaded retry.
 ## Read-aloud qualification (2026-11-08)
 
 English first; Hebrew/Russian routing/settings are scaffolded, with missing-voice refusals covered
