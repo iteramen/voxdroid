@@ -48,14 +48,16 @@ class ConfigBackupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         setContentView(R.layout.section)
-        layoutInflater.inflate(R.layout.config_backup, findViewById<FrameLayout>(R.id.section_content), true)
+        val container = findViewById<FrameLayout>(R.id.section_content)
+        val content = layoutInflater.inflate(R.layout.config_backup, container, false)
+        container.addView(content)
         findViewById<MaterialToolbar>(R.id.toolbar).apply {
             setTitle(R.string.backup_title)
             setNavigationContentDescription(R.string.backup_back)
             setNavigationOnClickListener { finish() }
         }
-        status = findViewById(R.id.backup_status)
-        findViewById<View>(R.id.backup_export).setOnClickListener { password(true) { chars ->
+        status = content.findViewById(R.id.backup_status)
+        content.findViewById<View>(R.id.backup_export).setOnClickListener { password(true) { chars ->
             work {
                 val bytes = try {
                     val snapshot = store.snapshot()
@@ -75,7 +77,7 @@ class ConfigBackupActivity : AppCompatActivity() {
                 R.string.backup_choose_destination
             }
         } }
-        findViewById<View>(R.id.backup_import).setOnClickListener {
+        content.findViewById<View>(R.id.backup_import).setOnClickListener {
             open.launch(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "*/*"
