@@ -4,6 +4,9 @@ internal data class Sanitized(val text: String, val dropped: Int)
 
 data class Finished(val text: String, val dropped: Int)
 
+/** Many times a five-minute take. A longer text is a hostile reply, and megabytes in one clip or one commit crash the service. */
+internal const val MAX_TYPED_CHARS = 100_000
+
 /** True for control characters and format characters, except the bidi marks and joiners real Hebrew, Arabic and emoji text needs. */
 private fun isForbidden(cp: Int): Boolean =
     Character.isISOControl(cp) || (isFormat(cp) && cp !in 0x200C..0x200F)
@@ -52,12 +55,12 @@ internal fun sanitize(text: String): Sanitized {
 internal fun droppedNote(dropped: Int): String? =
     if (dropped > 0) "commit: removed $dropped control or format characters" else null
 
-/** [sanitize], trim, then exactly one terminal `.` when [stripTerminalPeriod]; `..` and `?` stay. */
+/** [sanitize], trim, exactly one terminal `.` off when [stripTerminalPeriod] (`..` and `?` stay), then a cut to [MAX_TYPED_CHARS]. */
 fun finish(text: String, stripTerminalPeriod: Boolean): Finished {
     val sanitized = sanitize(text)
     var typed = sanitized.text.trim()
     if (stripTerminalPeriod && typed.endsWith('.') && !typed.endsWith("..")) {
         typed = typed.dropLast(1).trimEnd()
     }
-    return Finished(typed, sanitized.dropped)
+    return Finished(typed.cut(MAX_TYPED_CHARS).trimEnd(), sanitized.dropped)
 }
