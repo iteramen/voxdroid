@@ -220,8 +220,9 @@ does not require microphone permission (`CaptionController`, `CaptionReceiveActi
 voxdroid sends to `https://` addresses, and to plain `http://` only on the phone itself
 (loopback), unless you turn on **Allow insecure (http) endpoints** on the Speech page. That switch
 is off by default and asks you to confirm before it turns on (`Endpoints.kt` — `insecureBlocked`).
-While it is off, an `http://` address to any other host is refused when you enter it, before every
-request, and by the status check — for the speech server, every lane, the cleanup server and the read-aloud server alike.
+While it is off, an `http://` address to any other host is refused when you enter it and before every
+request, for the speech server, every lane, the cleanup server and the read-aloud server alike, and by the
+status check for the speech server.
 With it on, your audio, glossary, transcript, text you choose to read aloud and bearer tokens cross the network unencrypted to an
 `http://` server; unless that path is protected otherwise, for example by Tailscale or WireGuard,
 anyone who can observe it can read them. HTTPS uses Android's own certificate checks.
@@ -237,7 +238,7 @@ voxdroid's accessibility service reaches the following, and only when stated
   start. Dictation is refused in a password field, and text is never typed or copied into one. A
   dictation whose field changed is not typed: it is dropped, or copied to the clipboard if you
   chose that. The lookup fetches the active window's root without prefetching its contents and
-  asks it for the focused field; where an app answers nothing while the keyboard is in use, it
+  asks it for the focused field; where that finds no editable field while the keyboard is in use, it
   visits at most 500 of the window's elements to find the focused editable one. The accessibility
   node cache is switched off afterwards, and the field is held
   until the dictation is typed or cancelled, including through an error and its retry

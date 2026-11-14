@@ -71,7 +71,7 @@ The feature ships in 0.3.0. Its hearing-accessibility purpose does not establish
   editable, marked as a password field (`isPassword`) or voxdroid's own Try field (by view id), and
   whether the keyguard is locked. The control is hidden over a field marked as a password field,
   on the lock screen and on voxdroid's own pages, except that 🎤 stays on the Try page while its
-  field is focused; hiding it also ends a narration or a block picker. None of it is written to
+  field is focused; a narration or a block picker ends when the control must hide or narrow to 🎤. None of it is written to
   storage, logged or sent; with both switches off the check does not run
   (`ReadAloudController.kt` — `observe`, `showGlyph`, `controlContext`; `ReadControlContext.kt`).
 - **Types the transcript** once, through the service's own input connection, into the field
@@ -102,9 +102,9 @@ The feature ships in 0.3.0. Its hearing-accessibility purpose does not establish
 The manifest capabilities and the code's narrower access rules:
 
 - **Bounded event use.** Window, window-state, content, scroll, click and long-click events are
-  subscribed to; no event type is acted on by itself: each prompts a re-read of the bounded state
-  below. Besides captions, the events drive the floating-control check above, bound a narration's
-  lifetime and re-place the pill while a dictation runs. Caption observation acts only when enabled, dictation is idle and the supported
+  subscribed to. No code acts on a long-click as such: like the others, it prompts a re-read of
+  the bounded state below. Besides captions, the events drive the floating-control check above and
+  bound a narration's lifetime, and a window change re-places the pill while a dictation runs. Caption observation acts only when enabled, dictation is idle and the supported
   source is foreground. Routine header inspection skips the message list. Selected-message
   metadata is inspected only in selected mode; no composer or unselected message text is read.
 - **No retained accessibility tree.** The node cache is disabled when the service connects and

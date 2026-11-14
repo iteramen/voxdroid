@@ -33,7 +33,7 @@ attacker who is not that user.
 - The focused field is looked up when a take starts and again at delivery: whether it is editable,
   whether it is a password field, and its identity (`FieldAccess.kt` — `focused`). The lookup
   fetches the active window's root with `getRootInActiveWindow(0)`, no prefetch flag set, and asks
-  it for the focused input node. When that answers nothing while the keyboard has an input
+  it for the focused input node. When that answers nothing editable while the keyboard has an input
   started, as with Compose, it visits at most 500 nodes, fetching each one's children, for the focused editable one
   (`WALK_CAP`).
   voxdroid reads no text of the field itself.
@@ -52,7 +52,7 @@ attacker who is not that user.
   aloud is on, every event also re-reads the floating control's context: the active window's
   package, whether its focused field is editable, marked as a password field (`isPassword`) or
   voxdroid's own Try field (by view id), and whether the keyguard is locked. That decides whether
-  the control is shown, and ends a narration or a block picker when the control must hide. While
+  the control is shown, and ends a narration or a block picker when the control must hide or narrow to 🎤. While
   read aloud is choosing or speaking, each event also checks that the source window and package
   are unchanged and refreshes the one chosen block (its text, bounds and visibility), to stop when
   it changes. None of it is written to storage, logged or sent, and with both off no window is
