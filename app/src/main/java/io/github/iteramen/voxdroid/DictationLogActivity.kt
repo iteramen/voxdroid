@@ -24,6 +24,7 @@ import java.time.ZoneId
  * switching the log off or Delete all redraws an open viewer from the emptied store.
  */
 class DictationLogActivity : AppCompatActivity() {
+    private val selection = LogViewSession()
     private val log by lazy { openDictationLog(this) }
     private val cleared: () -> Unit = { runOnUiThread { if (!isDestroyed) show() } }
     private lateinit var content: FrameLayout
@@ -52,6 +53,7 @@ class DictationLogActivity : AppCompatActivity() {
     private fun show() {
         content.removeAllViews()
         val entries = newestFirst(log.entries())
+        selection.replace(entries)
         val id = intent.getStringExtra(EXTRA_ID)
         when {
             id != null -> entries.firstOrNull { it.id == id }?.let(::detail) ?: message(R.string.dictation_log_entry_gone)
@@ -102,7 +104,8 @@ class DictationLogActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams(if (wide) 0 else ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, if (wide) 1f else 0f)
         }
         view.findViewById<View>(R.id.log_entry_copy).setOnClickListener {
-            val clip = ClipData.newPlainText(getString(R.string.dictation_log_entry), logReport(entry, zone))
+            val current = selection.entry(entry.id) ?: return@setOnClickListener
+            val clip = ClipData.newPlainText(getString(R.string.dictation_log_entry), logReport(current, zone))
             // Sensitive, so Android shows no preview of the transcript.
             clip.description.extras = PersistableBundle().apply { putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true) }
             getSystemService(ClipboardManager::class.java).setPrimaryClip(clip)
