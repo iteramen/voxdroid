@@ -200,11 +200,11 @@ No new data recipient, permission or accessibility capability is introduced.
   `laneToken`, `sameServer`).
 - A blank or discarded take never reaches the cleanup endpoint (`VoxdroidA11yService.kt` —
   `transcribe`).
-- A reply cannot take the service down by its shape or size. A body is read up to 10 MiB
-  (`Http.kt` — `BODY_LIMIT_BYTES`); JSON nested deeply enough to overflow the parser's stack is
-  reported as malformed like any other (`parseJson`: Android's `org.json` recurses per level with
-  no limit of its own); and the text is cut to 100,000 UTF-16 units before it is typed or copied
-  (`Commit.kt` — `MAX_TYPED_CHARS`), under what one clipboard or input transaction carries.
+- A reply is bounded in size and shape before it is used. A body is read up to 1 MiB (`Http.kt`
+  — `BODY_LIMIT_BYTES`), which bounds what parsing it can allocate; JSON nested deeply enough to
+  overflow the parser's stack is reported as malformed like any other (`parseJson`: Android's
+  `org.json` recurses per level with no limit of its own); and the text is cut to 100,000 UTF-16
+  units before it is typed or copied (`Commit.kt` — `MAX_TYPED_CHARS`).
 
 **In scope:** a control or format character (bidi override, zero-width, tag) reaching the field; a
 newline, U+2028 or U+2029 typed as a line break; a blank or discarded take sent to cleanup; a lane
@@ -281,7 +281,7 @@ submitted issue being public.
   turning it off asks nothing (`SectionFragment.kt` — `insecureSwitch`). With it on, a cleartext
   STT endpoint is named on the status card, and every cleartext base URL under its own row.
 - HTTPS uses the platform's verification: there is no custom `TrustManager`, `HostnameVerifier` or
-  network security config. Redirects are not followed and a reply is capped at 10 MiB (`Http.kt` —
+  network security config. Redirects are not followed and a reply is capped at 1 MiB (`Http.kt` —
   `boundedPost`, `BODY_LIMIT_BYTES`). The status probe sends no token, and a token is sent only when
   set.
 

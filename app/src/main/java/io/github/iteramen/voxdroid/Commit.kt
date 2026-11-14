@@ -55,12 +55,12 @@ internal fun sanitize(text: String): Sanitized {
 internal fun droppedNote(dropped: Int): String? =
     if (dropped > 0) "commit: removed $dropped control or format characters" else null
 
-/** [sanitize], trim, cut to [MAX_TYPED_CHARS], then exactly one terminal `.` when [stripTerminalPeriod]; `..` and `?` stay. */
+/** [sanitize], trim, exactly one terminal `.` off when [stripTerminalPeriod] (`..` and `?` stay), then a cut to [MAX_TYPED_CHARS]. */
 fun finish(text: String, stripTerminalPeriod: Boolean): Finished {
     val sanitized = sanitize(text)
-    var typed = sanitized.text.trim().cut(MAX_TYPED_CHARS).trimEnd()
+    var typed = sanitized.text.trim()
     if (stripTerminalPeriod && typed.endsWith('.') && !typed.endsWith("..")) {
         typed = typed.dropLast(1).trimEnd()
     }
-    return Finished(typed, sanitized.dropped)
+    return Finished(typed.cut(MAX_TYPED_CHARS).trimEnd(), sanitized.dropped)
 }

@@ -189,7 +189,11 @@ internal fun boundedPost(
 
 private class ResponseTooLarge : IOException()
 
-internal const val BODY_LIMIT_BYTES = 10 * 1024 * 1024
+/**
+ * Ten times a five-minute take's `verbose_json`. The limit is what bounds the parse: a megabyte of `{},` is a few hundred
+ * thousand objects, where ten were millions and an OutOfMemoryError no caller catches.
+ */
+internal const val BODY_LIMIT_BYTES = 1024 * 1024
 
 private const val CONNECT_TIMEOUT_MS = 5_000
 private const val HEADER_REFUSED = "the token has a character an HTTP header cannot carry"

@@ -313,12 +313,17 @@ Against a working STT endpoint:
       `Tailscale not connected?` for an endpoint outside the tailnet; turn the radio back on and
       tap `↻ Retry` — the same dictation lands, from the audio still held in memory
 - [ ] point `STT endpoint` at a port nothing listens on and dictate: the pill reads `stt unreachable`
-- [ ] point `STT endpoint` at a stub that answers 200 with 20,000 `[` characters and dictate: the
-      pill reads `stt JSON` with `↻ Retry`, and the service is still on afterwards (the JVM tests
-      cannot show this: only Android's `org.json` overflows)
-- [ ] the same stub answering `{"text": "…"}` with 2 MB of letters, Delivery set to *Copy to the
-      clipboard* and no field focused: the pill reads `copied to the clipboard`, the clip holds
-      100,000 characters, and the service is still on
+- [ ] point `STT endpoint` at a stub that answers 200 with 1,000,000 `[` characters and dictate:
+      the pill reads `stt JSON` with `↻ Retry`, and the service is still on afterwards (the JVM
+      tests cannot show this: only Android's `org.json` overflows, and a build without `parseJson`
+      dies on the same stub)
+- [ ] the same stub answering `{"text":"","segments":[{},{},…]}` padded to just under 1 MiB: the
+      pill reads `silence` or an `stt` failure, and the service is still on
+- [ ] the same stub answering `{"text": "…"}` with 500,000 letters, Cleanup off, Delivery set to
+      *Copy to the clipboard* and no field focused: the pill reads `copied to the clipboard`, the
+      clip holds 100,000 characters, and the service is still on
+- [ ] the same reply into a focused plain text field: the field gains 100,000 characters (one more
+      with the leading space), and both voxdroid and the app holding the field stay up
 - [ ] point `STT endpoint` at a tailnet host (a `100.x` address or a `*.ts.net` name) and disconnect
       Tailscale, then dictate: the pill reads `stt timed out — Tailscale not connected?` or
       `stt unreachable — Tailscale not connected?`, with no token, URL or server text on it, and it

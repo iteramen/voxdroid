@@ -33,6 +33,19 @@ class HostileReplyTest {
     }
 
     @Test
+    fun aPeriodTheCutLandsOnIsNotTheTerminalOne() {
+        val typed = finish("a".repeat(MAX_TYPED_CHARS - 1) + ". and more.", stripTerminalPeriod = true).text
+        assertEquals(MAX_TYPED_CHARS, typed.length)
+        assertTrue(typed.endsWith("a."))
+    }
+
+    /** The body limit is the only bound on what a shallow reply costs to parse: millions of empty objects fit in ten megabytes. */
+    @Test
+    fun theBodyLimitKeepsAShallowReplySmallEnoughToParse() {
+        assertTrue(BODY_LIMIT_BYTES <= 1024 * 1024)
+    }
+
+    @Test
     fun theCutNeverLeavesHalfASurrogatePair() {
         val typed = finish("a".repeat(MAX_TYPED_CHARS - 1) + "🎤🎤", stripTerminalPeriod = false).text
         assertEquals(MAX_TYPED_CHARS - 1, typed.length)
