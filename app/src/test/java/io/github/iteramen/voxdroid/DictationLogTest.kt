@@ -469,6 +469,8 @@ class DictationLogTest {
     @Test
     fun knownDiagnosticShapesSurviveButAdditionalContentDoesNot() {
         for (detail in listOf(
+            "stt transport: port out of range",
+            "polish transport: port out of range",
             "stt[he] HTTP 401: no token sent: response content omitted",
             "stt transport: timeout after 15000 ms; resent once (lane he)",
             "polish HTTP 502 body unreadable: connection unavailable",
