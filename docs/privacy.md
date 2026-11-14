@@ -32,8 +32,9 @@ key can hold it. voxdroid asks for no storage, contacts, location, phone-state o
 
 ## The microphone
 
-Holding volume-down or tapping the accessibility button starts recording at once. Recording stops
-when you press volume-down, tap the button or the pill's Stop, or by itself after 5 minutes
+Holding volume-down or tapping the floating 🎤 control starts a dictation; recording begins
+after the short start tone when cue tones are on, at once otherwise. Recording stops
+when you press volume-down, tap the control or the pill's Stop, or by itself after 5 minutes
 (`VoxdroidA11yService.kt` — `CAP_MS`); the audio is then sent for transcription (below).
 
 During a call — a phone call, or any app's call that sets Android's audio mode to a call — a
@@ -180,7 +181,7 @@ For microphone dictation:
 The caption feature helps people who are deaf or hard of hearing read selected Telegram
 and WhatsApp voice notes. **Enable voice-message captions** is off by default and explains the
 extra access before enabling it. Open a supported conversation, select one downloaded voice note,
-tap Voxdroid's accessibility button, and choose **Caption with Voxdroid** in native sharing. This
+tap Voxdroid's floating 🎤 control, and choose **Caption with Voxdroid** in native sharing. This
 does not require microphone permission (`CaptionController`, `CaptionReceiveActivity`).
 
 - **You choose one message.** Only a voice message you explicitly hand to voxdroid is read, once,
@@ -219,7 +220,7 @@ voxdroid sends to `https://` addresses, and to plain `http://` only on the phone
 is off by default and asks you to confirm before it turns on (`Endpoints.kt` — `insecureBlocked`).
 While it is off, an `http://` address to any other host is refused when you enter it, before every
 request, and by the status check — for the speech server, every lane and the cleanup server alike.
-With it on, your audio, glossary, transcript and bearer tokens cross the network unencrypted to an
+With it on, your audio, glossary, transcript, text you choose to read aloud and bearer tokens cross the network unencrypted to an
 `http://` server; unless that path is protected otherwise, for example by Tailscale or WireGuard,
 anyone who can observe it can read them. HTTPS uses Android's own certificate checks.
 
@@ -243,6 +244,12 @@ voxdroid's accessibility service reaches the following, and only when stated
   only, passes every other key on untouched and keeps none (`VoxdroidA11yService.kt` —
   `onKeyEvent`).
 - **The keyboard window's position**, to place the pill above it (`Pill.kt` — `keyboardTop`).
+- **Where the floating control may show**, on every screen change while the floating 🎤 control
+  or read aloud is on: which app is in front, whether its focused field is editable, a password
+  field or voxdroid's own Try field, and whether the phone is locked. The control hides over a
+  password field, on the lock screen and on voxdroid's own pages. Nothing of this is kept, logged
+  or sent, and with both switches off the check does not run (`ReadAloudController.kt` —
+  `observe`, `controlContext`).
 - **Foreground caption context**, only with captions enabled and dictation idle: supported-app
   conversation header, selected-note metadata, control resource IDs and native Share controls.
   Window, window-state, content, scroll, click and long-click events keep selection and result lifetimes bounded. No
@@ -263,7 +270,9 @@ your settings that was dropped as malformed (`Settings.kt` — `warn`); that a l
 no text and the default server was asked, naming the language code (`Routed.kt`); once, that the
 cleanup pass is on with no address or model (`VoxdroidA11yService.kt` — `POLISH_UNCONFIGURED`);
 the HTTP status when a long recording was resent without `vad`, and the fixed failure category
-when a recording got no response and was resent (`SttClient.kt`); that a dictation log record
+when a recording got no response and was resent, and that a server refused language candidates and
+the recording was resent without them (`SttClient.kt`); the type of error when a cue tone could
+not play (`Tone.kt`); that a dictation log record
 could not be saved, by a fixed reason (`VoxdroidA11yService.kt` — `capture`); and how many
 control or format characters were removed from a dictation, never the text (`Commit.kt` —
 `droppedNote`).

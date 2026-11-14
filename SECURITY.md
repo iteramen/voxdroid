@@ -33,7 +33,9 @@ attacker who is not that user.
 - The focused field is looked up when a take starts and again at delivery: whether it is editable,
   whether it is a password field, and its identity (`FieldAccess.kt` — `focused`). The lookup
   fetches the active window's root with `getRootInActiveWindow(0)`, no prefetch flag set, and asks
-  it for the focused input node only; voxdroid reads no text of the field itself.
+  it for the focused input node. When that answers nothing while the keyboard has an input
+  started, as with Compose, it walks at most 500 nodes for the focused editable one (`WALK_CAP`).
+  voxdroid reads no text of the field itself.
 - A password field is judged three ways: the field's masking (`isPassword`), a password input type
   on its node, or one in the keyboard's editor info, where Compose puts it. A take is refused in
   such a field, and one whose focused field is a password field at delivery is dropped, never typed
@@ -41,12 +43,18 @@ attacker who is not that user.
   of the three is not refused.
 - The start field's node is held from the start until the take ends, or through a failure until a
   retry delivers or the take is cancelled (`VoxdroidA11yService.kt` — `startField`, `ended`). The
-  accessibility node cache is off from the moment the service connects and is switched off again
-  after every lookup, so no copy of another app's nodes is kept (`VoxdroidA11yService.kt` —
-  `onServiceConnected`; `FieldAccess.kt` — `focused`).
+  accessibility node cache is switched off when the service connects and again after every field
+  lookup (`VoxdroidA11yService.kt` — `onServiceConnected`; `FieldAccess.kt` — `focused`). The
+  per-event lookups for the floating control and captions, below, do not switch it off again
+  themselves.
 - The service subscribes to window, window-state, content, scroll, click and long-click events.
   Caption observation uses these only when captions are enabled and dictation is idle in a
-  supported foreground app (`CaptionController.observe`). While a take runs, a window change
+  supported foreground app (`CaptionController.observe`). While the floating 🎤 control or read
+  aloud is on, every event also re-reads the floating control's context: the active window's
+  package, whether its focused field is editable, a password field or voxdroid's own Try field (by
+  view id), and whether the keyguard is locked. That decides only whether the control is shown;
+  none of it is stored, logged or sent, and with both off no window is looked at
+  (`ReadAloudController.kt` — `observe`, `controlContext`; `ReadControlContext.kt`). While a take runs, a window change
   re-places the pill from the keyboard window's
   bounds; `keyboardTop` fetches every interactive window's info and uses the `TYPE_INPUT_METHOD`
   window's alone (`Pill.kt` — `keyboardTop`, `follow`).
@@ -59,7 +67,8 @@ attacker who is not that user.
   volume-down while its trigger is off; with the trigger on, volume-down is consumed and a short
   press while idle is re-applied as a volume step. The only state kept is two booleans
   (`VoxdroidA11yService.kt` — `onKeyEvent`; `VolumeGesture.kt`).
-- Dictation stores how high above the keyboard the pill was last dropped (`Settings.pillSaved`).
+- Dictation stores how high above the keyboard the pill was last dropped (`Settings.pillSaved`),
+  and the floating control the corner it was last dragged to (`ReadAloudSettings.position`).
   Captions add transient origin/selection state in memory and optional transcript records below.
 - `res/xml/a11y_entry.xml` declares `canRetrieveWindowContent`, `canRequestFilterKeyEvents`, the
   flags `flagRequestFilterKeyEvents`, `flagInputMethodEditor`,
@@ -195,8 +204,8 @@ No new data recipient, permission or accessibility capability is introduced.
   while `strip_terminal_period` is on (the default), loses one terminal `.` (never from `..`). The count of removed characters is logged, never the text (`Commit.kt` —
   `sanitize`, `finish`, `droppedNote`).
 - A language lane is sent its own token if it has one, else the STT token if its switch is on,
-  else none. While the switch is untouched it counts as on only for a lane with the same scheme
-  and authority, as written, as the STT endpoint (`https://h` and `https://h:443` differ), and only when an STT token is set (`Endpoints.kt` —
+  else none. While the switch is untouched it counts as on only for a lane with the same scheme,
+  host and port, as written, as the STT endpoint (`https://h` and `https://h:443` differ), and only when an STT token is set (`Endpoints.kt` —
   `laneToken`, `sameServer`).
 - A blank or discarded take never reaches the cleanup endpoint (`VoxdroidA11yService.kt` —
   `transcribe`).
@@ -277,7 +286,8 @@ submitted issue being public.
   switch is off, its row and the status card say it is blocked (`Endpoints.kt` — `urlSummary`;
   `SettingsActivity.kt` — `endpointLine`), and a cleanup pass sent to a blocked endpoint types the
   raw text with `polish blocked (plain http), raw text`.
-- Turning the switch on asks first, naming the audio, the glossary, the transcript and the tokens;
+- Turning the switch on asks first, naming the audio, the glossary, the transcript, text chosen
+  for read aloud and the tokens;
   turning it off asks nothing (`SectionFragment.kt` — `insecureSwitch`). With it on, a cleartext
   STT endpoint is named on the status card, and every cleartext base URL under its own row.
 - HTTPS uses the platform's verification: there is no custom `TrustManager`, `HostnameVerifier` or
@@ -326,8 +336,9 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   independently of enabling captions (`CaptionCache`, `SectionFragment`). Its directory, `filesDir/captions/`, is excluded whole from cloud backup
   and device transfer, write sidecars included (`res/xml/data_extraction_rules.xml`). A record holds
   the raw and displayed text, the cleanup outcome and the write time, under a SHA-256 digest of its
-  key; no audio, profile, credential, URI or chat identity. Records expire 30 days after the write
-  and nothing in the cache is logged. Turning it off or Delete all removes every record, and a
+  key; no audio, profile, credential, URI or chat identity. Records expire 30 days after the write:
+  an expired record is never read back, and its file is deleted at the next start of the service,
+  opening of the app, or use of the cache. Nothing in the cache is logged. Turning it off or Delete all removes every record, and a
   request begun before either cannot write afterwards (`CaptionCache.kt` — `begin`, `put`).
 - The voice-message spool directory, `filesDir/caption_spool/`, is excluded whole the same way
   ([Imported voice messages](#imported-voice-messages)).
@@ -337,7 +348,7 @@ token cross it in clear, and anyone on the path can replace the reply with text 
   text only: raw and delivered transcript, outcome, fixed failure details, retry and connection
   events, cleanup model and timeout, language sent and detected, the answering lane or host, stage
   durations and app version. No audio, token, endpoint userinfo or query, response body or raw
-  exception text; details pass `safeDetail` before they are stored. Records expire 30 days after the take; turning the log
+  exception text; details pass `safeDetail` before they are stored. Records expire 30 days after the take, with the file deleted at the next start of the service, opening of the app, or use of the log; turning the log
   off or Delete all removes every record, drops the take held in memory, and a take begun before
   either cannot write afterwards (`DictationLog.kt` — `begin`, `put`).
 
@@ -377,8 +388,8 @@ scope:** Play Protect's behaviour, which voxdroid cannot see or change.
 
 ### Components
 
-The merged manifest of both build types declares seven components: `SettingsActivity` (exported, the
-launcher); `SectionActivity` and `TryActivity` (not exported); `CaptionReceiveActivity` (exported,
+The merged manifest of both build types declares these components: `SettingsActivity` (exported, the
+launcher); `SectionActivity`, `TryActivity`, `ConfigBackupActivity` and `DictationLogActivity` (not exported); `CaptionReceiveActivity` (exported,
 single-audio SEND, guarded by the session/provider/grant checks above); `VoxdroidA11yService` (exported,
 guarded by `android.permission.BIND_ACCESSIBILITY_SERVICE`); and two that AndroidX adds,
 `androidx.startup.InitializationProvider` (not exported; voxdroid's manifest removes its
@@ -400,10 +411,13 @@ scope:** the shell or the system broadcasting to `ProfileInstallReceiver`.
 - GitHub release APKs are built by `release.yml` from the tag, signed with a key used only for
   GitHub releases (SHA-256 certificate fingerprint in [docs/sideload.md](docs/sideload.md)), and
   published with `SHA256SUMS` and a build-provenance attestation. The key lives in the
-  repository's Actions secrets and on the job's runner only while it signs.
+  repository's Actions secrets and, during a release job, in the runner's temp directory from
+  the step before the build to the cleanup step that always runs (`release.yml`).
 - CI runs the gate (`lint testDebugUnitTest assembleDebug`), the release witness and the
-  dependency audit, all with `contents: read`, every action pinned by commit SHA
-  (`.github/workflows/`). The audit runs OSV-Scanner over a lockfile of the runtime classpaths and
+  dependency audit, all with `contents: read`, each action they name pinned by commit SHA
+  (`ci.yml`, `release-witness.yml`, `dependency-audit.yml`). The docs-freshness and
+  issue-intake workflows are ouro templates, pinned by release tag; they hold no secret, and
+  docs-freshness reads only. The audit runs OSV-Scanner over a lockfile of the runtime classpaths and
   blocks on any known vulnerability; build tooling is outside its scope. An exception is an
   `osv-scanner.toml` `[[IgnoredVulns]]` entry with `id`, `reason` and `ignoreUntil`.
 - Debug builds are signed with the Android Gradle plugin's debug key. Release artifacts are

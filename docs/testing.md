@@ -1127,3 +1127,13 @@ do not create one tab per test run. UIAutomator remains unsuitable during active
   and still opens the policy URL in the browser. Internal sub-pages retain their chevrons.
 - [ ] Large fonts and landscape do not clip the backup actions or overlap the toolbar.
   Backup screenshot protection remains enabled; no export/restore is needed for these checks.
+
+### Floating control context check
+
+The control decides where it may show from every accessibility event (`ReadAloudController.observe`).
+
+| Check | Expected |
+| --- | --- |
+| *Floating 🎤 control* and read aloud both off | No floating control over any app. Turning *Floating 🎤 control* back on shows it at once. |
+| A password field focused, the lock screen, voxdroid's own pages | The control is hidden; it returns on leaving. On the Try page with its field focused, only 🎤 shows. |
+| Read aloud on, in another app | 🎤 and 🔊 show together and both act. |

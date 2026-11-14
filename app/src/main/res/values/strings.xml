@@ -107,7 +107,7 @@
     <string name="settings_allow_insecure_http">Allow insecure (http) endpoints</string>
     <string name="settings_allow_insecure_http_summary">Off refuses plain http:// to anything but this phone: STT, cleanup and every lane.</string>
     <string name="settings_insecure_confirm_title">Allow insecure (http) endpoints?</string>
-    <string name="settings_insecure_confirm">Over plain http://, your audio, glossary, transcript and bearer tokens cross the network unencrypted. This is safe only over a network that encrypts by itself, such as Tailscale or WireGuard.</string>
+    <string name="settings_insecure_confirm">Over plain http://, your audio, glossary, transcript, text you choose to read aloud and bearer tokens cross the network unencrypted. This is safe only over a network that encrypts by itself, such as Tailscale or WireGuard.</string>
     <string name="settings_insecure_turn_on">Turn on</string>
     <string name="settings_url_not_http">Not an http(s) URL. An endpoint starts with http:// or https://.</string>
     <string name="settings_url_insecure">Plain http:// is off. Use https://, or turn on Allow insecure (http) endpoints on the Speech page.</string>

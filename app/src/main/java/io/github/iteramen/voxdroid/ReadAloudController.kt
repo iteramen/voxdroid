@@ -67,6 +67,8 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     val busy: Boolean get() = active || picker != null
 
     fun observe(event: AccessibilityEvent?) {
+        // With neither control on there is nothing to place, so no window is looked at.
+        if (!prefs.enabled && !Settings(service).triggerButton) return
         val root = service.getRootInActiveWindow(0)
         val context = controlContext(root)
         if (context != ReadControlContext.External) {

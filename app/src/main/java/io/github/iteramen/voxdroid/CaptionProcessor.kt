@@ -24,7 +24,7 @@ sealed interface CaptionOutcome {
 
     data object Silence : CaptionOutcome
 
-    /** [detail] can quote 200 characters of the reply, which may be the transcript: never log it at the default level. */
+    /** [detail] is a fixed classification and status, never the reply. */
     data class SttFailed(val bar: String, val detail: String) : CaptionOutcome
 
     /** More than [CAPTION_MAX_ENCODED_BYTES] encoded bytes. */

@@ -245,7 +245,7 @@ internal fun captionDir(filesDir: File) = File(filesDir, CAPTION_DIR)
 internal fun openCaptionCache(filesDir: File, now: () -> Long = System::currentTimeMillis): CaptionCache =
     CaptionCache(captionDir(filesDir), now).also { it.prune() }
 
-/** For a future producer: prunes on open. Nothing in the app calls it yet. */
+/** Prunes on open. */
 fun openCaptionCache(context: Context): CaptionCache = openCaptionCache(context.filesDir)
 
 private fun atomicMove(from: File, to: File) {
