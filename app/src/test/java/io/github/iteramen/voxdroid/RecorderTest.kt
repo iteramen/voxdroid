@@ -6,6 +6,15 @@ import org.junit.Test
 
 class RecorderTest {
 
+    /** The pill shows this app's own message as written and nothing of the platform's but its kind. */
+    @Test
+    fun aRecorderThatWouldNotStartIsNamedByAFixedLine() {
+        assertEquals("mic: 16 kHz capture unsupported", micFailureBar(IllegalStateException(MIC_RATE_UNSUPPORTED)))
+        assertEquals("mic: refused by the platform", micFailureBar(SecurityException("uid 10452 /data/private path")))
+        assertEquals("mic: unavailable", micFailureBar(IllegalStateException("startRecording() called on an uninitialized AudioRecord.")))
+        assertEquals("mic: unavailable", micFailureBar(IllegalStateException()))
+    }
+
     @Test
     fun theHeaderOfASixteenSampleTakeIsTheOneWhisperExpects() {
         val pcm = ByteArray(SAMPLES * BYTES_PER_SAMPLE) { it.toByte() }

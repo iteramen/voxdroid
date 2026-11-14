@@ -10,6 +10,15 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+internal const val MIC_RATE_UNSUPPORTED = "mic: 16 kHz capture unsupported"
+
+/** What the pill says when the recorder would not start: this app's own message as written, the platform's by its kind alone. */
+internal fun micFailureBar(failed: RuntimeException): String = when {
+    failed.message == MIC_RATE_UNSUPPORTED -> MIC_RATE_UNSUPPORTED
+    failed is SecurityException -> "mic: refused by the platform"
+    else -> "mic: unavailable"
+}
+
 /** 16 kHz mono PCM16; a handset that refuses it fails loudly, and [stop] after a [start] that threw returns an empty take. */
 class AudioRecorder(private val context: Context) {
 
@@ -28,7 +37,7 @@ class AudioRecorder(private val context: Context) {
             error(PERMISSION_MISSING)
         }
         val minBytes = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_IN, ENCODING)
-        if (minBytes <= 0) error(RATE_UNSUPPORTED)
+        if (minBytes <= 0) error(MIC_RATE_UNSUPPORTED)
         val bufferBytes = minBytes * BUFFER_FACTOR
         val record = AudioRecord(
             MediaRecorder.AudioSource.VOICE_RECOGNITION,
@@ -40,7 +49,7 @@ class AudioRecorder(private val context: Context) {
         // getMinBufferSize can answer for a configuration the constructor then refuses.
         if (record.state != AudioRecord.STATE_INITIALIZED) {
             record.release()
-            error(RATE_UNSUPPORTED)
+            error(MIC_RATE_UNSUPPORTED)
         }
         capturing = true
         record.startRecording()
@@ -79,7 +88,6 @@ class AudioRecorder(private val context: Context) {
     }
 
     private companion object {
-        const val RATE_UNSUPPORTED = "mic: 16 kHz capture unsupported"
         const val CHANNEL_IN = AudioFormat.CHANNEL_IN_MONO
         const val ENCODING = AudioFormat.ENCODING_PCM_16BIT
         const val BUFFER_FACTOR = 4

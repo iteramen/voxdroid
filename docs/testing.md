@@ -963,7 +963,7 @@ and remove the test package afterwards. Record the exact committed APK used for 
 | Automatic timeout with USB wake disabled | During synthesis/playback, display stays awake beyond its configured timeout | Passed a9eac33, 18 s observation against 15 s timeout, USB wake off |
 | Completion, cancellation and failed TTS | `keepScreenOn=false`; idle display can time out | Flag release passed on completion/cancel/503; idle timeout in final regression |
 | Manual power-button lock during speech | Speech stops, glyph disappears and no late restart | Injected screen-off passed a9eac33; physical button not separately tested |
-| Service off after a notification Stop | Stop a narration from its notification, then start a dictation and switch the service off in Accessibility settings while it records: the microphone indicator goes out at once, and `adb shell dumpsys activity services <package>` lists no `VoxdroidA11yService` record (before the fix it stayed, with `startRequested=true`). Switching the service back on gives one pill and one floating control. | Not run |
+| Service off after a notification Stop | Stop a narration from its notification, then start a dictation and switch the service off in Accessibility settings while it records: the microphone indicator goes out at once, and `adb shell dumpsys activity services <package>` lists no `VoxdroidA11yService` record (expected before the fix: the record stays, with `startRequested=true`). Switching the service back on gives one pill and one floating control; a second narration and a dictation then both start, each with its notification. | Not run |
 
 Debug diagnostics expose counts/flags only, never selected text or other app identity. A green
 JVM/build gate does not establish these handset outcomes.

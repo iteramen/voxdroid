@@ -241,10 +241,9 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         } catch (failed: RuntimeException) {
             // IllegalStateException from the recorder, SecurityException from the platform.
             stopForeground(STOP_FOREGROUND_REMOVE)
-            // A fixed line for the log and the pill alike: the exception's text is not ours to store or show.
-            val line = if (failed is SecurityException) "mic: refused by the platform" else "mic: unavailable"
-            capture.recordingFailed(machine.currentTake, line)
-            return line
+            // The log keeps a fixed line, and so does the pill: the platform's text is not ours to store or show.
+            capture.recordingFailed(machine.currentTake, if (failed is SecurityException) "mic: refused by the platform" else "mic: unavailable")
+            return micFailureBar(failed)
         }
         recorder = rec
         recordingSince = SystemClock.elapsedRealtime()

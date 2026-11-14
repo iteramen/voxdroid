@@ -28,7 +28,8 @@ Fixed
 - After Stop was tapped on a read-aloud notification, switching voxdroid off in Accessibility
   settings left the service running, a recording in progress included. It now stops with the
   switch.
-- A microphone that fails to start shows a fixed message on the pill, not the system's error text.
+- A microphone that fails to start shows a fixed message on the pill, not the system's error
+  text; a phone that cannot record at 16 kHz is still named as such.
 
 Changed
 - The privacy policy describes the dictation log; the speech client logs a fixed category when a
