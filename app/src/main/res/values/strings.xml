@@ -48,7 +48,7 @@
     <string name="settings_stt_timeout">Timeout, seconds</string>
     <string name="settings_timeout_hint">The whole request. Connecting is always given 5 seconds of it.</string>
     <string name="settings_no_speech_threshold">No-speech threshold</string>
-    <string name="settings_no_speech_threshold_hint">A dictation scoring above this is dropped as silence. 0 turns the gate off, and with it routing an auto take to a lane.</string>
+    <string name="settings_no_speech_threshold_hint">A dictation whose average no-speech score exceeds this is dropped as silence. Segment durations weight the average when available. 0 turns the gate off, and with it routing an auto take to a lane.</string>
     <string name="settings_chip_languages_hint">Two-letter ISO language codes, comma separated. Each one gets a row below, which opens its own page.</string>
     <string name="settings_lane_url">Lane URL for %1$s</string>
     <string name="settings_lane_url_hint">An endpoint of its own for %1$s, typically a fine-tune. Empty sends %1$s to the STT endpoint above. With the no-speech gate on, auto asks the STT endpoint first and sends the take on to this lane when it hears %1$s at 0.5 or more.</string>

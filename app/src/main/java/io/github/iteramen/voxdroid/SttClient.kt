@@ -81,7 +81,7 @@ class SttClient(
         // whisper breaks `text` at segment boundaries, not at spoken line breaks, so lines join on a space.
         val joined = text.lines().map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ")
         val prob = if (scored) {
-            maxNoSpeechProb(fields).getOrElse { return Result.failure(it) }
+            meanNoSpeechProb(fields).getOrElse { return Result.failure(it) }
         } else {
             null
         }
@@ -91,20 +91,33 @@ class SttClient(
     }
 
     /** `null` when no segment is scored; a malformed `segments` or score fails loudly instead of looking like an unscored server. */
-    private fun maxNoSpeechProb(fields: JSONObject): Result<Float?> {
+    private fun meanNoSpeechProb(fields: JSONObject): Result<Float?> {
         val segments = fields.opt("segments")
         if (segments == null || segments === JSONObject.NULL) return Result.success(null)
         if (segments !is JSONArray) return fail("stt response segments is not an array", RESPONSE_DETAIL)
-        var max: Float? = null
+        val scores = mutableListOf<Pair<Float, Double?>>()
         for (i in 0 until segments.length()) {
             val segment = segments.opt(i) as? JSONObject ?: continue
             // Absent and JSON null differ: an absent key is skipped, a null score is a reply this client does not understand.
             val score = segment.opt("no_speech_prob") ?: continue
             val prob = (score as? Number)?.toFloat()
                 ?: return fail("stt response no_speech_prob is not a number", RESPONSE_DETAIL)
-            max = if (max == null) prob else maxOf(max, prob)
+            val start = (segment.opt("start") as? Number)?.toDouble()
+            val end = (segment.opt("end") as? Number)?.toDouble()
+            scores += prob to if (start != null && end != null) end - start else null
         }
-        return Result.success(max)
+        if (scores.isEmpty()) return Result.success(null)
+        // Match byovox: one silent pause must not veto a mostly spoken take. If any scored
+        // segment lacks usable timing, use equal weights for every score, not mixed units.
+        val durations = scores.map { it.second }
+        val total = durations.sumOf { it ?: 0.0 }
+        val timed = durations.all { it != null && it.isFinite() && it >= 0.0 } && total.isFinite() && total > 0.0
+        val mean = if (timed) {
+            scores.sumOf { (prob, duration) -> prob.toDouble() * duration!! } / total
+        } else {
+            scores.sumOf { it.first.toDouble() } / scores.size
+        }
+        return Result.success(mean.toFloat())
     }
 
     private fun send(wav: ByteArray, language: SttLanguage, prompt: String?, vad: Boolean): Attempt {

@@ -3,6 +3,14 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Fixed
+- Long dictations with a short pause use byovox's duration-weighted no-speech score
+  instead of discarding the whole take because one segment looks silent.
+- Settings follow setup order; Backup and restore uses the standard back arrow,
+  and the external Privacy policy link no longer has a submenu chevron.
+
 ## 0.4.3 — 2026-11-13
 
 Changed

@@ -2,7 +2,7 @@ package io.github.iteramen.voxdroid
 
 data class Transcription(
     val text: String,
-    /** The maximum over segments; null when the server did not score, which is not zero. */
+    /** Duration-weighted segment mean (equal weights if timings are unusable); null when unscored. */
     val noSpeechProb: Float?,
     val detected: Pair<String, Float>? = null,
 )

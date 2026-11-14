@@ -96,8 +96,11 @@ The start field is kept through an Error, so a Retry delivers into it.
    `response_format` is `verbose_json` while the no-speech threshold is above 0, else `json`. One
    resend when no status came back (transport failure or timeout); any status is final. Line
    breaks in `text` become spaces.
-3. **No-speech gate** (`Transcriber.kt` — `dictate`): the highest `segments[].no_speech_prob`
-   above the threshold (default 0.3) is silence. A threshold of 0 or an unscored reply gates
+3. **No-speech gate** (`Transcriber.kt` — `dictate`): the duration-weighted mean of scored
+   `segments[].no_speech_prob` above the threshold (default 0.3) is silence, matching byovox.
+   If any scored segment lacks usable start/end timing, or total duration is zero/non-finite,
+   use the equal-weight mean. A short pause cannot veto a longer spoken take solely because
+   its individual score is high. A threshold of 0 or an unscored reply gates
    nothing; the score decides, never the words.
 4. **Polish** when enabled with a base URL and a model and the text has at least *Minimum words*
    words ([Cleanup prompt](#cleanup-prompt)); then [delivery](#delivery-into-the-focused-field).

@@ -1,5 +1,25 @@
 # Reliability review repair queue — 2026-11-10
 
+## Delivery wave — 2026-11-14
+
+Owner authorized finishing #36 → #52 → #44/PR #45 → #53, merging on green and
+delivering a signed in-place phone update with configuration preserved. Ask only
+for unresolved rulings or necessary manual handset steps. Logging/profile/always-on
+ideas and Play account submission are outside this wave.
+
+- [ ] #36: reproduce mixed speech/pause false silence; match byovox's weighted-mean
+  gate, retain true-silence filtering, and record regression evidence.
+- [ ] #52: support standard external STT providers without requiring users to erase
+  their language list; retain compatible self-hosted behavior and credential boundaries.
+- [ ] #44 / PR #45: reconcile the Telegram share-start notice with current main,
+  test the bounded handoff/cancellation rules and verify prepared handset fixtures.
+- [ ] #53: explicit easy-start setup and guide, preserving existing settings unless
+  the user deliberately applies the preset; provider data flow and token setup clear.
+- [ ] Release: all exact-head checks green, relevant native acceptance recorded,
+  version/changelog updated, signed APK verified and installed as an update (no uninstall).
+
+This checklist tracks work, not an assertion that unchecked handset cases passed.
+
 Owner direction: repair one item at a time, preserve Git history and validation evidence.
 Each item uses an isolated branch and PR. The owner authorized merging repairs on green CI;
 merge and installation remain separate milestones. Feature PRs remain unmerged until native

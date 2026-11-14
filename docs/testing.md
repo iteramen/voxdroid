@@ -213,6 +213,10 @@ Against a working STT endpoint:
 - [ ] the same tailnet endpoint, connected, answering 401 or 500: the pill reads `stt HTTP 401` or
       `stt HTTP 500` and never asks about Tailscale
 - [ ] trigger in silence and stop: nothing is typed and the pill shows `silence`
+- [ ] dictate for over 30 seconds, pause briefly, then continue: the speech before and
+      after the pause remains when the overall score is below the configured threshold.
+      Also check a mostly silent take remains filtered. JVM synthetic responses cover
+      weighted scores, absent/invalid timing fallback and true-silence rejection (#36).
 - [ ] point `STT endpoint` at a whisper-server started without `--vad-model` and dictate for over
       60 seconds: the text lands, and `adb logcat -s voxdroid` shows
       `stt: the server refused vad (HTTP 500); resent the take without it` once
