@@ -7,8 +7,10 @@ delivering a signed in-place phone update with configuration preserved. Ask only
 for unresolved rulings or necessary manual handset steps. Logging/profile/always-on
 ideas and Play account submission are outside this wave.
 
-- [ ] #36: reproduce mixed speech/pause false silence; match byovox's weighted-mean
-  gate, retain true-silence filtering, and record regression evidence.
+- [x] #36: PR #75 merged as `93c8558`, four exact-head CI checks green. Three new/updated
+  regressions failed before the fix; all JVM tests, lint and debug build pass afterward.
+  Weighted speech/pause and mostly-silent fixtures cover the pipeline; this does not claim
+  a new 70-second live microphone acceptance run.
 - [ ] #52: support standard external STT providers without requiring users to erase
   their language list; retain compatible self-hosted behavior and credential boundaries.
 - [ ] #44 / PR #45: reconcile the Telegram share-start notice with current main,

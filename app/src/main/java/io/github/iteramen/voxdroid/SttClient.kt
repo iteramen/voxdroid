@@ -49,14 +49,26 @@ class SttClient(
         prompt: String?,
     ): Result<Transcription> {
         if (endpoint.isEmpty()) return fail(NO_ENDPOINT)
-        val long = isLongTake(wav)
-        var attempt = send(wav, language, prompt, vad = long)
-        // A server started without `--vad-model` answers `vad=true` with an HTTP error, so the take
-        // is sent once more without it, and that second outcome stands.
-        if (long && attempt is Attempt.Answered && attempt.status !in HTTP_OK_FIRST..HTTP_OK_LAST) {
+        var vad = isLongTake(wav)
+        var wireLanguage = language
+        var attempt = send(wav, wireLanguage, prompt, vad)
+        // Each fallback removes an extension permanently for this take: at most two protocol
+        // resends, always to the configured endpoint. Do not interpret arbitrary response prose.
+        while (attempt is Attempt.Answered && attempt.status !in HTTP_OK_FIRST..HTTP_OK_LAST) {
             if (!current()) return notCurrent()
-            note("stt: the server refused vad (HTTP ${attempt.status}); resent the take without it")
-            attempt = send(wav, language, prompt, vad = false)
+            val hasCandidates = wireLanguage is SttLanguage.Auto && wireLanguage.candidates.isNotEmpty()
+            if (hasCandidates && rejectsLanguageCandidates(attempt)) {
+                wireLanguage = SttLanguage.Auto(emptyList())
+                vad = false
+                note("stt: the server rejected language candidates; resent with standard fields")
+            } else if (vad) {
+                // Preserve whisper.cpp compatibility when started without --vad-model.
+                vad = false
+                note("stt: the server refused vad (HTTP ${attempt.status}); resent the take without it")
+            } else {
+                break
+            }
+            attempt = send(wav, wireLanguage, prompt, vad)
         }
 
         val answered = when (attempt) {
@@ -139,6 +151,21 @@ class SttClient(
 
     private fun post(contentType: String, body: ByteArray): Attempt =
         boundedPost(endpoint + PATH, allowInsecureHttp, contentType, token, body, timeoutMs, WATCHDOG_THREAD, current)
+
+    private fun rejectsLanguageCandidates(answer: Attempt.Answered): Boolean {
+        if (answer.status != 400) return false
+        val error = try {
+            (JSONTokener(answer.body).nextValue() as? JSONObject)?.opt("error") as? JSONObject
+        } catch (_: JSONException) {
+            null
+        } ?: return false
+        if (error.opt("code") !in listOf("unknown_param", "unknown_parameter")) return false
+        // Groq leaves param empty and names it in this exact fixed message. Never expose or
+        // log the body: other errors may contain credentials, prompts, or transcript content.
+        return error.opt("param") == "language_candidates" ||
+            (error.opt("param") in listOf(null, "", JSONObject.NULL) &&
+                error.opt("message") == "unknown param `language_candidates`")
+    }
 
     private fun <T> fail(head: String, detail: String? = null, bar: String = head): Result<T> =
         Result.failure(SttError(bar, if (detail.isNullOrEmpty()) head else "$head: $detail"))
