@@ -21,6 +21,10 @@
             android:summary="@string/dictation_log_summary"
             android:title="@string/dictation_log" />
         <Preference
+            android:key="show_dictation_log"
+            android:summary="@string/dictation_log_show_summary"
+            android:title="@string/dictation_log_show" />
+        <Preference
             android:key="delete_dictation_log"
             android:summary="@string/dictation_log_delete_summary"
             android:title="@string/dictation_log_delete" />

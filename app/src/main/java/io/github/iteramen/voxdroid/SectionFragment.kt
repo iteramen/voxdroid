@@ -147,6 +147,10 @@ class SectionFragment : PreferenceFragmentCompat() {
                 if (!it) Toast.makeText(requireContext(), R.string.dictation_log_storage_failed, Toast.LENGTH_LONG).show()
             }
         }
+        findPreference<Preference>(KEY_SHOW_DICTATION_LOG)?.setOnPreferenceClickListener {
+            startActivity(DictationLogActivity.intent(requireContext()))
+            true
+        }
         findPreference<Preference>(KEY_DELETE_DICTATION_LOG)?.setOnPreferenceClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.dictation_log_delete)
@@ -417,6 +421,7 @@ class SectionFragment : PreferenceFragmentCompat() {
         private const val KEY_NO_FIELD_MODE = "no_field_mode"
         private const val NO_FIELD_ROW_PREFIX = "no_field_"
         private const val KEY_DICTATION_LOG = "dictation_log"
+        private const val KEY_SHOW_DICTATION_LOG = "show_dictation_log"
         private const val KEY_DELETE_DICTATION_LOG = "delete_dictation_log"
         private const val KEY_CATEGORY_LANGUAGES = "category_languages"
         private const val LANGUAGE_ROW_PREFIX = "language_"

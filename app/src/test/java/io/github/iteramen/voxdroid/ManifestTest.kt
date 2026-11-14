@@ -21,6 +21,16 @@ class ManifestTest {
     }
 
     @Test
+    fun theDictationLogViewerHasNoExternalEntryPoint() {
+        val activities = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(manifestFile()).getElementsByTagName("activity")
+        val viewer = (0 until activities.length).map { activities.item(it) as Element }
+            .single { it.getAttributeNS(ANDROID_NS, "name") == ".DictationLogActivity" }
+        assertEquals("false", viewer.getAttributeNS(ANDROID_NS, "exported"))
+        assertEquals(0, viewer.getElementsByTagName("intent-filter").length)
+    }
+
+    @Test
     fun whatsappCaptionSelectorsReceiveTheViewIdsTheyNeed() {
         val file = sequenceOf("src/main/res/xml/a11y_entry.xml", "app/src/main/res/xml/a11y_entry.xml")
             .map(::File).first(File::exists)
