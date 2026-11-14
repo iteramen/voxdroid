@@ -14,9 +14,6 @@ private val ROW_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.RO
 /** A lane code, `default` or a bare host, as `SttTrace` names them; anything else may carry userinfo, path or query. */
 private val SERVED_BY = Regex("""lane [a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*|default|\[[0-9A-Fa-f:.]{2,45}]|[A-Za-z0-9.-]{1,253}""")
 
-/** A language code and its score, as `SttTrace` writes them; with no candidates sent, the code is whatever key the server chose. */
-private val DETECTED = Regex("""[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})* [0-9]\.[0-9]{2}""")
-
 internal fun newestFirst(entries: List<DictationEntry>): List<DictationEntry> = entries.sortedByDescending { it.atMs }
 
 /** Fixed English, so a pasted report reads the same from every phone. */
@@ -42,9 +39,6 @@ internal fun logRowText(entry: DictationEntry): String =
 
 internal fun shownText(text: String): String = text.ifBlank { NO_TEXT }
 
-/** A settings or server value on a metadata line, bounded so the lines stay a small, fixed share of a report link. */
-private const val MAX_VALUE_CHARS = 100
-
 /** The first [chars] UTF-16 units, never half of a surrogate pair. */
 internal fun String.cut(chars: Int): String = when {
     length <= chars -> this
@@ -61,7 +55,7 @@ internal fun logMetadata(entry: DictationEntry, zone: ZoneId): List<String> = li
     entry.detail?.let { "Detail: " + safeDetail(it) },
     "App: " + entry.appVersion.value(),
     entry.sttLanguage?.let { "Language sent: " + it.value() },
-    entry.sttDetected?.let { "Language detected: " + if (it.length <= MAX_VALUE_CHARS && DETECTED.matches(it)) it else "omitted" },
+    entry.sttDetected?.let { "Language detected: " + (safeDetected(it) ?: "omitted") },
     entry.sttServedBy?.let { "Answered by: " + if (SERVED_BY.matches(it)) it.value() else "omitted" },
     entry.sttMs?.let { "Speech-to-text: $it ms" },
     entry.polishModel?.let { "Cleanup model: " + it.value() },

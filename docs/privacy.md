@@ -109,10 +109,11 @@ voxdroid neither sets nor sees; check the policy of any server you did not set u
 
 ## What stays on the device
 
-voxdroid keeps its settings in its own private storage, in two files: `secrets`, holding only the
-bearer tokens, and `voxdroid`, holding everything else — the server addresses, the language
+voxdroid keeps its settings in its own private storage, in two files: `secrets`, holding the
+bearer tokens and the two switches you turn on after a disclosure (voice-message captions and
+read aloud), and `voxdroid`, holding everything else — the server addresses, the language
 settings, the glossary, the other options and how high above the keyboard you last dropped the
-pill (`Settings.kt`). The tokens are excluded from Android's cloud backup and from device-to-device
+pill (`Settings.kt`). The `secrets` file is excluded from Android's cloud backup and from device-to-device
 transfer (`res/xml/data_extraction_rules.xml`); everything else is included in Android's normal
 backup, so it can follow you to a new phone, where the tokens are entered again. Uninstalling the
 app removes both files. Caption transcripts (`captions`), temporary imported audio

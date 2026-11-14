@@ -34,6 +34,14 @@ Fixed
 Changed
 - The privacy policy describes the dictation log; the speech client logs a fixed category when a
   request got no response and was resent once.
+- *Enable voice-message captions* is stored off Android backups and device transfers, like the
+  read-aloud switch, so neither comes back on with a restore. After this update captions are off
+  until you turn them on again.
+- A read-aloud language that has its own token but no base URL of its own no longer sends that
+  token to the English server: reading in that language is refused with a message until it has
+  its own URL or *Use the English/default TTS token* is on.
+- The dictation log stores a detected language only when it is a language code and a score; the
+  token box opts out of Android autofill.
 
 ## 0.5.0 — 2026-11-14
 

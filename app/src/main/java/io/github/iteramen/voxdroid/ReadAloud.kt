@@ -30,6 +30,10 @@ internal class ReadAloudConfig(val enabled: Boolean, val english: TtsEndpoint, v
         val model = lane?.model?.ifBlank { null } ?: english.model
         if (url.isBlank() || model.isBlank()) throw TtsFailure("Read aloud: configure the TTS endpoint and model first")
         if (validateBaseUrl(url, allowHttp, EndpointKind.Tts) != null) throw TtsFailure("Read aloud: check the TTS base URL and insecure HTTP setting")
+        // A lane's own token goes to that lane's own server only. Without one it borrows the English server, which is no place to send it.
+        if (lane != null && !lane.inherit && lane.baseUrl.isBlank() && lane.token.isNotBlank()) {
+            throw TtsFailure("Read aloud: the $code token needs a $code base URL; to use the English endpoint, switch on its token instead")
+        }
         val token = if (lane == null || lane.inherit) english.token else lane.token
         return TtsEndpoint(url.trimEnd('/'), model, voice, token)
     }

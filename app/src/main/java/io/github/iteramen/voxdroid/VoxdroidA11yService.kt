@@ -96,6 +96,8 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         readAloud = ReadAloudController(this,
             { machine.state == TakeState.Idle && captions?.configurationBusy() != true },
             ::buttonAction, ::beginReadAloudMedia, { stopForeground(STOP_FOREGROUND_REMOVE) })
+        // An earlier build kept the caption consent in this backed-up file. Nothing reads that copy; it should not travel in backups either.
+        getSharedPreferences("voxdroid", MODE_PRIVATE).edit().remove("voice_captions").apply()
         getSharedPreferences("voxdroid", MODE_PRIVATE).registerOnSharedPreferenceChangeListener(captionPrefs)
         getSharedPreferences("secrets", MODE_PRIVATE).registerOnSharedPreferenceChangeListener(captionPrefs)
         accessibilityButtonController.registerAccessibilityButtonCallback(button)
