@@ -398,6 +398,32 @@ class DictationLogTest {
         assertNotNull(trace.servedBy)
     }
 
+    @Test
+    fun deletingBeforeRetryNeverAcquiresNewConsentForTheOldTake() {
+        on()
+        capture.attempt(1, "en")
+        capture.failed(1, "stt HTTP 502: response content omitted")
+        assertTrue(log.deleteAll())
+        capture.attempt(1, "en")
+        capture.finish(1, LogOutcome.PolishOff, "old take", "old take")
+        assertEquals(emptyList<DictationEntry>(), log.entries())
+    }
+
+    @Test
+    fun anExpiredWriteCannotRecreateADeletedOldRecord() {
+        val ticket = on()
+        time += DICTATION_LOG_TTL_MS
+        assertEquals(LogWrite.Invalid, log.put(ticket, entry(atMs = T0)))
+        assertEquals(emptySet<String>(), files())
+    }
+
+    @Test
+    fun unknownDiagnosticsAreOmittedRatherThanPartiallyRedacted() {
+        for (detail in listOf("Authorization: Basic c2VjcmV0", "server said private transcript", "credential: private-value")) {
+            assertEquals("diagnostic detail omitted", safeDetail(detail))
+        }
+    }
+
     private companion object {
         const val T0 = 1_800_000_000_000L
         const val ID = "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0"
