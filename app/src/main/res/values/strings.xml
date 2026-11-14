@@ -38,6 +38,13 @@
     <string name="dictation_log_events">Retries and connection events</string>
     <string name="dictation_log_no_events">None</string>
     <string name="dictation_log_copy">Copy</string>
+    <string name="dictation_log_report">Report</string>
+    <string name="dictation_log_report_title">Report preview</string>
+    <string name="dictation_log_report_notice">Nothing has left this phone yet. Continue to GitHub opens your browser at a new voxdroid issue, with the text below inside the link: GitHub receives it as soon as the page opens, before you submit anything, and a submitted issue is public. Edit out anything private first. Copy keeps it on this phone.</string>
+    <string name="dictation_log_report_hint">Report text</string>
+    <string name="dictation_log_report_continue">Continue to GitHub</string>
+    <string name="dictation_log_report_too_long">Too long for a GitHub link: %1$d of %2$d bytes. Shorten the text, or use Copy and paste it into a new GitHub issue.</string>
+    <string name="dictation_log_report_no_browser">No browser could open the link. Use Copy instead.</string>
     <string name="pill_stop">■ Stop</string>
     <string name="pill_retry">↻ Retry</string>
     <string name="pill_cancel">Cancel dictation</string>

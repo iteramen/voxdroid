@@ -47,6 +47,28 @@ class DictationLogViewTest {
         )
         assertEquals(
             """
+            ### Raw transcript
+
+            ```text
+            hello there
+            friend
+            ```
+
+            ### Delivered text
+
+            ```text
+            Hello there, friend
+            ```
+
+            ### Expected
+
+            ```text
+
+            ```
+
+            ### Details
+
+            ```text
             Voxdroid dictation log entry
             Time: 2026-11-14 20:03:05 +00:00
             Outcome: Cleaned (Cleaned)
@@ -59,11 +81,7 @@ class DictationLogViewTest {
             Cleanup timeout: 20 s
             Cleanup: 300 ms
             Events: none
-            Raw transcript:
-            hello there
-            friend
-            Delivered text:
-            Hello there, friend
+            ```
             """.trimIndent(),
             logReport(full, UTC),
         )
@@ -76,7 +94,7 @@ class DictationLogViewTest {
         val silent = entry(outcome = LogOutcome.Silence)
         assertEquals(NO_TEXT, logRowText(silent))
         assertEquals("2026-11-14 20:03 · Silence", logRowTitle(silent, UTC))
-        assertTrue(logReport(silent, UTC).endsWith("Raw transcript:\n$NO_TEXT\nDelivered text:\n$NO_TEXT"))
+        assertTrue(logReport(silent, UTC).startsWith("### Raw transcript\n\n```text\n$NO_TEXT\n```\n\n### Delivered text\n\n```text\n$NO_TEXT\n```\n"))
         assertEquals("whitespace is no text either", NO_TEXT, shownText(" \n "))
     }
 
@@ -84,7 +102,7 @@ class DictationLogViewTest {
     fun aDroppedDeliveryRowFallsBackToTheRawTranscript() {
         val dropped = entry(outcome = LogOutcome.PolishOff, raw = "  typed\tnowhere  ")
         assertEquals("typed nowhere", logRowText(dropped))
-        assertTrue(logReport(dropped, UTC).endsWith("Delivered text:\n$NO_TEXT"))
+        assertTrue(logReport(dropped, UTC).contains("### Delivered text\n\n```text\n$NO_TEXT\n```\n"))
     }
 
     @Test
@@ -99,8 +117,9 @@ class DictationLogViewTest {
         assertTrue(failedReport.contains("Outcome: Speech-to-text failed (SttFailed)\nDetail: stt HTTP 502: response content omitted\n"))
         assertTrue(failedReport.contains(
             "Events:\n- 2026-11-14 20:03:06 +00:00 Transport: stt transport: request timed out; resent once\n" +
-                "- 2026-11-14 20:03:07 +00:00 SttFailed: stt HTTP 502: response content omitted\nRaw transcript:\n$NO_TEXT\n",
+                "- 2026-11-14 20:03:07 +00:00 SttFailed: stt HTTP 502: response content omitted\n```",
         ))
+        assertTrue(failedReport.startsWith("### Raw transcript\n\n```text\n$NO_TEXT\n```\n"))
 
         val retried = entry(outcome = LogOutcome.Cleaned, raw = "ok", delivered = "Ok.", events = events)
         assertEquals(
@@ -111,7 +130,7 @@ class DictationLogViewTest {
             ),
             logEvents(retried, UTC),
         )
-        assertTrue(logReport(retried, UTC).endsWith("Raw transcript:\nok\nDelivered text:\nOk."))
+        assertTrue(logReport(retried, UTC).startsWith("### Raw transcript\n\n```text\nok\n```\n\n### Delivered text\n\n```text\nOk.\n```\n"))
     }
 
     @Test

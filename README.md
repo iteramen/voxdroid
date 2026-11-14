@@ -88,7 +88,10 @@ dictation**. While the screen is open, it checks every five seconds that the spe
   raw and delivered text, outcome, retries and connection failures on the phone for 30 days, never
   audio or tokens, out of backups. Turning it off or *Delete the dictation log* erases it. *Show
   the dictation log* lists takes newest first; an entry shows both texts, its outcome, details and
-  retries, and **Copy** puts them on the clipboard as a report, marked sensitive.
+  retries, and **Copy** puts them on the clipboard as a report, marked sensitive. **Report** opens
+  an editable preview of that report; only *Continue to GitHub* there sends it, as a pre-filled
+  [cleanup-miss issue](.github/ISSUE_TEMPLATE/cleanup-miss.md) in your browser that you submit
+  yourself.
 - Drag the pill up or down; it keeps that height above the keyboard. With *Vibrate on start and
   done* on, a click marks a start and a landing, and a double click a failure or a refusal.
   *Tones on start and done* (on by default) beeps for the same moments, at *Tone volume (%)* (5 by

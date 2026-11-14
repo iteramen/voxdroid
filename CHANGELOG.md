@@ -14,6 +14,11 @@ Added
   text, outcome, details, retries and connection events. Copy puts the entry on the clipboard as a
   report, marked sensitive so Android shows no preview. Turning the log off or deleting it empties
   an open viewer.
+- **Report** on a dictation log entry: an editable preview of the report, then *Continue to
+  GitHub* opens the browser at a pre-filled voxdroid issue for you to submit. The text travels in
+  the link, under 8 KiB, with long texts cut and marked. Nothing is sent before Continue, and the
+  app never posts or signs in. Copy and Report share one text, with an empty Expected block.
+- A *Cleanup miss* issue template.
 
 Changed
 - The privacy policy describes the dictation log; the speech client logs a fixed category when a

@@ -133,9 +133,21 @@ messages; a stage that did not run leaves its fields empty. Records are deleted 
 dictation, checked whenever the app or the service starts and at every write. *Delete the
 dictation log* (after a confirmation) and turning the switch off erase every record and the
 dictation still in progress, and a dictation already running cannot write afterwards. It is not
-sent anywhere, and uninstalling the app removes it. *Show the dictation log* displays the records;
+sent anywhere unless you report an entry (below), and uninstalling the app removes it. *Show the dictation log* displays the records;
 an entry's **Copy** writes that entry's texts and details to the clipboard only when you tap it,
 marked sensitive so Android shows no preview; clipboard managers may still retain it.
+
+**Reporting an entry, only if you choose to.** An entry's **Report** opens a preview on the phone
+that you can edit; nothing is sent while you read or edit it, and **Cancel** sends nothing.
+**Continue to GitHub** opens your browser at a new issue on the voxdroid repository, with the
+previewed text inside the web address: the raw transcript and the delivered text as you left them,
+the outcome, the cleanup model and timeout, the languages, the lane or host name that answered,
+the timings, the retry and connection events, the time of the dictation and the app version
+(`DictationReport.kt` — `reportUrl`, `reportDraft`). Your browser sends that address to GitHub
+(GitHub, Inc.) as soon as the page opens, before you submit anything, and GitHub handles it under
+its own [privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+If you then submit the issue, with your own GitHub account, it is public. voxdroid holds no GitHub
+credential and never submits an issue itself. A report never includes audio or tokens.
 
 **Backup and restore** lets you explicitly save a password-protected configuration file, including
 your API tokens, using Android's document picker. It includes speech/cleanup, language/lane,

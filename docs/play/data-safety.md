@@ -78,8 +78,24 @@ deleting the app's log cannot recall those copies. Under the [current definition
 on-device transfers to another app can count as sharing, with an exception for a specific
 user-initiated transfer the user reasonably expects. This draft applies that exception to the
 labelled Copy action; it does not add a collection recipient or change the declared categories.
-This is an implementation-based interpretation, not a Google approval. Reassess the separate
-GitHub browser report flow when it is implemented.
+This is an implementation-based interpretation, not a Google approval.
+
+**Viewer Report (reviewed 2026-11-14):** Report on a log entry opens an editable on-device preview
+and transmits nothing. Only the labelled **Continue to GitHub** button then opens the user's
+browser at a new issue on `github.com/iteramen/voxdroid`, with the previewed text (raw and
+delivered transcript, outcome, cleanup model, languages, answering lane or host, timings, events,
+take time, app version) in the link's query. The browser sends it to **GitHub**, a recipient the
+developer chose, when the page loads; the issue is public only if the user then submits it under
+their own account. Voxdroid makes no network request itself, holds no GitHub credential and
+never posts (`DictationReport`, `DictationLogActivity`). The data is a dictated transcript, which
+the **App activity → Other user-generated content** row already declares as collected for App
+functionality; for a dictation made into a chat the user may consider it message content, as the
+Messages row already covers. This draft treats the transfer as the same specific, user-initiated,
+disclosed action as Copy: the preview states the recipient and that the text is sent on opening.
+Unlike Copy the recipient is fixed by the developer and receives the data over the network, so
+the owner must decide in the Console whether the user-initiated exception holds or the row's
+Shared answer becomes Yes (purpose: App functionality, optional); do not submit the form without
+that decision. The privacy policy names GitHub as the recipient.
 
 ## Other data and accessibility
 

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/dictation_log_report_notice" />
+        <!-- No autofill, suggestions or keyboard learning: the text is a transcript. -->
+        <EditText android:id="@+id/log_report_draft" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="16dp" android:gravity="top|start"
+            android:hint="@string/dictation_log_report_hint" android:imeOptions="flagNoPersonalizedLearning"
+            android:importantForAutofill="no" android:inputType="textMultiLine|textNoSuggestions"
+            android:minLines="6" android:textDirection="firstStrong" />
+        <TextView android:id="@+id/log_report_status" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp"
+            android:accessibilityLiveRegion="polite" android:textColor="?attr/colorError" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/log_report_continue"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:text="@string/dictation_log_report_continue" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/log_report_copy"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/dictation_log_copy" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/log_report_cancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@android:string/cancel" />
+    </LinearLayout>
+</ScrollView>
