@@ -1,6 +1,6 @@
 # Foreground service declaration draft
 
-Prepared for 0.4.3 on 2026-11-13. These are draft answers, not a filed declaration.
+Prepared on 2026-11-13; unchanged service scope checked for 0.5.0 on 2026-11-14. These are draft answers, not a filed declaration.
 Source: `AndroidManifest.xml` and `VoxdroidA11yService.kt`. Google's
 [FGS declaration guidance](https://support.google.com/googleplay/android-developer/answer/13392821)
 requires a description, user impact and a video for each used service type.
