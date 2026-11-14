@@ -323,12 +323,16 @@ log** switch (off by default) and **Delete the dictation log** (with confirmatio
 - **Viewer.** `DictationLogActivity` (not exported) lists `DictationLog.entries` newest first and,
   with an entry id, shows one entry: raw and delivered text side by side when the screen is at
   least 600 dp per unit of font scale, stacked otherwise, `(no text)` for an empty one, the
-  metadata and the events. It re-reads the store at every resume and on `DictationLog.onDelete`,
-  so turning the log off or Delete all empties an open viewer and an expired entry disappears.
+  metadata and the events. A serial worker reads/prunes the store; `LogViewSession` rejects
+  obsolete load generations and changed deletion epochs before rendering. Resume, deletion,
+  the nearest entry expiry and clock changes refresh the display; pause drops visible records.
+  Turning the log off or Delete all therefore empties an open viewer without a late load
+  repainting it. Copy and opening a row recheck the epoch and expiry before using its snapshot.
   `DictationLogView.kt` maps an entry to display and Copy text in fixed English; details and
   events pass `safeDetail` again and the answering name must be a lane, `default` or a bare host,
   so a record on disk is not trusted to be clean. **Copy** writes that report as a clip marked
-  `EXTRA_IS_SENSITIVE`, so Android shows no preview. Nothing is sent anywhere.
+  `EXTRA_IS_SENSITIVE`, so Android shows no preview. Transcript views do not offer a second
+  system-selection Copy path. Nothing is sent anywhere.
 
 ### Private caption integration
 

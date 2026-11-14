@@ -18,6 +18,7 @@
     <string name="settings_no_field_refuse">Refuse</string>
     <string name="settings_no_field_clipboard">Copy to the clipboard</string>
     <string name="dictation_log_category">Dictation log</string>
+    <string name="dictation_log_loading">Loading dictation log…</string>
     <string name="dictation_log">Keep a dictation log</string>
     <string name="dictation_log_summary">Off by default. Keeps each take\'s text, outcome, retries and connection failures on this phone for 30 days, never audio or tokens, excluded from backup and transfer. Turning off deletes the log.</string>
     <string name="dictation_log_delete">Delete the dictation log</string>

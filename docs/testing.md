@@ -56,6 +56,17 @@ This is protocol regression evidence, not a live Groq account qualification.
 
 ## Dictation log (#20)
 
+Handset checkpoint, 2026-11-14, isolated `captiontest` build from merged `684ca604`:
+opt-in created an empty log; startup removed a planted 31-day-old synthetic entry while
+keeping three current entries; Cancel preserved those entries; confirmed Delete removed
+them and stayed enabled; off removed entries and state. The owner then started/stopped
+one short Try-screen take: the loopback fixture received valid WAV, STT and cleanup ran
+once each, and one `Cleaned` record contained matching synthetic raw/delivered text and
+both stage durations. Delivered text correctly reflected the default terminal-period
+removal. Microphone permission was verified before the take, revoked afterward, and
+the original accessibility settings restored. No production configuration, credentials,
+history or audio files were copied. Other rows below remain pending unless separately recorded.
+
 - [ ] During Recording, Delete all or switch logging off/on before stopping: that take must
   not create a record. Enabling logging after recording has started applies only to later takes.
 - [ ] After a failed take, Delete all and then Retry: no deleted record returns. A subsequent
@@ -64,7 +75,8 @@ This is protocol regression evidence, not a live Groq account qualification.
 `DictationLogTest` covers the record format, capture outcomes, Retry, stale takes, expiry,
 deletion, backup rules and redaction on the JVM; `DictationLogViewTest` covers the viewer's
 newest-first order, empty states and the display and Copy text of cleaned, silent, failed and
-retried entries, credentials excluded. These rows need a handset and have not been run. Check
+retried entries, credentials excluded. `LogViewSessionTest` covers expiry and stale-load/deletion
+generations. The checkpoint above covers only its named handset cases; other rows remain unrun. Check
 records in *Delivery → Show the dictation log*, or with `adb shell run-as <debug package> ls
 files/dictation_log` and `cat` of one entry on a debug build, then delete transient copies.
 
@@ -86,7 +98,7 @@ files/dictation_log` and `cat` of one entry on a debug build, then delete transi
 | Rotation | Portrait: raw above delivered. Landscape at default font: side by side. Rotating keeps the list or the open entry. |
 | Delete all while viewer is open | The Delete row sits under the viewer in the same task, so this needs a second voxdroid window (split screen, where the launcher offers one); mark it unreachable on a device without. Open an entry, Delete the dictation log in the other window: the entry turns to *deleted or expired* at once; back shows the empty list. Without a second window: Delete all, then reopen the viewer: empty. |
 | Switch off while viewer is open | Same with *Keep a dictation log* off: the open list or entry empties at once; reopening the viewer says the log is off. No `files/dictation_log` entry remains. |
-| Expiry while viewer is open | With an entry open, move the clock past its 30 days, leave and return to the app: the entry turns to *deleted or expired*. |
+| Expiry while viewer is open | Use a synthetic entry close to its 30-day boundary. Leave its detail visible: expiry clears it without leaving/returning; Copy cannot export expired text. A clock change also refreshes it. |
 
 ## Encrypted configuration migration (0.3.0)
 

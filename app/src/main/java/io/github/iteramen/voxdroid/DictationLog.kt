@@ -227,7 +227,7 @@ class DictationLog internal constructor(
         }
     }
 
-    /** Oldest first; empty while off. For the later viewer and the tests. */
+    /** Oldest first; empty while off. */
     fun entries(): List<DictationEntry> = synchronized(LOCK) {
         try {
             val time = now()

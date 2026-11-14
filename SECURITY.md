@@ -223,6 +223,10 @@ clipboard manager may still retain that text; closing the caption does not clear
 Dictation log Copy is the same kind of explicit, sensitive-marked action, one entry at a time
 (`DictationLogActivity`); its report text omits unknown details and any answering name that is
 not a lane or a bare host (`DictationLogView.kt`).
+The viewer has no system text-selection Copy path. It rechecks deletion epoch and expiry
+before copying; asynchronous reads cannot restore text after deletion, and paused viewers
+drop their visible records (`LogViewSession`). Explicit copies already outside Voxdroid are
+not recalled when its log is deleted.
 
 ### Network
 
