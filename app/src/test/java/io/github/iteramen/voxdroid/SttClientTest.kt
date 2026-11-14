@@ -252,14 +252,43 @@ class SttClientTest {
     }
 
     @Test
-    fun noSpeechProbIsTheMaximumOverTheSegments() {
+    fun scoresWithoutTimingsUseTheMeanRatherThanTheWorstSegment() {
         val server = start(
             reply = """{"text":"x","segments":[{"no_speech_prob":0.03},{"id":1},{"no_speech_prob":0.42}]}""",
         )
 
         val out = client(server.url).transcribe(wav, auto, null)
 
-        assertEquals(0.42f, out.getOrThrow().noSpeechProb!!, 1e-6f)
+        assertEquals(0.225f, out.getOrThrow().noSpeechProb!!, 1e-6f)
+    }
+
+    @Test
+    fun aPauseInALongSpokenTakeDoesNotDiscardTheWholeTranscript() {
+        val server = start(reply = """{"text":"Before the pause. After the pause.","segments":[
+            {"start":0,"end":30,"no_speech_prob":0.02},
+            {"start":30,"end":33,"no_speech_prob":0.95},
+            {"start":33,"end":70,"no_speech_prob":0.03}]}""")
+        val outcome = dictate(client(server.url), wavOfSamples(SIXTY_SECONDS_SAMPLES + 1), auto, null, 0.3f)
+        assertEquals(SttOutcome.Text("Before the pause. After the pause."), outcome)
+    }
+
+    @Test
+    fun mostlySilentTakesStillFailTheGate() {
+        val server = start(reply = """{"text":"Synthetic hallucination","segments":[
+            {"start":0,"end":1,"no_speech_prob":0.02},
+            {"start":1,"end":40,"no_speech_prob":0.95}]}""")
+        assertEquals(SttOutcome.Silence, dictate(client(server.url), wav, auto, null, 0.3f))
+    }
+
+    @Test
+    fun unusableDurationsFallBackToEqualWeightsForAllScoredSegments() {
+        for (timing in listOf("", "\"start\":2,\"end\":1,", "\"start\":0,\"end\":0,")) {
+            endpoint?.stop()
+            val server = start(reply = """{"text":"speech","segments":[
+                {${timing}"no_speech_prob":0.1},
+                {"start":0,"end":0,"no_speech_prob":0.7}]}""")
+            assertEquals(0.4f, client(server.url).transcribe(wav, auto, null).getOrThrow().noSpeechProb!!, 1e-6f)
+        }
     }
 
     @Test
