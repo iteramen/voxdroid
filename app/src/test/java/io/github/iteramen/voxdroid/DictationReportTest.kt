@@ -116,6 +116,29 @@ class DictationReportTest {
         assertFalse(body.contains('?'))
     }
 
+    /** With no candidates sent the server picks this string, and a chain of subtags is still shaped like a language. */
+    @Test
+    fun aLongDetectedLanguageIsOmittedSoTheOverheadStaysFixed() {
+        val long = "en" + "-aaaaaaaa".repeat(900) + " 0.99"
+        val take = entry(raw = "short", delivered = "Short.").copy(sttDetected = long)
+        val body = reportDraft(take, UTC)
+        assertTrue(body.contains("Language detected: omitted\n"))
+        assertTrue(body.contains("```text\nshort\n```"))
+        assertTrue(reportUrl(reportTitle(take), body).length < 1_300)
+    }
+
+    @Test
+    fun aCutNeverLeavesHalfASurrogatePair() {
+        assertEquals("a", "a🎤".cut(2))
+        assertEquals("a🎤", "a🎤".cut(3))
+        assertEquals("", "🎤".cut(1))
+        assertEquals("", "abc".cut(0))
+        assertEquals("abc", "abc".cut(9))
+        val model = "m".repeat(99) + "🎤tail"
+        val line = logMetadata(entry().copy(polishModel = model), UTC).first { it.startsWith("Cleanup model: ") }
+        assertEquals("the pair straddling the value limit goes whole", "Cleanup model: " + "m".repeat(99) + "…", line)
+    }
+
     @Test
     fun secretsInAStoredRecordNeverReachTheLink() {
         val planted = DictationEntry(
@@ -138,12 +161,15 @@ class DictationReportTest {
     fun aDraftIsKeptWhileItsEntryLivesAndForgottenWithIt() {
         val draft = ReportDraft()
         val take = entry(raw = "private words")
+        assertFalse("a new holder, as after the process died, holds nothing", draft.held)
         assertEquals("generated", draft.textFor(take) { "generated" })
+        assertTrue(draft.held)
         draft.keep("redacted", 3)
         assertEquals("the edit survives a redraw", "redacted", draft.textFor(take) { "generated" })
         assertEquals(3, draft.cursor)
         assertNull("deleted, switched off or expired", draft.textFor(null) { "generated" })
         assertEquals(0, draft.cursor)
+        assertFalse(draft.held)
         assertEquals("nothing of the old draft comes back", "fresh", draft.textFor(take) { "fresh" })
     }
 

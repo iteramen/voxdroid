@@ -29,7 +29,8 @@ internal fun reportDraft(entry: DictationEntry, zone: ZoneId): String {
     val withoutEvents = logReport(entry, zone, withEvents = false)
     if (fits(withoutEvents)) return withoutEvents
     var low = 0
-    var high = maxOf(entry.raw.length, entry.delivered.length) - 1
+    // A text of REPORT_URL_MAX units cannot fit, so the search never encodes more of a long take than that.
+    var high = minOf(maxOf(entry.raw.length, entry.delivered.length) - 1, REPORT_URL_MAX)
     while (low < high) {
         val mid = (low + high + 1) / 2
         if (fits(logReport(entry, zone, mid, withEvents = false))) low = mid else high = mid - 1
@@ -42,6 +43,9 @@ internal class ReportDraft : ViewModel() {
     private var text: String? = null
     var cursor = 0
         private set
+
+    /** False in a preview recreated after its process died: the edits went with it. */
+    val held: Boolean get() = text != null
 
     fun keep(text: String, cursor: Int) {
         this.text = text

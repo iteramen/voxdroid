@@ -336,7 +336,7 @@ log** switch (off by default) and **Delete the dictation log** (with confirmatio
 - **Report.** An entry's **Report** opens the same activity as an editable preview of the report
   text (`logReport`): both texts and an empty Expected block, each in a Markdown code block whose
   fence is longer than any backtick run inside it, then the metadata and events in another. That
-  is the Copy text too, and it carries what a byovox `bench/polish_items.jsonl` row needs (raw
+  is the entry's Copy text too (a long entry's preview starts from it shortened, below), and it carries what a byovox `bench/polish_items.jsonl` row needs (raw
   text, language, expected); turning a report into a bench item stays manual. `reportDraft` fits
   the draft to a link under 8 KiB once percent-encoded (`REPORT_URL_MAX`): it drops the events
   first, then cuts both texts to one shared length, and says so in the body each time. Metadata
@@ -349,7 +349,10 @@ log** switch (off by default) and **Delete the dictation log** (with confirmatio
   GitHub credential and submits nothing; the person submits the issue in the browser. The draft
   (`ReportDraft`) lives in memory only, across redraws and rotation; when its entry expires or
   the log is deleted or switched off, the preview shows the gone message, the draft is dropped,
-  and Copy and Continue recheck the entry first.
+  and Copy and Continue recheck the entry first. A preview restored after its process died has
+  lost the edits, so it closes back to the entry instead of showing the unedited text again.
+- **Recents.** The activity turns its Recents screenshot off (`setRecentsScreenshotEnabled`):
+  a thumbnail of a transcript would outlive deletion and expiry.
 
 ### Private caption integration
 

@@ -61,7 +61,7 @@ internal fun logMetadata(entry: DictationEntry, zone: ZoneId): List<String> = li
     entry.detail?.let { "Detail: " + safeDetail(it) },
     "App: " + entry.appVersion.value(),
     entry.sttLanguage?.let { "Language sent: " + it.value() },
-    entry.sttDetected?.let { "Language detected: " + if (DETECTED.matches(it)) it else "omitted" },
+    entry.sttDetected?.let { "Language detected: " + if (it.length <= MAX_VALUE_CHARS && DETECTED.matches(it)) it else "omitted" },
     entry.sttServedBy?.let { "Answered by: " + if (SERVED_BY.matches(it)) it.value() else "omitted" },
     entry.sttMs?.let { "Speech-to-text: $it ms" },
     entry.polishModel?.let { "Cleanup model: " + it.value() },

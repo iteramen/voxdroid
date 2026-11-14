@@ -48,6 +48,13 @@ class DictationLogActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // A Recents thumbnail of a transcript would outlive Delete all and the 30 days.
+        setRecentsScreenshotEnabled(false)
+        // Restored without its draft, a preview would show the text again with every redaction undone: close it instead.
+        if (savedInstanceState != null && intent.getBooleanExtra(EXTRA_REPORT, false) && !draft.held) {
+            finish()
+            return
+        }
         setContentView(R.layout.section)
         content = findViewById(R.id.section_content)
         findViewById<MaterialToolbar>(R.id.toolbar).apply {

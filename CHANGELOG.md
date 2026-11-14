@@ -17,7 +17,9 @@ Added
 - **Report** on a dictation log entry: an editable preview of the report, then *Continue to
   GitHub* opens the browser at a pre-filled voxdroid issue for you to submit. The text travels in
   the link, under 8 KiB, with long texts cut and marked. Nothing is sent before Continue, and the
-  app never posts or signs in. Copy and Report share one text, with an empty Expected block.
+  app never posts or signs in. Copy and Report share one text, with an empty Expected block; a
+  report too long for the link starts from that text shortened.
+- The dictation log screens no longer leave a thumbnail of the transcript in Recents.
 - A *Cleanup miss* issue template.
 
 Changed
