@@ -98,6 +98,14 @@ files/dictation_log` and `cat` of one entry on a debug build, then delete transi
 | Rotation | Portrait: raw above delivered. Landscape at default font: side by side. Rotating keeps the list or the open entry. |
 | Delete all while viewer is open | The Delete row sits under the viewer in the same task, so this needs a second voxdroid window (split screen, where the launcher offers one); mark it unreachable on a device without. Open an entry, Delete the dictation log in the other window: the entry turns to *deleted or expired* at once; back shows the empty list. Without a second window: Delete all, then reopen the viewer: empty. |
 | Switch off while viewer is open | Same with *Keep a dictation log* off: the open list or entry empties at once; reopening the viewer says the log is off. No `files/dictation_log` entry remains. |
+| Report preview | In an entry, Report: an editable preview opens with the notice that Continue sends the text to GitHub inside the link; no browser opens. For a short entry its text is what the entry's Copy gives. Cancel or back returns to the entry and nothing was sent. |
+| Report: Copy | Edit the preview (remove a word), Copy: pasting gives the edited text exactly. |
+| Report: Continue | With a GitHub app installed too: Continue to GitHub opens a browser, not that app, on a new voxdroid issue with the title and the edited body in editable fields, Hebrew and Cyrillic intact; nothing is submitted. Close the tab without submitting: never file test content. |
+| Report: long entry | A take of several minutes: the preview says how many characters of each text are shown and that events were omitted, Expected and Details are intact, and Continue opens the issue form. Paste a page of extra text and Continue: refused with the link's size, no browser. |
+| Report: rotation and return | Edit the preview, rotate, switch to another app and back: the edit is still there. |
+| Report: process killed | With this build's accessibility service off (Android does not kill a process that holds an enabled one; otherwise use Developer options → *Don't keep activities*): edit the preview, Home, `adb shell am kill <package>`, return to the app: the entry is shown, not a preview with the edit undone. Report again starts a fresh draft. |
+| Recents | With the list, an entry or the preview open, open Recents: voxdroid's card shows no transcript text. |
+| Report while the entry goes away | With the preview open, Delete the dictation log or switch the log off in a second window, or let a synthetic entry expire: the preview turns to *deleted or expired*; reopening Report on another entry starts from that entry's own text. |
 | Expiry while viewer is open | Use a synthetic entry close to its 30-day boundary. Leave its detail visible: expiry clears it without leaving/returning; Copy cannot export expired text. A clock change also refreshes it. |
 
 ## Encrypted configuration migration (0.3.0)

@@ -228,6 +228,37 @@ before copying; asynchronous reads cannot restore text after deletion, and pause
 drop their visible records (`LogViewSession`). Explicit copies already outside Voxdroid are
 not recalled when its log is deleted.
 
+### Dictation log report
+
+**Report** on a log entry is the one path by which log text leaves the phone, and only by two
+deliberate steps. The first opens an editable preview and sends nothing (`DictationLogActivity` —
+`preview`). The second, **Continue to GitHub**, opens a browser at a new voxdroid issue with the
+edited text in the link's query (`DictationReport.kt` — `reportUrl`); the browser, not voxdroid,
+makes the request, and GitHub receives the text when the page loads, before any submit. The
+intent's selector resolves to a browser, so an app registered for github.com links does not get
+the text. voxdroid has no GitHub credential and no code that posts an issue.
+
+The report text is `logReport`, which is also the entry's Copy text; a report too long for the
+link starts from that text shortened, with a note at each cut. Transcripts sit in Markdown code blocks fenced
+longer than any backtick run in them, so a transcript cannot mention a user, open a link or break
+out into markup on the issue page; details and events pass `safeDetail` again; an answering name
+that is not a lane or bare host, or a detected language that is not a code and a score, is
+written as `omitted` (`DictationLogView.kt` — `logMetadata`). The title is the outcome only
+(`reportTitle`). The link stays under 8 KiB (`REPORT_URL_MAX`): `reportDraft` shortens long text
+and says so, and an edit that outgrows the limit is refused, never cut silently. The draft is
+held in memory only (`ReportDraft`) and is dropped, with Copy and Continue refused, once the
+entry expires or the log is deleted or switched off. A preview that Android restores after
+killing the process has lost its edits; it closes instead of presenting the unedited text as if
+it had been reviewed (`DictationLogActivity` — `onCreate`). The viewer, entry and preview show
+no Recents thumbnail (`setRecentsScreenshotEnabled(false)`), so no image of a transcript outlives
+deletion or expiry; a screenshot the user takes is theirs to manage.
+
+**In scope:** any report text reaching the network before Continue; a token, endpoint userinfo or
+query, or server reply in a generated report; a stored record that makes the generated report
+render as markup on GitHub. **Out of scope:** what the reporter types into the preview; the
+browser's and GitHub's handling of the address once opened (history, sync, server logs); a
+submitted issue being public.
+
 ### Network
 
 - While "Allow insecure (http) endpoints" is off, the default, plain `http://` to a non-loopback

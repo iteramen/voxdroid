@@ -61,7 +61,7 @@ Logic that needs no Android lives in plain functions and classes, so the JVM tes
 | `Pill.kt`, `PillPlacement.kt`, `Cue.kt`, `Tone.kt` | the overlay, its placement and drag, haptic cues; the cue tones, their mute policy (`audible`) and `TonePlayer` |
 | `Settings.kt`, `SettingsStore.kt` | the two preference files |
 | `CaptionCache.kt` | the opt-in, 30-day voice-message transcript cache ([below](#caption-cache)) |
-| `DictationLog.kt`, `DictationCapture.kt`, `DictationLogActivity.kt`, `DictationLogView.kt` | the opt-in, 30-day dictation log: storage and record format; the take's record as it is built; the viewer and its display and Copy text ([below](#dictation-log)) |
+| `DictationLog.kt`, `DictationCapture.kt`, `DictationLogActivity.kt`, `DictationLogView.kt`, `DictationReport.kt` | the opt-in, 30-day dictation log: storage and record format; the take's record as it is built; the viewer and its display and Copy text; the issue link and the report draft ([below](#dictation-log)) |
 | `CaptionProcessor.kt`, `CaptionAudio.kt`, `CaptionMediaDecoder.kt` | voice-message processing: acquisition, fingerprint, Ogg/Opus decode, 16 kHz WAV, STT and cleanup; used by the private caption controller ([below](#voice-message-processing)) |
 | `SettingsActivity.kt`, `Readiness.kt`, `EndpointProbe.kt` | the launcher: a status card whose button fixes the first problem (`problems`), the settings page rows, the privacy row |
 | `SectionActivity.kt`, `SectionFragment.kt`, `TryActivity.kt` | one page per `res/xml/section_*.xml`, a language's filled in code (`languagePage`); a field for a first take |
@@ -332,7 +332,27 @@ log** switch (off by default) and **Delete the dictation log** (with confirmatio
   events pass `safeDetail` again and the answering name must be a lane, `default` or a bare host,
   so a record on disk is not trusted to be clean. **Copy** writes that report as a clip marked
   `EXTRA_IS_SENSITIVE`, so Android shows no preview. Transcript views do not offer a second
-  system-selection Copy path. Nothing is sent anywhere.
+  system-selection Copy path. Viewing and Copy send nothing anywhere.
+- **Report.** An entry's **Report** opens the same activity as an editable preview of the report
+  text (`logReport`): both texts and an empty Expected block, each in a Markdown code block whose
+  fence is longer than any backtick run inside it, then the metadata and events in another. That
+  is the entry's Copy text too (a long entry's preview starts from it shortened, below), and it carries what a byovox `bench/polish_items.jsonl` row needs (raw
+  text, language, expected); turning a report into a bench item stays manual. `reportDraft` fits
+  the draft to a link under 8 KiB once percent-encoded (`REPORT_URL_MAX`): it drops the events
+  first, then cuts both texts to one shared length, and says so in the body each time. Metadata
+  values are bounded, so a long take still gets about half the link. Nothing leaves the phone until
+  **Continue to GitHub**, which opens
+  `github.com/iteramen/voxdroid/issues/new?template=cleanup-miss.md` with the title (`reportTitle`,
+  the outcome only) and the edited text in the query (`reportUrl`), through an intent whose
+  selector names any browser, so an app that claims github.com links does not receive it. An
+  edit that grows the link past the limit is refused with its size, not cut. The app holds no
+  GitHub credential and submits nothing; the person submits the issue in the browser. The draft
+  (`ReportDraft`) lives in memory only, across redraws and rotation; when its entry expires or
+  the log is deleted or switched off, the preview shows the gone message, the draft is dropped,
+  and Copy and Continue recheck the entry first. A preview restored after its process died has
+  lost the edits, so it closes back to the entry instead of showing the unedited text again.
+- **Recents.** The activity turns its Recents screenshot off (`setRecentsScreenshotEnabled`):
+  a thumbnail of a transcript would outlive deletion and expiry.
 
 ### Private caption integration
 
