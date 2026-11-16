@@ -3,7 +3,7 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
-## Unreleased
+## 0.6.2 — 2026-11-16
 
 Fixed
 - A notification sound no longer stops read aloud. Android asks the playing app to lower its

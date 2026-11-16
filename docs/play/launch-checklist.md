@@ -51,7 +51,7 @@ account registration, submission, price or release rollout has been made.
 
 ## Build and signing handoff
 
-The current source is 0.6.1, versionCode 12, minSdk 33, targetSdk 36. Build with
+The current source is 0.6.2, versionCode 13, minSdk 33, targetSdk 36. Build with
 the existing Linux/WSL toolchain; do not invent another release version merely
 to prepare the listing. Check Console for previously consumed version codes
 before an actual upload.
