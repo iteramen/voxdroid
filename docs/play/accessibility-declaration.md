@@ -202,7 +202,8 @@ their configured TTS server. This supports people who have difficulty seeing or 
 The speaker press outlines visible read-only blocks; the subsequent block tap authorizes its
 transfer. Password subtrees and editable blocks are excluded. Candidate access is bounded to
 600 foreground nodes, no background scan. Selected text and generated speech stay in memory;
-Stop, source-view changes, lock, dictation or audio-focus loss cancel it (`ReadAloudController`).
+Stop, source-view changes, lock, dictation or audio-focus loss cancel it; a notification sound
+does not (`ReadAloudController`; `ReadAloudLifetime.kt` — `readAloudStopsOnFocusChange`).
 The new mediaPlayback foreground-service permission supports the Stop notification without mic
 access. The enable dialog, privacy policy and next Console declaration/video must cover this
 text-to-TTS data flow. No Google approval is claimed by adding this accessibility purpose.

@@ -317,8 +317,8 @@ can retain it under its own policy. Password fields and editable blocks are excl
 keeps candidates, chosen text and generated speech only in memory, never in logs, files, captions
 or the clipboard. It reads no background document and does not use the microphone.
 
-Stop, leaving/changing the source view, locking, starting dictation or losing audio focus cancels
-reading and discards late replies. Network I/O already admitted before cancellation may still
+Stop, leaving/changing the source view, locking, starting dictation or losing audio focus (a
+notification sound does not count) cancels reading and discards late replies. Network I/O already admitted before cancellation may still
 reach or finish on the server; the app cannot recall it. The separate
 `FOREGROUND_SERVICE_MEDIA_PLAYBACK` permission supports playback with a Stop notification; it
 adds no permission dialog. TTS uses the same explicit remote-HTTP gate as dictation. TTS tokens

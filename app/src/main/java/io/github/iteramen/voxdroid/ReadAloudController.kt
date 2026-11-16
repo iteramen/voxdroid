@@ -64,7 +64,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
     private val focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
         .setAudioAttributes(attributes).setWillPauseWhenDucked(true)
-        .setOnAudioFocusChangeListener({ change -> if (change < 0) cancel() }, main).build()
+        .setOnAudioFocusChangeListener({ change -> if (readAloudStopsOnFocusChange(change)) cancel() }, main).build()
 
     val busy: Boolean get() = active || picker != null
 
