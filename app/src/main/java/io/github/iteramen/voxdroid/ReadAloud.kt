@@ -75,7 +75,7 @@ internal fun ttsChunks(text: String): List<String> {
         fun last(fits: (Int) -> Boolean) = prefix.indices.lastOrNull { it >= boundary / 2 && fits(it) }
         // A sentence end first: each chunk is its own utterance, so a cut inside a sentence is heard.
         val split = if (boundary == rest.length) boundary
-            else (last { prefix[it] == '\n' || (prefix[it] in ".!?;" && rest[it + 1].isWhitespace()) }
+            else (last { prefix[it] in ".!?;" && rest[it + 1].isWhitespace() } ?: last { prefix[it] == '\n' }
                 ?: last { prefix[it].isWhitespace() || prefix[it] in ".!?;" })?.plus(1) ?: boundary
         result += rest.substring(0, split).trim()
         rest = rest.substring(split).trimStart()

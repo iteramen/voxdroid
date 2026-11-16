@@ -67,6 +67,10 @@ class ReadAloudTest {
         assertTrue(parts.size > 1)
         assertTrue(parts.all { it.codePointCount(0, it.length) <= TTS_CHUNK })
         assertEquals(parts.joinToString("\n"), emptyList<String>(), parts.filterNot { it.endsWith("while.") })
+        val wrapped = ttsChunks(sentence.repeat(30).trim().split(" ").chunked(7).joinToString("\n") { it.joinToString(" ") })
+        assertEquals("a line wrap is not a sentence end", emptyList<String>(), wrapped.filterNot { it.endsWith("while.") })
+        val lines = ttsChunks("one line without a full stop\n".repeat(60))
+        assertTrue("without sentence ends, whole lines", lines.size > 1 && lines.all { it.endsWith("stop") })
         val unpunctuated = ttsChunks("word ".repeat(300))
         assertTrue(unpunctuated.all { it.endsWith("word") && it.codePointCount(0, it.length) <= TTS_CHUNK })
     }
@@ -87,10 +91,16 @@ class ReadAloudTest {
             var current = true
             val requested = java.util.Collections.synchronizedList(mutableListOf<Int>())
             val heard = mutableListOf<Int>()
-            oneAhead(listOf(1, 2, 3, 4), pool, { current }, { requested += it; it }) { heard += it; current = false }
-            pool.submit { }.get(5, TimeUnit.SECONDS)
+            oneAhead(listOf(1, 2, 3, 4), pool, { current }, { requested += it; it }) {
+                // Everything submitted so far has run before Stop arrives, so a request too many shows.
+                pool.submit { }.get(5, TimeUnit.SECONDS)
+                heard += it; current = false
+            }
             assertEquals("nothing plays after Stop", listOf(1), heard)
-            assertFalse("at most one chunk is requested ahead of the one playing", 3 in requested)
+            assertEquals("one chunk is requested ahead of the one playing, no more", listOf(1, 2), requested.toList())
+
+            var checks = 0
+            oneAhead(listOf(1, 2), pool, { checks++ == 0 }, { it }) { fail("played after a Stop that arrived during the request") }
         } finally { pool.shutdownNow() }
     }
     @Test fun wavIsValidatedBeforePlayback() {

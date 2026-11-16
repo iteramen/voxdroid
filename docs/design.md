@@ -532,7 +532,8 @@ speaker press, bounded to 600 foreground nodes; a second tap selects one refresh
 and playback are mutually exclusive with dictation/caption processing. Source/window changes
 invalidate them. One serial bounded worker plays validated PCM16 via `AudioTrack` under audio
 focus and a mediaPlayback foreground service. A second thread requests speech through
-`ReadAloud.kt` one chunk ahead of the one playing (`oneAhead`), so chunks follow without a pause. A
+`ReadAloud.kt` one chunk ahead of the one playing (`oneAhead`), so a chunk waits for its speech
+only when the server answers slower than the previous chunk plays. A
 generation fence discards late work after cancellation; no text/audio history is created.
 Content updates invalidate picker coordinates. During speech, an unrelated content update is
 allowed only while the original selected node still refreshes with matching text, bounds,
@@ -544,7 +545,9 @@ completion, cancellation or failure; manual screen-off remains cancellation.
 Settings and encrypted portable backup scaffold en/he/ru endpoints/voices and explicit TTS-token
 inheritance. English/default is configured first; HE/RU require real supported voices. Detection
 is dominant script per ≤500-code-point chunk, with a 20,000-code-point total limit. A chunk ends
-at a sentence end when its second half has one, otherwise at whitespace. All routes
+at the last of these its second half has, in this order: `.`, `!`, `?` or `;` followed by
+whitespace; a line break; any whitespace or one of those marks. With none it is cut at the limit
+(`ttsChunks`). All routes
 must resolve before network begins. See SECURITY.md for byte, duration and format limits.
 
 The TTS transport revalidates its endpoint before connection registration. Cancellation is

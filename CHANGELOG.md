@@ -6,9 +6,10 @@ build-provenance attestation are published from it on GitHub Releases.
 ## Unreleased
 
 Fixed
-- Read aloud no longer pauses between the parts of a long text: the speech for the next part is
-  requested while the current one plays, and a part ends at a sentence end rather than wherever
-  500 characters ran out.
+- Read aloud no longer waits for a part of a long text to finish playing before it requests the
+  speech for the next one, which left a silence at every boundary; a pause remains only when the
+  server answers slower than the part plays. A part now ends at a sentence end when there is one
+  in its second half, rather than at the last space before 500 characters.
 
 ## 0.6.0 — 2026-11-15
 
