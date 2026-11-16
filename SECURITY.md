@@ -512,8 +512,8 @@ One visible glyph window keeps the screen on during synthesis/playback only; idl
 completion and cancellation release that flag. Explicit screen-off still stops speech.
 
 Stop, dictation start, selected-view/app change,
-password focus, screen-off, audio-focus loss, settings change or destruction invalidates the
-request and stops playback. The transport watchdog disconnects obsolete I/O off the main thread
+password focus, screen-off, audio-focus loss (not a notification's request to duck), settings
+change or destruction invalidates the request and stops playback. The transport watchdog disconnects obsolete I/O off the main thread
 at 50 ms intervals, with a separate total deadline and generation checks before upload and after
 I/O. Cancellation during registration is checked before opening a stream. Late replies cannot
 play. Already-admitted network I/O may still reach or finish on the server; it cannot be recalled.

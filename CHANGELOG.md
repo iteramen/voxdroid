@@ -3,6 +3,13 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Fixed
+- A notification sound no longer stops read aloud. Android asks the playing app to lower its
+  volume for one, and read aloud took that as losing the audio. A call or another app's playback
+  still stops it.
+
 ## 0.6.1 — 2026-11-16
 
 Fixed
