@@ -7,6 +7,9 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Timer
 import java.util.TimerTask
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val TTS_MAX_TEXT = 20_000
@@ -69,13 +72,31 @@ internal fun ttsChunks(text: String): List<String> {
     while (rest.isNotEmpty()) {
         val boundary = rest.offsetByCodePoints(0, minOf(TTS_CHUNK, rest.codePointCount(0, rest.length)))
         val prefix = rest.substring(0, boundary)
-        val split = if (boundary == rest.length) boundary else prefix.indices.lastOrNull {
-            it >= boundary / 2 && (prefix[it].isWhitespace() || prefix[it] in ".!?;")
-        }?.plus(1) ?: boundary
+        fun last(fits: (Int) -> Boolean) = prefix.indices.lastOrNull { it >= boundary / 2 && fits(it) }
+        // A sentence end first: each chunk is its own utterance, so a cut inside a sentence is heard.
+        val split = if (boundary == rest.length) boundary
+            else (last { prefix[it] in ".!?;" && rest[it + 1].isWhitespace() } ?: last { prefix[it] == '\n' }
+                ?: last { prefix[it].isWhitespace() || prefix[it] in ".!?;" })?.plus(1) ?: boundary
         result += rest.substring(0, split).trim()
         rest = rest.substring(split).trimStart()
     }
     return result
+}
+
+/** Hands each result over in order while the next is already being produced, so nothing waits between them. */
+internal fun <T, R> oneAhead(items: List<T>, pool: ExecutorService, current: () -> Boolean,
+    produce: (T) -> R, consume: (R) -> Unit) {
+    fun start(index: Int) = items.getOrNull(index)?.let { item -> pool.submit(Callable { produce(item) }) }
+    var index = 0
+    var next = start(index)
+    try {
+        while (next != null && current()) {
+            val ready = try { next.get() } catch (failed: ExecutionException) { throw failed.cause ?: failed }
+            if (!current()) return
+            next = start(++index)
+            consume(ready)
+        }
+    } finally { next?.cancel(true) }
 }
 
 internal class SpeechPcm(val samples: ShortArray, val sampleRate: Int, val channels: Int)

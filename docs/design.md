@@ -530,8 +530,10 @@ and changing between own and external windows rebuilds the visible controls. No 
 trigger is introduced. Read-only blocks are discovered only on a
 speaker press, bounded to 600 foreground nodes; a second tap selects one refreshed block. Picker
 and playback are mutually exclusive with dictation/caption processing. Source/window changes
-invalidate them. One serial bounded worker requests speech through `ReadAloud.kt`, then plays
-validated PCM16 via `AudioTrack` under audio focus and a mediaPlayback foreground service. A
+invalidate them. One serial bounded worker plays validated PCM16 via `AudioTrack` under audio
+focus and a mediaPlayback foreground service. A second thread requests speech through
+`ReadAloud.kt` one chunk ahead of the one playing (`oneAhead`), so a chunk waits for its speech
+only when the server answers slower than the previous chunk plays. A
 generation fence discards late work after cancellation; no text/audio history is created.
 Content updates invalidate picker coordinates. During speech, an unrelated content update is
 allowed only while the original selected node still refreshes with matching text, bounds,
@@ -542,7 +544,10 @@ completion, cancellation or failure; manual screen-off remains cancellation.
 
 Settings and encrypted portable backup scaffold en/he/ru endpoints/voices and explicit TTS-token
 inheritance. English/default is configured first; HE/RU require real supported voices. Detection
-is dominant script per ≤500-code-point chunk, with a 20,000-code-point total limit. All routes
+is dominant script per ≤500-code-point chunk, with a 20,000-code-point total limit. A chunk ends
+at the last of these its second half has, in this order: `.`, `!`, `?` or `;` followed by
+whitespace; a line break; any whitespace or one of those marks. With none it is cut at the limit
+(`ttsChunks`). All routes
 must resolve before network begins. See SECURITY.md for byte, duration and format limits.
 
 The TTS transport revalidates its endpoint before connection registration. Cancellation is
@@ -550,7 +555,8 @@ checked after registration, before upload, during response reads and before retu
 watchdog polls the captured generation every 50 ms and disconnects blocked I/O off the main
 thread. The total deadline also marks expiration so later phases cannot restart transport after
 timeout. The controller cancels playback immediately and leaves transport teardown to that
-watchdog; network I/O already admitted before cancellation cannot be recalled from the server.
+watchdog; network I/O already admitted before cancellation, including the chunk requested ahead,
+cannot be recalled from the server.
 
 ### Incomplete cleanup responses
 

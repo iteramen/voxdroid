@@ -502,7 +502,8 @@ upload. Replies are bounded to 12 MiB, PCM16 WAV,
 mono/stereo, 8–48 kHz and 120 seconds per chunk. Kokoro's streaming RIFF/data length sentinels are
 completed only from the already bounded body; arbitrary truncation/oversize is rejected.
 
-One worker and one pending slot bound queued text. While speaking, a content update may continue
+One worker and one pending slot bound queued text. Speech for at most one chunk is requested ahead
+of the chunk being played; a Stop cannot recall that request from the server. While speaking, a content update may continue
 only if the originally chosen node refreshes and still has identical text/bounds, the original
 package/window, and remains visible, read-only and non-password. No replacement node is searched
 for. The chosen-node reference and comparison text are cleared on cancellation/completion. Picker content changes

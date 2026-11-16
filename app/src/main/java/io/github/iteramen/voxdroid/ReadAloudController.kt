@@ -26,6 +26,7 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Toast
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -35,6 +36,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     private val mic: () -> Unit, private val beginMedia: () -> Unit, private val endMedia: () -> Unit) {
     private val main = Handler(Looper.getMainLooper())
     private val worker = ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, ArrayBlockingQueue(1))
+    private val ahead = Executors.newSingleThreadExecutor()
     private val windows = service.getSystemService(WindowManager::class.java)
     private val audio = service.getSystemService(AudioManager::class.java)
     private val prefs = ReadAloudSettings(service)
@@ -275,13 +277,10 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         worker.queue.clear()
         worker.execute {
             try {
-                for ((chunk, endpoint) in prepared) {
-                    if (generation.get() != id) break
-                    val pcm = ttsSynthesize(config, endpoint, chunk, { generation.get() == id }, {})
-                    if (generation.get() != id) break
+                oneAhead(prepared, ahead, { generation.get() == id },
+                    { (chunk, endpoint) -> ttsSynthesize(config, endpoint, chunk, { generation.get() == id }, {}) }) { pcm ->
                     synchronized(lock) {
-                        if (generation.get() != id) return@execute
-                        if (!focused) {
+                        if (generation.get() == id && !focused) {
                             if (audio.requestAudioFocus(focus) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) throw TtsFailure("Read aloud: audio output is busy")
                             focused = true
                         }
@@ -329,7 +328,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         sourcePackage = null; sourceWindow = -1
     }
     fun screenOff() { cancel(); hideGlyph() }
-    fun destroy() { screenOff(); worker.shutdownNow() }
+    fun destroy() { screenOff(); worker.shutdownNow(); ahead.shutdownNow() }
     /** Called only from the isolated debug package's service dump: no text, endpoints, tokens or app identity. */
     fun diagnostics(out: java.io.PrintWriter) {
         val playing = synchronized(lock) { track?.playState == AudioTrack.PLAYSTATE_PLAYING }
