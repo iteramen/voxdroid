@@ -6,6 +6,7 @@ import org.json.JSONObject
 import java.net.ServerSocket
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 
@@ -59,6 +60,38 @@ class ReadAloudTest {
         assertTrue(parts.all { it.codePointCount(0, it.length) <= TTS_CHUNK })
         assertEquals(input.trim().split(Regex("\\s+")), parts.joinToString(" ").split(Regex("\\s+")))
         refuses { ttsChunks("") }; refuses { ttsChunks("a".repeat(TTS_MAX_TEXT + 1)) }
+    }
+    @Test fun aLongSelectionIsCutAtSentenceEndsNotInsideThem() {
+        val sentence = "This sentence has 3.14 reasons to stay whole, and it runs on for a while. "
+        val parts = ttsChunks(sentence.repeat(30))
+        assertTrue(parts.size > 1)
+        assertTrue(parts.all { it.codePointCount(0, it.length) <= TTS_CHUNK })
+        assertEquals(parts.joinToString("\n"), emptyList<String>(), parts.filterNot { it.endsWith("while.") })
+        val unpunctuated = ttsChunks("word ".repeat(300))
+        assertTrue(unpunctuated.all { it.endsWith("word") && it.codePointCount(0, it.length) <= TTS_CHUNK })
+    }
+    @Test fun theNextChunkIsRequestedWhileTheCurrentOnePlays() {
+        val pool = java.util.concurrent.Executors.newSingleThreadExecutor()
+        try {
+            val second = java.util.concurrent.CountDownLatch(1)
+            val played = mutableListOf<String>()
+            oneAhead(listOf(1, 2, 3), pool, { true }, { if (it == 2) second.countDown(); "pcm$it" }) {
+                if (it == "pcm1") assertTrue("the second request starts during the first playback", second.await(5, TimeUnit.SECONDS))
+                played += it
+            }
+            assertEquals(listOf("pcm1", "pcm2", "pcm3"), played)
+
+            val failure = refuses { oneAhead(listOf(1, 2), pool, { true }, { if (it == 2) throw TtsFailure("synthetic refusal") else it }) { } }
+            assertEquals("the server's refusal reaches the user as itself", "synthetic refusal", failure.userMessage)
+
+            var current = true
+            val requested = java.util.Collections.synchronizedList(mutableListOf<Int>())
+            val heard = mutableListOf<Int>()
+            oneAhead(listOf(1, 2, 3, 4), pool, { current }, { requested += it; it }) { heard += it; current = false }
+            pool.submit { }.get(5, TimeUnit.SECONDS)
+            assertEquals("nothing plays after Stop", listOf(1), heard)
+            assertFalse("at most one chunk is requested ahead of the one playing", 3 in requested)
+        } finally { pool.shutdownNow() }
     }
     @Test fun wavIsValidatedBeforePlayback() {
         val audio = ttsWav(wav())

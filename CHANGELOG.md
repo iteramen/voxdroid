@@ -3,6 +3,13 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Fixed
+- Read aloud no longer pauses between the parts of a long text: the speech for the next part is
+  requested while the current one plays, and a part ends at a sentence end rather than wherever
+  500 characters ran out.
+
 ## 0.6.0 — 2026-11-15
 
 Added
