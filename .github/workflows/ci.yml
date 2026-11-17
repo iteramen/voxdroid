@@ -21,7 +21,7 @@ jobs:
           persist-credentials: false
 
       - name: Gates from the binding
-        uses: iteramen/ouro/actions/gates@fd03b25d410e4c5c5f49894fb475d2f61076d673 # v1.11.2
+        uses: iteramen/ouro/actions/gates@ce5db018ed696db99cfafb2c47f36a495fb0088e # v1.11.3
 
       - name: Handset test-helper checks (synthetic data only)
         run: python3 -m unittest discover -s tools -p 'test_caption_test_*.py'
