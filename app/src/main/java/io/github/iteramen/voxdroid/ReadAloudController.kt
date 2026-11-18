@@ -208,7 +208,8 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     }
 
     private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null; glyphParams = null; glyphContext = null; glyphSpace = null }
-    private fun hidePicker() { picker?.let { runCatching { windows.removeView(it) } }; picker = null; choices = emptyList() }
+    // Only a picker that was up withdraws the pill: it holds the pick hint, never a failure notice posted around a cancel.
+    private fun hidePicker() { picker?.let { runCatching { windows.removeView(it) }; noticePill.hide() }; picker = null; choices = emptyList() }
 
     private class Choice(val node: AccessibilityNodeInfo, val bounds: Rect)
 
