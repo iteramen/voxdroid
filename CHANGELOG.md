@@ -3,12 +3,16 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
-## Unreleased
+## 0.6.5 — 2026-11-19
 
 Fixed
 - Read aloud's notices are visible again. They were toasts from the service, which Android drops
   for an app that may not post notifications, so a refusal such as a missing server address showed
   nothing. They now appear on a pill over the app in front.
+- Read aloud's *pick the text* hint goes away when the picker closes. It used to stay for the rest
+  of its four seconds, over the text being read.
+- A microphone that refuses to start recording is released at once. It used to stay allocated
+  until Android reclaimed it.
 
 Removed
 - The Stop action on read aloud's notification. voxdroid does not ask for the notification
