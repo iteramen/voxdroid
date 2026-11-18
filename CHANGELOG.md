@@ -3,7 +3,7 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
-## Unreleased
+## 0.6.3 — 2026-11-18
 
 Added
 - Android's accessibility button is back as a way to dictate. Since 0.4.0 voxdroid no longer asked

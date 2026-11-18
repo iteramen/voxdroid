@@ -1,6 +1,6 @@
 # Privacy policy — voxdroid
 
-**Effective: 2026-11-16.**
+**Effective: 2026-11-18.**
 
 voxdroid is an Android accessibility service that dictates into the text field you are typing in,
 with your own keyboard staying up. You hold volume-down or tap the floating 🎤 control, speak,
