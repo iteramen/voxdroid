@@ -2,6 +2,7 @@ package io.github.iteramen.voxdroid
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -38,6 +39,35 @@ class RecorderTest {
         startOrRelease({}, { releases++ })
 
         assertEquals(0, releases)
+    }
+
+    /** The recorder itself, not only the helper: a refused start releases that microphone, and nothing is left capturing. */
+    @Test
+    fun aRecorderWhoseMicrophoneRefusesToStartReleasesItAndCapturesNothing() {
+        var starts = 0
+        var stops = 0
+        var releases = 0
+        val recorder = AudioRecorder {
+            object : Mic {
+                override val bufferBytes = 16
+                override fun startRecording() {
+                    starts++
+                    throw IllegalStateException("startRecording() called on an uninitialized AudioRecord.")
+                }
+                override fun read(buffer: ByteArray) = -1
+                override fun stop() { stops++ }
+                override fun release() { releases++ }
+            }
+        }
+
+        assertThrows(IllegalStateException::class.java) { recorder.start() }
+
+        assertEquals(1, starts)
+        assertEquals(1, releases)
+        assertFalse(recorder.capturing)
+        assertEquals(HEADER, recorder.stop().size)
+        assertEquals(0, stops)
+        assertEquals(1, releases)
     }
 
     @Test
