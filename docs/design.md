@@ -546,7 +546,9 @@ and changing between own and external windows rebuilds the visible controls. No 
 trigger is introduced. Read-only blocks are discovered only on a
 speaker press, bounded to 600 foreground nodes; a second tap selects one refreshed block. Picker
 and playback are mutually exclusive with dictation/caption processing. Source/window changes
-invalidate them. One serial bounded worker plays validated PCM16 via `AudioTrack` under audio
+invalidate them, except System UI's notification shade (`readAloudSourceHeld`): a narration keeps
+speaking under the open shade so its notification's Stop can be tapped. Another app's window
+still cancels, and the lock screen hides the controls and cancels before this check. One serial bounded worker plays validated PCM16 via `AudioTrack` under audio
 focus and a mediaPlayback foreground service. A second thread requests speech through
 `ReadAloud.kt` one chunk ahead of the one playing (`oneAhead`), so a chunk waits for its speech
 only when the server answers slower than the previous chunk plays. A

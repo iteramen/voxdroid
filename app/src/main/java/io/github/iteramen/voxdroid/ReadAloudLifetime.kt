@@ -16,6 +16,13 @@ internal fun readAloudInvalidated(
     else -> false
 })
 
+/**
+ * The source still holds while the active window is its own, or System UI's notification shade over
+ * it, so the narration's notification Stop stays reachable. The lock screen never gets here.
+ */
+internal fun readAloudSourceHeld(rootWindow: Int, rootPackage: String?, sourceWindow: Int, sourcePackage: String?): Boolean =
+    rootPackage == "com.android.systemui" || (rootWindow == sourceWindow && rootPackage == sourcePackage)
+
 /** A notification sound asks only to duck; speech plays on beneath it. */
 internal fun readAloudStopsOnFocusChange(change: Int): Boolean =
     change == AudioManager.AUDIOFOCUS_LOSS || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT

@@ -78,7 +78,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
             return
         }
         if (busy) {
-            val sameSource = root != null && root.windowId == sourceWindow && root.packageName?.toString() == sourcePackage
+            val sameSource = root != null && readAloudSourceHeld(root.windowId, root.packageName?.toString(), sourceWindow, sourcePackage)
             val invalid = readAloudInvalidated(
                 sameSource,
                 event != null && event.packageName?.toString() == sourcePackage, event?.eventType,
