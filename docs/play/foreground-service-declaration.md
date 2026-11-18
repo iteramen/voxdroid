@@ -9,7 +9,7 @@ requires a description, user impact and a video for each used service type.
 
 **Use:** user-initiated dictation into a focused field while the user's chosen
 keyboard/app remains visible. Holding Volume Down or tapping the floating
-microphone starts recording; a second press/tap or the pill's Stop ends it.
+microphone (or Android's accessibility button, if the user chose it) starts recording; a second press/tap or the pill's Stop ends it.
 
 **Why immediate/continuous:** deferring recording loses the words the user
 expects to dictate; interrupting capture loses part of the take. The recording

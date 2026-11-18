@@ -13,4 +13,4 @@ labels: bug
 - voxdroid version (the main screen's title row):
 - Android version and phone model:
 - Keyboard app:
-- Trigger: volume-down hold or accessibility button
+- Trigger: volume-down hold, floating 🎤 control or Android's accessibility button

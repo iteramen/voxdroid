@@ -10,7 +10,7 @@ class ConfigBackupTest {
         "stt_timeout_s" to 30, "no_speech_threshold" to 0.3f, "polish_enabled" to true,
         "chip_languages" to "he,en", "lane_inherit_token_he" to false,
         "lane_base_url_he" to "https://lane.invalid/v1", "explicit_he" to true,
-        "stt_prompt" to "שלום\nfixture", "no_field_mode" to "clipboard"),
+        "stt_prompt" to "שלום\nfixture", "no_field_mode" to "clipboard", "tap_trigger" to "accessibility_button"),
         mapOf("stt_token" to "synthetic-stt", "polish_token" to "synthetic-cleanup", "lane_token_he" to "synthetic-lane"))
 
     @Test fun portableRoundTripPreservesTypesUnicodeAndEveryToken() {
@@ -66,7 +66,7 @@ class ConfigBackupTest {
         for ((key, value) in listOf("stt_timeout_s" to "30", "stt_token" to "token-in-wrong-file",
             "voice_captions" to true, "remember_voice_messages" to true, "unknown" to "value",
             "volume_hold_ms" to 100, "cue_volume" to 101, "no_speech_threshold" to Float.NaN,
-            "no_field_mode" to "send", "lane_base_url_../../file" to "bad")) {
+            "no_field_mode" to "send", "tap_trigger" to "both", "lane_base_url_../../file" to "bad")) {
             reject { ConfigBackup.encrypt(ConfigSnapshot(mapOf(key to value), emptyMap()), password) }
         }
         reject { ConfigBackup.encrypt(ConfigSnapshot(emptyMap(), mapOf("stt_base_url" to "bad")), password) }

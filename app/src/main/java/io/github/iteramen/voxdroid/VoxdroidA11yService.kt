@@ -57,13 +57,13 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     private var buttonClicks = 0
     private val captionPrefs = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "voice_captions") captions?.preferencesChanged()
-        if (key?.startsWith("tts_") == true || key == "trigger_button") readAloud?.preferencesChanged()
+        if (key?.startsWith("tts_") == true || key == "trigger_button" || key == "tap_trigger") readAloud?.preferencesChanged()
     }
 
     private val button = object : AccessibilityButtonController.AccessibilityButtonCallback() {
         override fun onClicked(controller: AccessibilityButtonController) {
             if (BuildConfig.DEBUG) buttonClicks++
-            buttonAction()
+            buttonAction(TapTrigger.AccessibilityButton)
         }
     }
 
@@ -451,8 +451,8 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         startForeground(NOTIFICATION_ID, note, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
     }
 
-    private fun buttonAction() {
-        if (!settings.triggerButton) return
+    private fun buttonAction(from: TapTrigger = TapTrigger.Floating) {
+        if (settings.tapTrigger != from) return
         readAloud?.cancel()
         if (machine.state == TakeState.Idle && captions?.trigger() == true) return
         dispatch(TakeEvent.Trigger)

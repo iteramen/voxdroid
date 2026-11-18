@@ -18,6 +18,19 @@ internal fun cueVolume(stored: Int): Int = stored.coerceIn(0, 100)
 
 internal const val ALLOW_INSECURE_HTTP_DEFAULT = false
 
+/** The on-screen control a tap dictates with. Android's button also needs voxdroid's shortcut on in Accessibility settings. */
+enum class TapTrigger(val stored: String) {
+    Floating("floating"),
+    AccessibilityButton("accessibility_button"),
+    None("none");
+
+    companion object {
+        /** Before this choice existed, `trigger_button` switched the floating control on or off. */
+        fun parse(raw: String?, legacySwitch: Boolean): TapTrigger =
+            entries.firstOrNull { it.stored == raw } ?: if (legacySwitch) Floating else None
+    }
+}
+
 /** Two app-private files: `voxdroid`, and `secrets` for the tokens and the disclosed opt-ins ([isConsent]), the file `android:dataExtractionRules` keeps off a backup. */
 class Settings(context: Context) {
 
@@ -57,7 +70,7 @@ class Settings(context: Context) {
 
     val triggerVolume: Boolean get() = prefs.getBoolean("trigger_volume", true)
 
-    val triggerButton: Boolean get() = prefs.getBoolean("trigger_button", true)
+    val tapTrigger: TapTrigger get() = TapTrigger.parse(prefs.getString("tap_trigger", null), prefs.getBoolean("trigger_button", true))
 
     /** Explicit opt-in before observing foreground conversation metadata for private captions. */
     val voiceCaptions: Boolean get() = secrets.getBoolean("voice_captions", false)

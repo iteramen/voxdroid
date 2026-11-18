@@ -41,6 +41,16 @@ class ManifestTest {
     }
 
     @Test
+    fun androidsAccessibilityButtonIsOfferedBesideTheFloatingControl() {
+        val file = sequenceOf("src/main/res/xml/a11y_entry.xml", "app/src/main/res/xml/a11y_entry.xml")
+            .map(::File).first(File::exists)
+        val service = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(file).documentElement
+        assertTrue("Without the request Android never calls the button callback, and a shortcut toggles the service instead",
+            "flagRequestAccessibilityButton" in service.getAttributeNS(ANDROID_NS, "accessibilityFlags").split('|'))
+    }
+
+    @Test
     fun theCaptionReceiverIsAnExplicitSingleAudioShareSurface() {
         val document = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
             .newDocumentBuilder().parse(manifestFile())

@@ -5,7 +5,11 @@
     <string name="settings_trigger_volume">Hold volume-down</string>
     <string name="settings_trigger_volume_summary">A hold starts dictation, a press stops it. While on, holding volume-down no longer lowers the volume continuously.</string>
     <string name="settings_trigger_button">Floating 🎤 control</string>
-    <string name="settings_trigger_button_summary">A tap starts and stops dictation.</string>
+    <string name="settings_tap_trigger">Tap to start and stop dictation with</string>
+    <string name="settings_tap_trigger_floating_summary">voxdroid\'s own control, over other apps; drag it anywhere</string>
+    <string name="settings_tap_trigger_accessibility_button">Android\'s accessibility button</string>
+    <string name="settings_tap_trigger_accessibility_button_summary">Also turn on the voxdroid shortcut in Android\'s Accessibility settings</string>
+    <string name="settings_tap_trigger_none">Nothing on screen</string>
     <string name="settings_allow_during_call">Dictate during a call</string>
     <string name="settings_allow_during_call_summary">While off, a take is refused during a call.</string>
     <string name="settings_haptic_cues">Vibrate on start and done</string>
@@ -127,7 +131,7 @@
     <string name="section_cleanup">Cleanup</string>
     <string name="section_languages">Languages</string>
     <string name="section_speech_summary">Endpoint, token, model</string>
-    <string name="section_triggers_summary">Volume-down hold, floating 🎤 control</string>
+    <string name="section_triggers_summary">Volume-down hold, tap control</string>
     <string name="section_delivery_summary">No text field, or the field changed</string>
     <string name="section_cleanup_summary">The cleanup pass and its endpoint</string>
     <string name="section_languages_summary">Your languages, Gboard\'s language, lanes</string>

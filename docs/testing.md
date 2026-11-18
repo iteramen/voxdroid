@@ -469,6 +469,15 @@ does both from the status card's **Turn on**.
 - [ ] a quick volume-down press while idle lowers the volume and starts nothing; holding it with
       media playing starts dictation instead of lowering the volume continuously
 - [ ] tap the accessibility button, speak, tap it again: same as above
+- [ ] Triggers page, tap control: an install upgraded from 0.6.2 with *Floating 🎤 control* on
+      shows **Floating 🎤 control** chosen, and one with it off shows **Nothing on screen**
+- [ ] choose **Android's accessibility button** and turn on the voxdroid shortcut in Android's
+      Accessibility settings: Android shows its button (navigation bar or floating, per the phone);
+      a tap starts and a second tap stops a take; the floating 🎤 is gone (🔊 stays while read
+      aloud is on); the status card's triggers line names the accessibility button
+- [ ] choose **Floating 🎤 control** with the voxdroid shortcut still on: a tap on Android's button
+      starts nothing; the 🎤 dictates
+- [ ] choose **Nothing on screen**: neither starts a take; volume-down still does
 - [ ] the same in Keep and in one Compose field (Google Messages)
 - [ ] force-stop ChatGPT, open it and tap its text box, then trigger at once: it records, no
       `no text field`

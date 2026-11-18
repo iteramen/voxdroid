@@ -241,7 +241,11 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun triggersLine(): String = listOfNotNull(
         getString(R.string.settings_trigger_volume).takeIf { settings.triggerVolume },
-        getString(R.string.settings_trigger_button).takeIf { settings.triggerButton },
+        when (settings.tapTrigger) {
+            TapTrigger.Floating -> getString(R.string.settings_trigger_button)
+            TapTrigger.AccessibilityButton -> getString(R.string.settings_tap_trigger_accessibility_button)
+            TapTrigger.None -> null
+        },
     ).joinToString(" · ").ifEmpty { getString(R.string.status_no_triggers) }
 
     /** A boolean theme attribute, true when the theme does not set it (the Context overloads' default). */

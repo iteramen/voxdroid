@@ -48,7 +48,9 @@ Open voxdroid. The status card at the top lists what is still missing, and its b
 first item:
 
 1. **Turn on the service.** The button opens Android's Accessibility settings; turn voxdroid on
-   there. The floating 🎤 control appears outside Voxdroid settings; its trigger can be disabled separately.
+   there. The floating 🎤 control appears outside Voxdroid settings. On the Triggers page you can
+   tap Android's accessibility button instead, or have nothing on screen; the accessibility button
+   also needs the voxdroid shortcut on in Android's Accessibility settings.
 2. **Grant the microphone.**
 3. **Speech:** the STT endpoint (the base URL; voxdroid appends `/audio/transcriptions` itself),
    a bearer token if your server needs one, the model name (sent as `model`; whisper.cpp ignores
@@ -71,9 +73,9 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 ## Dictate
 
 - **Start:** hold volume-down (500 ms by default, at least 300; Triggers page) or tap the
-  floating 🎤 control. Recording starts once the start tone has played (at once with tones off)
+  floating 🎤 control (or Android's accessibility button, if you chose it). Recording starts once the start tone has played (at once with tones off)
   and the pill appears above the keyboard with a red dot and a timer. A quick volume-down press while idle still lowers the volume.
-- **Stop:** press volume-down, tap the floating 🎤 control again, or tap **■ Stop** on the pill.
+- **Stop:** press volume-down, tap the floating 🎤 control or the accessibility button again, or tap **■ Stop** on the pill.
   There is no silence timeout: pause to think as long as you like. A take stops itself at five
   minutes and is transcribed.
 - **Discard:** tap **✕** while recording. Turning the screen off abandons the take at any stage.

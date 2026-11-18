@@ -3,6 +3,16 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Added
+- Android's accessibility button is back as a way to dictate. Since 0.4.0 voxdroid no longer asked
+  Android for it, so a voxdroid shortcut set up under 0.3.0 did nothing. The Triggers page now
+  offers one tap control out of three: the floating 🎤 control, Android's accessibility button
+  (turn on the voxdroid shortcut in Android's Accessibility settings too), or nothing on screen. A
+  tap does the same as before on either. The *Floating 🎤 control* switch becomes this choice: on
+  reads as the floating control, off as nothing on screen.
+
 ## 0.6.2 — 2026-11-16
 
 Fixed

@@ -134,8 +134,14 @@ or replace the recording/error pill. Caption cancellation and service destructio
   event is consumed and every other key returns `false`. A hold of `volume_hold_ms` (default 500,
   floor 300) starts a take; a press while recording stops it on key-down; a short press otherwise
   is re-applied as one volume step (`adjustSuggestedStreamVolume`); key repeats are swallowed.
-- **Floating 🎤 control** (`ReadAloudController`, retaining the legacy `AccessibilityButtonCallback.onClicked` callback): a tap is a Trigger.
-- Both can be switched off (`trigger_volume`, `trigger_button`); the status card lists the ones on.
+- **Tap control** (`tap_trigger`, `TapTrigger`), one of three: the **floating 🎤 control**
+  (`ReadAloudController`), **Android's accessibility button** (`flagRequestAccessibilityButton`,
+  `AccessibilityButtonCallback.onClicked`; Android shows it once the user turns on the voxdroid
+  shortcut in Accessibility settings), or none. A tap on the chosen one is a Trigger; a tap on the
+  other does nothing. An install from before the choice keeps its old switch: `trigger_button` on
+  reads as the floating control, off as none.
+- The volume-down hold can be switched off (`trigger_volume`) and the tap control set to none; the
+  status card lists the triggers on.
 
 The pill (`Pill.kt`) is a `TYPE_ACCESSIBILITY_OVERLAY` that never takes focus. Recording: red
 dot, elapsed time, **■ Stop**, **✕**. Working: `stt…` or `polish…`, no ✕. Error: the stage's bar

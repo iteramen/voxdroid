@@ -22,7 +22,7 @@ internal object ConfigBackup {
     private const val VERSION = 1
     private const val HEADER_SIZE = 40 // magic, version, work factor, salt, nonce
     private val text = setOf("stt_base_url", "stt_model", "stt_prompt", "polish_base_url", "polish_model",
-        "chip_languages", "no_field_mode") + TTS_LANGUAGES.flatMap { listOf("tts_url_$it", "tts_model_$it", "tts_voice_$it") }
+        "chip_languages", "no_field_mode", "tap_trigger") + TTS_LANGUAGES.flatMap { listOf("tts_url_$it", "tts_model_$it", "tts_voice_$it") }
     private val flags = setOf("allow_insecure_http", "polish_enabled", "capitalize_first_word", "strip_terminal_period",
         "trigger_volume", "trigger_button", "allow_during_call", "haptic_cues", "audio_cues", "tts_inherit_token_he", "tts_inherit_token_ru",
         "read_anchor_right", "read_anchor_bottom")
@@ -65,6 +65,7 @@ internal object ConfigBackup {
                     key == "tts_speed" -> require(value is Float && value.isFinite() && value in 0.25f..4f)
                 }
                 if (key == "no_field_mode") require(value in setOf("refuse", "clipboard"))
+                if (key == "tap_trigger") require(TapTrigger.entries.any { it.stored == value })
             }
         }
     }
