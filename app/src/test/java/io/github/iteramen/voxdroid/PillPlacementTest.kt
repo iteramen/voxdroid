@@ -42,6 +42,13 @@ class PillPlacementTest {
     }
 
     @Test
+    fun withNoKeyboardThePillRestsOnTheNavigationBar() {
+        val bar = 126
+        assertEquals(h - bar - margin - ph, place(null, ph, h, restingLine(null, h, bar), margin))
+        assertEquals(1500, restingLine(keyboardTop = 1500, screenH = h, navigationBar = bar))
+    }
+
+    @Test
     fun thePillNeverLeavesTheScreen() {
         val far = Saved(aboveKeyboard = 9000)
         assertEquals(0, place(far, ph, h, keyboardTop = 1500, margin = margin))

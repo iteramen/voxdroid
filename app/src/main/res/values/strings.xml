@@ -154,6 +154,7 @@
     <string name="status_label_keyboard">Keyboard</string>
     <string name="status_label_triggers">Triggers</string>
     <string name="status_problem_service">service off — turn on voxdroid in Accessibility settings</string>
+    <string name="status_problem_button_on_service">Android\'s accessibility button switches voxdroid off — in Accessibility settings, turn off the shortcut on voxdroid itself; only \"voxdroid button\" takes one</string>
     <string name="status_problem_microphone">microphone not granted</string>
     <string name="status_problem_endpoint_unset">no STT endpoint set</string>
     <string name="status_problem_endpoint_blocked">plain http is off: use https:// or turn on Allow insecure (http) endpoints</string>

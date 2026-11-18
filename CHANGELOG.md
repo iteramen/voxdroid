@@ -3,6 +3,18 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Fixed
+- The pill no longer covers Android's navigation bar. With no keyboard up it sat at the bottom
+  edge of the screen: on a three-button bar that is over Back, Home and Recents, and a long notice
+  also covered Android's accessibility button, so taps meant for them landed on the pill. It now
+  rests just above the bar.
+- The status card warns when Android's accessibility button is assigned to voxdroid itself instead
+  of to voxdroid button: a shortcut left over from 0.3.0, or one put on the wrong entry. Android
+  then switches voxdroid off and on with each tap, or asks which of the two to use. The card names
+  the shortcut to turn off and opens Accessibility settings.
+
 ## 0.6.3 — 2026-11-18
 
 Added

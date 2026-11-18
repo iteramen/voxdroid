@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.util.AttributeSet
 import android.view.accessibility.AccessibilityWindowInfo
@@ -154,10 +155,14 @@ class Pill(
         return v
     }
 
+    private fun restingLine(): Int = with(windows.currentWindowMetrics) {
+        restingLine(keyboardTop(), bounds.height(), windowInsets.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars()).bottom)
+    }
+
     private fun topFor(v: View): Int {
         return place(
             settings.pillSaved, v.measuredHeight,
-            windows.currentWindowMetrics.bounds.height(), keyboardTop(),
+            windows.currentWindowMetrics.bounds.height(), restingLine(),
             margin = (MARGIN_DP * service.resources.displayMetrics.density).toInt(),
         )
     }
@@ -169,7 +174,7 @@ class Pill(
             p.y = originY + dy.toInt()
             windows.updateViewLayout(v, p)
             if (ended) {
-                settings.pillSaved = remember(p.y, v.height, windows.currentWindowMetrics.bounds.height(), keyboardTop())
+                settings.pillSaved = remember(p.y, v.height, windows.currentWindowMetrics.bounds.height(), restingLine())
             }
         }
     }

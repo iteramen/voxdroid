@@ -6,6 +6,15 @@ import org.junit.Test
 class ReadinessTest {
 
     @Test
+    fun androidsButtonOnTheDictationServiceIsAProblem() {
+        assertEquals(listOf(Problem.ButtonSwitchesService), problems(true, true, true, Probe.Reachable(48), false, buttonOnService = true))
+        assertEquals(
+            listOf(Problem.ServiceOff, Problem.ButtonSwitchesService),
+            problems(false, true, true, Probe.Reachable(48), false, buttonOnService = true),
+        )
+    }
+
+    @Test
     fun onlyTheDictationServiceCountsAsOn() {
         val pkg = "io.github.iteramen.voxdroid"
         assertEquals(true, dictationServiceOn("other/.X:${serviceComponent(pkg)}", pkg))
