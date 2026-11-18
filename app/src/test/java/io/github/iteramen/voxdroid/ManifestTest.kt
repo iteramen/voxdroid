@@ -41,6 +41,27 @@ class ManifestTest {
     }
 
     @Test
+    fun onlyTheSeparateButtonServiceAsksForAndroidsAccessibilityButton() {
+        fun config(name: String) = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }.newDocumentBuilder()
+            .parse(sequenceOf("src/main/res/xml/$name.xml", "app/src/main/res/xml/$name.xml").map(::File).first(File::exists))
+            .documentElement
+        fun flags(name: String) = config(name).getAttributeNS(ANDROID_NS, "accessibilityFlags").split('|')
+        assertTrue("A service that asks for the button can only be on while Android shows it, so upgrades would put it on every screen",
+            "flagRequestAccessibilityButton" !in flags("a11y_entry"))
+        assertEquals(listOf("flagRequestAccessibilityButton"), flags("a11y_button"))
+        val button = config("a11y_button")
+        assertEquals("", button.getAttributeNS(ANDROID_NS, "canRetrieveWindowContent"))
+        assertEquals("", button.getAttributeNS(ANDROID_NS, "canRequestFilterKeyEvents"))
+        assertEquals("", button.getAttributeNS(ANDROID_NS, "accessibilityEventTypes"))
+        val services = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(manifestFile()).getElementsByTagName("service")
+        val declared = (0 until services.length).map { services.item(it) as Element }
+            .single { it.getAttributeNS(ANDROID_NS, "name") == ".ButtonService" }
+        assertEquals("android.permission.BIND_ACCESSIBILITY_SERVICE", declared.getAttributeNS(ANDROID_NS, "permission"))
+        assertEquals("@xml/a11y_button", (declared.getElementsByTagName("meta-data").item(0) as Element).getAttributeNS(ANDROID_NS, "resource"))
+    }
+
+    @Test
     fun theCaptionReceiverIsAnExplicitSingleAudioShareSurface() {
         val document = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
             .newDocumentBuilder().parse(manifestFile())

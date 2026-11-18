@@ -75,12 +75,14 @@ android {
                 applicationIdSuffix = ".captiontest"
                 versionNameSuffix = "-caption-test"
                 resValue("string", "app_name", "Voxdroid Caption Test")
+                resValue("string", "a11y_button_label", "Voxdroid Caption Test button")
             }
             if (providers.gradleProperty("readAloudTest").orNull == "true") {
                 check(providers.gradleProperty("captionTest").orNull != "true") { "Choose one isolated handset package" }
                 applicationIdSuffix = ".readaloudtest"
                 versionNameSuffix = "-read-aloud-test"
                 resValue("string", "app_name", "Voxdroid Read Aloud Test")
+                resValue("string", "a11y_button_label", "Voxdroid Read Aloud Test button")
             }
         }
         release {

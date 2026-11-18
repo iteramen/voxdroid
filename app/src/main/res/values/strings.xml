@@ -5,7 +5,13 @@
     <string name="settings_trigger_volume">Hold volume-down</string>
     <string name="settings_trigger_volume_summary">A hold starts dictation, a press stops it. While on, holding volume-down no longer lowers the volume continuously.</string>
     <string name="settings_trigger_button">Floating 🎤 control</string>
-    <string name="settings_trigger_button_summary">A tap starts and stops dictation.</string>
+    <string name="settings_tap_trigger">Tap to start and stop dictation with</string>
+    <string name="settings_tap_trigger_floating_summary">voxdroid\'s own control, over other apps; drag it anywhere</string>
+    <string name="settings_tap_trigger_accessibility_button">Accessibility button</string>
+    <string name="settings_tap_trigger_accessibility_button_summary">Android\'s own button. Also turn on \"voxdroid button\" in Android\'s Accessibility settings</string>
+    <string name="a11y_button_label">voxdroid button</string>
+    <string name="a11y_button_description">Puts Android\'s accessibility button on screen for voxdroid. A tap starts or stops dictation when the accessibility button is chosen on voxdroid\'s Triggers page, with voxdroid itself turned on. This service reads nothing on screen and receives no keys.</string>
+    <string name="settings_tap_trigger_none">Nothing on screen</string>
     <string name="settings_allow_during_call">Dictate during a call</string>
     <string name="settings_allow_during_call_summary">While off, a take is refused during a call.</string>
     <string name="settings_haptic_cues">Vibrate on start and done</string>
@@ -127,7 +133,7 @@
     <string name="section_cleanup">Cleanup</string>
     <string name="section_languages">Languages</string>
     <string name="section_speech_summary">Endpoint, token, model</string>
-    <string name="section_triggers_summary">Volume-down hold, floating 🎤 control</string>
+    <string name="section_triggers_summary">Volume-down hold, tap control</string>
     <string name="section_delivery_summary">No text field, or the field changed</string>
     <string name="section_cleanup_summary">The cleanup pass and its endpoint</string>
     <string name="section_languages_summary">Your languages, Gboard\'s language, lanes</string>
@@ -170,6 +176,8 @@
     <string name="status_route_explicit">%1$s → sent as %2$s</string>
     <string name="status_route_auto">%1$s → auto %2$s</string>
     <string name="try_hint">Tap the floating microphone to start and stop, or hold volume-down to start and press it again to stop.</string>
+    <string name="try_hint_accessibility_button">Tap Android\'s accessibility button to start and stop, or hold volume-down to start and press it again to stop.</string>
+    <string name="try_hint_none">Hold volume-down to start and press it again to stop.</string>
     <string name="caption_section">Voice messages</string>
     <string name="caption_section_summary">Private captions from Telegram and WhatsApp</string>
     <string name="caption_share_target">Caption with Voxdroid</string>

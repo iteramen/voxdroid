@@ -45,12 +45,14 @@ interrupted restore can be retried from the encrypted file. It exports no audio,
 caption consent or Android grants. It adds no runtime dependency or exported component. Normal
 same-signer upgrades retain preferences without this path.
 
-Three activities and one accessibility service ([AndroidManifest.xml](../app/src/main/AndroidManifest.xml)).
+Three activities and two accessibility services, the second only for Android's accessibility button
+([AndroidManifest.xml](../app/src/main/AndroidManifest.xml)).
 Logic that needs no Android lives in plain functions and classes, so the JVM tests reach it.
 
 | File | Owns |
 |---|---|
 | [VoxdroidA11yService.kt](../app/src/main/java/io/github/iteramen/voxdroid/VoxdroidA11yService.kt) | the host (`TakeHost`): keys, button, screen-off, recording under a foreground service, the worker, delivery |
+| `ButtonService.kt` | **voxdroid button**: Android's accessibility button, each tap handed to the host through `ButtonBridge` |
 | [Take.kt](../app/src/main/java/io/github/iteramen/voxdroid/Take.kt) | the state machine, take numbering, the audio held for Retry |
 | `VolumeGesture.kt`, `Recorder.kt` | hold-to-start and press-to-stop; `AudioRecorder` (16 kHz mono PCM16 into memory), `wav` |
 | `Transcriber.kt`, `SttClient.kt`, `Routed.kt` | `dictate` (the no-speech gate); the multipart request and reply parsing; lanes and the auto-detect resend |
@@ -134,8 +136,18 @@ or replace the recording/error pill. Caption cancellation and service destructio
   event is consumed and every other key returns `false`. A hold of `volume_hold_ms` (default 500,
   floor 300) starts a take; a press while recording stops it on key-down; a short press otherwise
   is re-applied as one volume step (`adjustSuggestedStreamVolume`); key repeats are swallowed.
-- **Floating 🎤 control** (`ReadAloudController`, retaining the legacy `AccessibilityButtonCallback.onClicked` callback): a tap is a Trigger.
-- Both can be switched off (`trigger_volume`, `trigger_button`); the status card lists the ones on.
+- **Tap control** (`tap_trigger`, `TapTrigger`), one of three: the **floating 🎤 control**
+  (`ReadAloudController`), **Android's accessibility button**, or none. A tap on the chosen one is
+  a Trigger; a tap on the other does nothing. The button belongs to a second accessibility service,
+  `ButtonService` (`a11y_button.xml`, `flagRequestAccessibilityButton` only), which hands
+  `onClicked` to the main service through `ButtonBridge`. Android fixes that request at install
+  (`REQUEST_ACCESSIBILITY_BUTTON_CHANGE`) and keeps a requesting service on only while one of its
+  shortcuts is assigned, adding the button to an already-enabled service on upgrade. In the main
+  service it would put the button on every user's screen; in its own service only those who turn
+  on **voxdroid button** get it. An install from before the choice keeps its old switch: `trigger_button` on
+  reads as the floating control, off as none.
+- The volume-down hold can be switched off (`trigger_volume`) and the tap control set to none; the
+  status card lists the triggers on.
 
 The pill (`Pill.kt`) is a `TYPE_ACCESSIBILITY_OVERLAY` that never takes focus. Recording: red
 dot, elapsed time, **■ Stop**, **✕**. Working: `stt…` or `polish…`, no ✕. Error: the stage's bar
@@ -365,10 +377,11 @@ supported foreground header outside message lists, then selected-note metadata w
 chrome is present. Source package, window and header are RAM-only context, not cache identity.
 Native English Share controls are supported initially; an unknown or multi-selection is refused.
 
-Select one downloaded note, tap the floating 🎤 control, and choose **Caption with Voxdroid** in
-Android's chooser. The controller invokes Telegram Share or WhatsApp's overflow → Share; it never
+Select one downloaded note, tap the chosen tap control (the floating 🎤 or Android's accessibility
+button; with **Nothing on screen** chosen, captions have no trigger), and choose **Caption with
+Voxdroid** in Android's chooser. The controller invokes Telegram Share or WhatsApp's overflow → Share; it never
 chooses a recipient, taps Send, inserts into the composer or records the microphone. Normal
-volume-down dictation is unchanged, and the floating 🎤 control still stops an active dictation.
+volume-down dictation is unchanged, and the tap control still stops an active dictation.
 
 A Telegram Share click is not proof that sharing opened: an undownloaded note can expose an
 enabled Share control and then stay in Telegram. A four-second start check invalidates a request
@@ -525,7 +538,7 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 
 `ReadAloudController` owns the draggable 🎤/🔊 overlay. In the own Try screen, the focused editable
 test field allows 🎤 only; own settings
-and credential screens keep the overlay hidden. The floating-microphone toggle still applies,
+and credential screens keep the overlay hidden. The 🎤 shows only with the floating control chosen (`tap_trigger`),
 and changing between own and external windows rebuilds the visible controls. No new exported
 trigger is introduced. Read-only blocks are discovered only on a
 speaker press, bounded to 600 foreground nodes; a second tap selects one refreshed block. Picker

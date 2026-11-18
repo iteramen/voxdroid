@@ -1,5 +1,34 @@
 # Manual checklist
 
+## Tap control and voxdroid button (#98) — 2026-11-18
+
+Pixel 10, Android 16, gesture navigation, Wi-Fi adb. The isolated `.captiontest` build ran beside
+production; production's settings, token and service were never touched. Synthetic loopback
+STT/cleanup (`tools/caption_test_server.py` over `adb reverse`), the app's own Try field. The
+secure settings were recorded first, compared equal afterwards, and the test package was
+uninstalled.
+
+- **Upgrade:** 0.6.2 code, service enabled with no shortcut, then this build over it. The service
+  stayed on, `accessibility_button_targets` stayed empty, no button appeared, and the "… button"
+  service was listed Off.
+- **Old switch:** a stored `trigger_button` true showed **Floating 🎤 control** chosen (card:
+  "Hold volume-down · Floating 🎤 control"); false showed **Nothing on screen**.
+- **Turning on voxdroid button in Settings:** its page had only the shortcut toggle. After the
+  consent dialog the button appeared, bound with `capabilities=0` and `requestA11yBtn=true`.
+- **Accessibility button chosen:** the 🎤 was gone and the card named the button. A ♿ tap started a
+  take (pill, mic indicator), a second tap stopped it, and the text landed. The stub saw one valid
+  WAV and one cleanup call.
+- **Floating chosen:** a ♿ tap started nothing (no stub call). The 🎤 dictated the same way.
+- **Nothing on screen:** neither control started anything (no stub call, no 🎤 window).
+- **Main service off, voxdroid button on:** a ♿ tap did nothing, nothing crashed, and the card said
+  "service off". It said "Ready" before the fix in this PR: the check matched any service from the
+  package.
+- **Try hint:** names the chosen control.
+
+**Not checked:** volume-down on the test service. Production also filters keys, so it gets them
+first, and an injected hold started nothing. This change does not touch the key path. Also not
+checked: any Samsung phone, and the three-button navigation bar.
+
 ## Easy start qualification — 2026-11-14
 
 `EasyStartTest` checks endpoint/model defaults, removal of old default tokens, disabled language
@@ -169,8 +198,9 @@ Replace them with yours. A row that uses an `http://` endpoint and does not name
       `adb shell pm grant io.github.iteramen.voxdroid android.permission.RECORD_AUDIO` — the
       status card's **Grant the microphone** is what asks for it otherwise
 - [ ] the icon is a white microphone with a stem and a base on black, on each surface that draws
-      it: the launcher, the app drawer, Settings, Apps, the floating accessibility button (its icon
-      is the app icon, as the service declares none), and Settings, Accessibility's entry for the
+      it: the launcher, the app drawer, Settings, Apps, Android's accessibility button when it is
+      the chosen tap control and the shortcut is on (its icon is the app icon, as the service
+      declares none), and Settings, Accessibility's entry for the
       service if Android draws one there (note whether it does). Under the launcher's mask nothing
       is clipped; with themed icons on (Settings, Wallpaper and style) the same microphone shows
       tinted to the wallpaper
@@ -205,7 +235,7 @@ Languages), then a **Privacy policy** row.
       and `plain http` after it for an `http://` host that is not loopback (Allow insecure (http)
       endpoints on); the triggers line names the triggers that are on; the button reads **Try a
       dictation** and opens a field — dictate into it with the volume-down hold or the
-      accessibility button, and the text lands; the instruction above the field is whole and at
+      chosen tap control, and the text lands; the instruction above the field is whole and at
       body text size, the field focused
 - [ ] release build: turn the service off in Settings → Accessibility (or over adb, as in
       [Dictation over Gboard](#dictation-over-gboard), removing the voxdroid entry) and revoke the
@@ -216,8 +246,8 @@ Languages), then a **Privacy policy** row.
 - [ ] debug build: with the service off and no `WRITE_SECURE_SETTINGS`, the button reads **Open
       Accessibility settings** as above. Grant it with
       `adb shell pm grant io.github.iteramen.voxdroid android.permission.WRITE_SECURE_SETTINGS`:
-      the button reads **Turn on**, and a tap turns the service on, brings the floating
-      accessibility button back, leaves every other enabled accessibility service on, and leaves
+      the button reads **Turn on**, and a tap turns the service on, brings Android's
+      accessibility button back if the voxdroid shortcut was on, leaves every other enabled accessibility service on, and leaves
       the card naming only what is left
 - [ ] revoke the microphone in Android's app settings: the card is red and its button reads
       **Grant the microphone**; it shows Android's dialog, denying it once asks again on the next
@@ -469,6 +499,22 @@ does both from the status card's **Turn on**.
 - [ ] a quick volume-down press while idle lowers the volume and starts nothing; holding it with
       media playing starts dictation instead of lowering the volume continuously
 - [ ] tap the accessibility button, speak, tap it again: same as above
+- [ ] Triggers page, tap control: an install upgraded from 0.6.2 with *Floating 🎤 control* on
+      shows **Floating 🎤 control** chosen, and one with it off shows **Nothing on screen**
+- [ ] upgrade from 0.6.2 with voxdroid on and no voxdroid shortcut: voxdroid stays on, Android's
+      button does not appear, `accessibility_button_targets` stays as it was, and **voxdroid
+      button** is listed Off in Android's Accessibility settings
+- [ ] turn on **voxdroid button** there: its page has only the shortcut toggle; after the consent
+      dialog Android shows its button (navigation bar or floating, per the phone)
+- [ ] choose **Accessibility button**: a tap starts and a second tap stops a take; the floating 🎤
+      is gone (🔊 stays while read aloud is on); the status card's triggers line names the
+      accessibility button
+- [ ] choose **Floating 🎤 control** with voxdroid button still on: a tap on Android's button
+      starts nothing; the 🎤 dictates
+- [ ] choose **Nothing on screen**: neither starts a take; volume-down still does
+- [ ] turn voxdroid itself off with voxdroid button on: a tap on Android's button does nothing, and
+      the status card says the service is off
+- [ ] the Try screen's hint names the chosen tap control
 - [ ] the same in Keep and in one Compose field (Google Messages)
 - [ ] force-stop ChatGPT, open it and tap its text box, then trigger at once: it records, no
       `no text field`
@@ -520,7 +566,7 @@ does both from the status card's **Turn on**.
 - [ ] an endpoint that returns empty text (or only spaces), with the cleanup pass on: `silence`
       flashes, nothing is inserted, and the next take shows no `polish failed` note
 - [ ] with an error pill and `↻ Retry` showing and no text field focused (mode Refuse), hold
-      volume-down (or tap the accessibility button): the pill and its Retry stay as they were; tap
+      volume-down (or tap the chosen tap control): the pill and its Retry stay as they were; tap
       into the original field again and tap Retry, and the same take lands
 - [ ] start a take, then lock the screen: nothing is typed after unlocking, and the pill is gone
 - [ ] screen timeout at 30 s: dictate for over 40 s without touching the phone and stop with
@@ -574,7 +620,7 @@ fails, is refused or is dropped, or lands raw after a failed cleanup, played on 
 while Android's **Touch feedback** is on. **Vibrate on start and done** is on the Triggers page, on
 by default.
 
-- [ ] hold volume-down in a chat: one click as the pill appears; tap the accessibility button
+- [ ] hold volume-down in a chat: one click as the pill appears; tap the chosen tap control
       instead: the same click
 - [ ] stop the take: one click as the text lands; mode Clipboard with no field focused: one click
       with `copied to the clipboard`
@@ -606,7 +652,7 @@ and **Tone volume (%)** (default on, 5) are on the Triggers page. Run with the r
 Not Disturb off unless a row says otherwise, and the notification volume up.
 
 - [ ] hold volume-down in a chat: one high beep, then the pill appears and the click plays; tap the
-      accessibility button instead: the same
+      chosen tap control instead: the same
 - [ ] stop the take: one lower beep as the text lands; mode Clipboard with no field focused: the
       same beep with `copied to the clipboard`
 - [ ] airplane mode on and dictate: the falling pair with the `stt transport` error pill; point
@@ -714,7 +760,7 @@ For both owner-prepared Telegram and WhatsApp fixture conversations (a combined 
 remains unchecked until all its cases have evidence for both apps):
 
 - [ ] Caption enable disclosure is clear; Enable and Remember default off independently.
-- [ ] One received note selected → accessibility button → native Share chooser → Caption with
+- [ ] One received note selected → chosen tap control → native Share chooser → Caption with
       Voxdroid → private readable panel over the original chat. No composer change or Send.
 - [ ] First share reaches STT then configured cleanup; server validates normalized WAV. Real
       configured STT also produces a readable result, separately from test-server static text.

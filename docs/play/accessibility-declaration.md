@@ -15,9 +15,14 @@ and the service puts it where the person already is: one gesture starts a dictat
 they are typing in, with their own keyboard staying up, and the transcript lands at the cursor.
 General hands-free dictation for anyone else is a use of the same service, not a different one.
 
-Two gestures reach the service (`res/xml/a11y_entry.xml`):
+Three gestures reach the service (`res/xml/a11y_entry.xml`); the user picks one tap control, or
+none, on the Triggers page:
 
 - the **floating 🎤 control** (`ReadAloudController`), with the original contextual dictation/caption action;
+- or **Android's accessibility button**, with the same action. It comes from a second, optional
+  service, **voxdroid button** (`ButtonService.kt`, `res/xml/a11y_button.xml`): it requests only
+  the button (`flagRequestAccessibilityButton`), receives no events, reads no window content and
+  filters no keys, and hands each `AccessibilityButtonCallback.onClicked` to the main service;
 - a **hold of volume-down**, which the service sees through key filtering
   (`flagRequestFilterKeyEvents`; `VoxdroidA11yService.kt` — `onKeyEvent`).
 
@@ -142,7 +147,7 @@ for access needed by dictation and private selected-note captions, plus explicit
 
 ## The `isAccessibilityTool` declaration
 
-`a11y_entry.xml` declares `android:isAccessibilityTool="true"`, on Play's policy: "only services
+`a11y_entry.xml` and `a11y_button.xml` declare `android:isAccessibilityTool="true"`, on Play's policy: "only services
 that are designed to help people with disabilities access their device or otherwise overcome
 challenges stemming from their disabilities are eligible to declare that they are accessibility
 tools", with "Voice-based input systems which support people with motor impairments" among its

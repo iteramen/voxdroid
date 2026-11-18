@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only Android's accessibility button: no events, no window content, no keys. Separate from a11y_entry because
+     a service asking for the button stays on only while Android shows the button. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRequestAccessibilityButton"
+    android:description="@string/a11y_button_description"
+    android:isAccessibilityTool="true" />

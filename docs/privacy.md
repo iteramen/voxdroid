@@ -32,7 +32,8 @@ key can hold it. voxdroid asks for no storage, contacts, location, phone-state o
 
 ## The microphone
 
-Holding volume-down or tapping the floating 🎤 control starts a dictation; recording begins
+Holding volume-down or tapping the floating 🎤 control (or Android's accessibility button, if you
+chose it on the Triggers page) starts a dictation; recording begins
 after the short start tone when one plays, at once otherwise. Recording stops
 when you press volume-down, tap the control or the pill's Stop, or by itself after 5 minutes
 (`VoxdroidA11yService.kt` — `CAP_MS`); the audio is then sent for transcription (below).

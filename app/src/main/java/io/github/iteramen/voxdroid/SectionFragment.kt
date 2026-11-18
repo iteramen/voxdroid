@@ -53,6 +53,7 @@ class SectionFragment : PreferenceFragmentCompat() {
         number(KEY_POLISH_TIMEOUT)
         number(KEY_VOLUME_HOLD)
         noFieldRows()
+        tapTriggerRows()
         dictationLogRows()
         captionRows()
         readAloudRows()
@@ -176,6 +177,23 @@ class SectionFragment : PreferenceFragmentCompat() {
                 val write = noFieldTap(mode, stored()) ?: return@setOnPreferenceChangeListener false
                 store.putString(KEY_NO_FIELD_MODE, write)
                 rows.forEach { (other, otherRow) -> if (other != mode) otherRow.isChecked = false }
+                true
+            }
+        }
+    }
+
+    /** Radio rows like [noFieldRows]; the checked one comes from [Settings.tapTrigger], which reads an older install's switch. */
+    private fun tapTriggerRows() {
+        val rows = TapTrigger.entries.mapNotNull { trigger ->
+            findPreference<CheckBoxPreference>(TAP_TRIGGER_ROW_PREFIX + trigger.stored)?.let { trigger to it }
+        }
+        val store = preferenceManager.preferenceDataStore ?: return
+        for ((trigger, row) in rows) {
+            row.isChecked = Settings(requireContext()).tapTrigger == trigger
+            row.setOnPreferenceChangeListener { _, _ ->
+                if (Settings(requireContext()).tapTrigger == trigger) return@setOnPreferenceChangeListener false
+                store.putString(KEY_TAP_TRIGGER, trigger.stored)
+                rows.forEach { (other, otherRow) -> if (other != trigger) otherRow.isChecked = false }
                 true
             }
         }
@@ -420,6 +438,8 @@ class SectionFragment : PreferenceFragmentCompat() {
         private const val KEY_VOLUME_HOLD = "volume_hold_ms"
         private const val KEY_NO_FIELD_MODE = "no_field_mode"
         private const val NO_FIELD_ROW_PREFIX = "no_field_"
+        private const val KEY_TAP_TRIGGER = "tap_trigger"
+        private const val TAP_TRIGGER_ROW_PREFIX = "tap_trigger_"
         private const val KEY_DICTATION_LOG = "dictation_log"
         private const val KEY_SHOW_DICTATION_LOG = "show_dictation_log"
         private const val KEY_DELETE_DICTATION_LOG = "delete_dictation_log"

@@ -18,6 +18,16 @@ class SettingsStoreTest {
     }
 
     @Test
+    fun theTapControlIsOneOfThreeAndAnOlderInstallKeepsItsSwitch() {
+        assertEquals(TapTrigger.Floating, TapTrigger.parse("floating", legacySwitch = false))
+        assertEquals(TapTrigger.AccessibilityButton, TapTrigger.parse("accessibility_button", legacySwitch = true))
+        assertEquals(TapTrigger.None, TapTrigger.parse("none", legacySwitch = true))
+        assertEquals("never chosen, switch on", TapTrigger.Floating, TapTrigger.parse(null, legacySwitch = true))
+        assertEquals("never chosen, switch off", TapTrigger.None, TapTrigger.parse(null, legacySwitch = false))
+        assertEquals("unknown value", TapTrigger.Floating, TapTrigger.parse("both", legacySwitch = true))
+    }
+
+    @Test
     fun theTwoNamedTokensAreSecrets() {
         assertEquals(StoredAs.Secret, storedAs("stt_token"))
         assertEquals(StoredAs.Secret, storedAs("polish_token"))

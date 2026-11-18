@@ -15,12 +15,6 @@
         app:useSimpleSummaryProvider="true" />
 
     <SwitchPreferenceCompat
-        android:defaultValue="true"
-        android:key="trigger_button"
-        android:summary="@string/settings_trigger_button_summary"
-        android:title="@string/settings_trigger_button" />
-
-    <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="allow_during_call"
         android:summary="@string/settings_allow_during_call_summary"
@@ -46,5 +40,25 @@
         android:title="@string/settings_cue_volume"
         app:min="0"
         app:showSeekBarValue="true" />
+
+    <PreferenceCategory android:title="@string/settings_tap_trigger">
+        <CheckBoxPreference
+            android:key="tap_trigger_floating"
+            android:persistent="false"
+            android:summary="@string/settings_tap_trigger_floating_summary"
+            android:title="@string/settings_trigger_button"
+            android:widgetLayout="@layout/preference_widget_radio" />
+        <CheckBoxPreference
+            android:key="tap_trigger_accessibility_button"
+            android:persistent="false"
+            android:summary="@string/settings_tap_trigger_accessibility_button_summary"
+            android:title="@string/settings_tap_trigger_accessibility_button"
+            android:widgetLayout="@layout/preference_widget_radio" />
+        <CheckBoxPreference
+            android:key="tap_trigger_none"
+            android:persistent="false"
+            android:title="@string/settings_tap_trigger_none"
+            android:widgetLayout="@layout/preference_widget_radio" />
+    </PreferenceCategory>
 
 </PreferenceScreen>

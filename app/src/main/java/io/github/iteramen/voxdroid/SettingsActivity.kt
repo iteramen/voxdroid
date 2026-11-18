@@ -199,10 +199,8 @@ class SettingsActivity : AppCompatActivity() {
         Problem.EndpointUnreachable -> R.string.status_problem_endpoint_down
     }
 
-    private fun serviceOn(): Boolean {
-        val enabled = Secure.getString(contentResolver, Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
-        return enabled.split(':').any { it.startsWith("$packageName/") }
-    }
+    private fun serviceOn(): Boolean =
+        dictationServiceOn(Secure.getString(contentResolver, Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty(), packageName)
 
     /** `plain http blocked` while the switch refuses it, so a red card explains itself. */
     private fun endpointLine(): String {
@@ -241,7 +239,11 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun triggersLine(): String = listOfNotNull(
         getString(R.string.settings_trigger_volume).takeIf { settings.triggerVolume },
-        getString(R.string.settings_trigger_button).takeIf { settings.triggerButton },
+        when (settings.tapTrigger) {
+            TapTrigger.Floating -> getString(R.string.settings_trigger_button)
+            TapTrigger.AccessibilityButton -> getString(R.string.settings_tap_trigger_accessibility_button)
+            TapTrigger.None -> null
+        },
     ).joinToString(" · ").ifEmpty { getString(R.string.status_no_triggers) }
 
     /** A boolean theme attribute, true when the theme does not set it (the Context overloads' default). */
