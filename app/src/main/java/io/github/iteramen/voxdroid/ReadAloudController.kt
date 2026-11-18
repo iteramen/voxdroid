@@ -24,7 +24,6 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.Toast
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
@@ -328,7 +327,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         sourcePackage = null; sourceWindow = -1
     }
     fun screenOff() { cancel(); hideGlyph() }
-    fun destroy() { screenOff(); worker.shutdownNow(); ahead.shutdownNow() }
+    fun destroy() { screenOff(); noticePill.hide(); worker.shutdownNow(); ahead.shutdownNow() }
     /** Called only from the isolated debug package's service dump: no text, endpoints, tokens or app identity. */
     fun diagnostics(out: java.io.PrintWriter) {
         val playing = synchronized(lock) { track?.playState == AudioTrack.PLAYSTATE_PLAYING }
@@ -346,5 +345,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         }
         choices.forEachIndexed { index, choice -> out.println("read-choice $index chars=${choice.node.text?.length ?: 0} bounds=${choice.bounds.toShortString()}") }
     }
-    private fun notice(text: String) { Toast.makeText(service, text, Toast.LENGTH_LONG).show() }
+    // Android drops a toast from the service over another app while notifications are not allowed.
+    private val noticePill: Pill by lazy { Pill(service, Settings(service), {}, {}, { noticePill.hide() }) }
+    private fun notice(text: String) { noticePill.flash(text, flashMs(true), maxLines = 5) }
 }
