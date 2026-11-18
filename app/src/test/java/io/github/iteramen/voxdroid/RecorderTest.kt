@@ -2,6 +2,8 @@ package io.github.iteramen.voxdroid
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class RecorderTest {
@@ -13,6 +15,29 @@ class RecorderTest {
         assertEquals("mic: refused by the platform", micFailureBar(SecurityException("uid 10452 /data/private path")))
         assertEquals("mic: unavailable", micFailureBar(IllegalStateException("startRecording() called on an uninitialized AudioRecord.")))
         assertEquals("mic: unavailable", micFailureBar(IllegalStateException()))
+    }
+
+    @Test
+    fun aRecorderWhoseStartThrowsIsReleasedOnceAndTheFailureStillReachesThePill() {
+        val refused = IllegalStateException("startRecording() called on an uninitialized AudioRecord.")
+        var releases = 0
+
+        val thrown = assertThrows(IllegalStateException::class.java) {
+            startOrRelease({ throw refused }, { releases++ })
+        }
+
+        assertSame(refused, thrown)
+        assertEquals(1, releases)
+        assertEquals("mic: unavailable", micFailureBar(thrown))
+    }
+
+    @Test
+    fun aRecorderThatStartsIsNotReleased() {
+        var releases = 0
+
+        startOrRelease({}, { releases++ })
+
+        assertEquals(0, releases)
     }
 
     @Test
