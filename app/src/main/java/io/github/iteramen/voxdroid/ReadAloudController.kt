@@ -45,7 +45,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     private var glyphParams: WindowManager.LayoutParams? = null
     private var glyphContext: ReadControlContext? = null
     private var glyphSpace: ControlSpace? = null
-    private var picker: View? = null
+    private val picker = PickerWindow<View>({ windows.removeView(it) }, { noticePill.hide() })
     private var active = false
     private var sourcePackage: String? = null
     private var sourceWindow = -1
@@ -65,7 +65,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         .setAudioAttributes(attributes).setWillPauseWhenDucked(true)
         .setOnAudioFocusChangeListener({ change -> if (readAloudStopsOnFocusChange(change)) cancel() }, main).build()
 
-    val busy: Boolean get() = active || picker != null
+    val busy: Boolean get() = active || picker.up
 
     fun observe(event: AccessibilityEvent?) {
         // With neither control on there is nothing to place, so no window is looked at.
@@ -82,7 +82,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
             val invalid = readAloudInvalidated(
                 sameSource,
                 event != null && event.packageName?.toString() == sourcePackage, event?.eventType,
-                picker != null, sameSource && (picker != null || selectionStillCurrent()))
+                picker.up, sameSource && (picker.up || selectionStillCurrent()))
             if (invalid) cancel()
             else if (active && event?.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED &&
                 event.packageName?.toString() == sourcePackage) contentKept++
@@ -208,8 +208,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     }
 
     private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null; glyphParams = null; glyphContext = null; glyphSpace = null }
-    // Only a picker that was up withdraws the pill: it holds the pick hint, never a failure notice posted around a cancel.
-    private fun hidePicker() { picker?.let { runCatching { windows.removeView(it) }; noticePill.hide() }; picker = null; choices = emptyList() }
+    private fun hidePicker() { picker.close(); choices = emptyList() }
 
     private class Choice(val node: AccessibilityNodeInfo, val bounds: Rect)
 
@@ -260,7 +259,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         }
         windows.addView(overlay, WindowManager.LayoutParams(-1, -1, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT))
-        picker = overlay
+        picker.open(overlay)
         notice(service.getString(R.string.read_pick_text))
     }
 
@@ -332,7 +331,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     /** Called only from the isolated debug package's service dump: no text, endpoints, tokens or app identity. */
     fun diagnostics(out: java.io.PrintWriter) {
         val playing = synchronized(lock) { track?.playState == AudioTrack.PLAYSTATE_PLAYING }
-        out.println("read-aloud enabled=${prefs.enabled} active=$active picking=${picker != null} playing=$playing starts=$playbackStarts completed=$playbackCompletes error=$lastError")
+        out.println("read-aloud enabled=${prefs.enabled} active=$active picking=${picker.up} playing=$playing starts=$playbackStarts completed=$playbackCompletes error=$lastError")
         val root = service.getRootInActiveWindow(0)
         val awake = glyphParams?.flags?.and(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0 && glyphParams != null
         out.println("read-state glyph=${glyph != null} root=${root != null} ownRoot=${root?.packageName?.toString() == service.packageName} locked=${service.getSystemService(KeyguardManager::class.java).isKeyguardLocked} keepScreenOn=$awake contentKept=$contentKept")
@@ -349,4 +348,12 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     // Android drops a toast from the service over another app while notifications are not allowed.
     private val noticePill: Pill by lazy { Pill(service, Settings(service), {}, {}, { noticePill.hide() }) }
     private fun notice(text: String) { noticePill.flash(text, flashMs(true), maxLines = 5) }
+}
+
+/** The picker overlay's window. Only a picker that was up withdraws the pill: it holds the pick hint, never a failure notice posted around a cancel. */
+internal class PickerWindow<V : Any>(private val remove: (V) -> Unit, private val hideHint: () -> Unit) {
+    private var view: V? = null
+    val up: Boolean get() = view != null
+    fun open(view: V) { this.view = view }
+    fun close() { view?.let { runCatching { remove(it) }; hideHint() }; view = null }
 }
