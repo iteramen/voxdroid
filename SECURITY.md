@@ -387,11 +387,11 @@ A release build never writes Android's accessibility settings: when the service 
 card's button opens Android's Accessibility settings, where the user turns it on
 (`SettingsActivity.kt` — `render`; `app/src/release/.../SelfEnable.kt`). A debug build granted
 `WRITE_SECURE_SETTINGS` over adb can turn itself on from that button: it adds only its own service
-to `enabled_accessibility_services` and `accessibility_button_targets`, keeping every other entry
+to `enabled_accessibility_services`, keeping every other entry
 (`app/src/debug/.../SelfEnable.kt` — `turnOn`; `Readiness.kt` — `withService`). The release build
 carries neither that permission nor that code.
 
-**In scope:** the debug path removing or changing any other service in those lists. **Out of
+**In scope:** the debug path removing or changing any other service in that list. **Out of
 scope:** Play Protect's behaviour, which voxdroid cannot see or change.
 
 ### Components

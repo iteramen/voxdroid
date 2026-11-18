@@ -51,6 +51,7 @@ class IsolatedDeviceTest(unittest.TestCase):
         with patch.object(device, "adb", side_effect=adb):
             device.enable(True)
             self.assertEqual(values["enabled_accessibility_services"], other + ":" + device.COMPONENT)
+            self.assertEqual(values["accessibility_button_targets"], other)
             device.enable(False)
         self.assertEqual(values["enabled_accessibility_services"], other)
         self.assertEqual(values["accessibility_button_targets"], other)

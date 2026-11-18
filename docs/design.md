@@ -145,7 +145,9 @@ or replace the recording/error pill. Caption cancellation and service destructio
   shortcuts is assigned, adding the button to an already-enabled service on upgrade. In the main
   service it would put the button on every user's screen; in its own service only those who turn
   on **voxdroid button** get it. An install from before the choice keeps its old switch: `trigger_button` on
-  reads as the floating control, off as none.
+  reads as the floating control, off as none. Android's button assigned to the main service, which
+  asks for none, switches that service off and on instead; the status card reads
+  `accessibility_button_targets` and reports it (`Problem.ButtonSwitchesService`).
 - The volume-down hold can be switched off (`trigger_volume`) and the tap control set to none; the
   status card lists the triggers on.
 
@@ -166,7 +168,8 @@ While Recording and Working the pill's window carries
 `ACTION_SCREEN_OFF` as the power button and cancel, does not fire; an Error, a notice or the
 pill's removal releases it, and no wake lock backs it. Centred, its bottom sits a saved distance
 above the keyboard
-window (`keyboardTop`) or the screen's bottom (`PillPlacement.kt` — `place`, `remember`); a
+window (`keyboardTop`) or, with no keyboard, the navigation bar, so it never covers Back, Home or
+Android's accessibility button (`PillPlacement.kt` — `restingLine`, `place`, `remember`); a
 vertical drag saves a new one (`Settings.kt` — `pillSaved`); `typeWindowsChanged`, the only
 subscribed event, re-places it (`follow`). Haptic cues (`Cue.kt`): a click for a start and for
 text landed or copied, a double click for an error, a refusal, a drop or a failed polish.

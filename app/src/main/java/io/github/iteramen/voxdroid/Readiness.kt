@@ -9,12 +9,19 @@ sealed interface Probe {
     data object Unknown : Probe
 }
 
-enum class Problem { ServiceOff, MicrophoneMissing, NoEndpoint, EndpointBlocked, EndpointUnreachable }
+enum class Problem { ServiceOff, ButtonSwitchesService, MicrophoneMissing, NoEndpoint, EndpointBlocked, EndpointUnreachable }
 
-/** [endpointBlocked]: then the switch, not the network, is why the probe fails. */
-fun problems(serviceOn: Boolean, micGranted: Boolean, endpointSet: Boolean, probe: Probe, endpointBlocked: Boolean): List<Problem> =
+/**
+ * [endpointBlocked]: then the switch, not the network, is why the probe fails.
+ * [buttonOnService]: Android's accessibility button is assigned to the dictation service itself, which asks for no button, so each tap switches it off or on.
+ */
+fun problems(
+    serviceOn: Boolean, micGranted: Boolean, endpointSet: Boolean, probe: Probe, endpointBlocked: Boolean,
+    buttonOnService: Boolean = false,
+): List<Problem> =
     buildList {
         if (!serviceOn) add(Problem.ServiceOff)
+        if (buttonOnService) add(Problem.ButtonSwitchesService)
         if (!micGranted) add(Problem.MicrophoneMissing)
         if (!endpointSet) add(Problem.NoEndpoint)
         else if (endpointBlocked) add(Problem.EndpointBlocked)

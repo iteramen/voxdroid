@@ -22,3 +22,6 @@ fun place(
 /** Keeps the pill's bottom above the keyboard's top, so a pill that grows later grows upward. */
 fun remember(pillTop: Int, pillH: Int, screenH: Int, keyboardTop: Int?): Saved =
     Saved((keyboardTop ?: screenH) - (pillTop + pillH))
+
+/** What the pill rests on: the keyboard's top, or the navigation bar's when no keyboard shows, so the pill never covers Back, Home or Android's accessibility button. */
+fun restingLine(keyboardTop: Int?, screenH: Int, navigationBar: Int): Int = keyboardTop ?: (screenH - navigationBar)

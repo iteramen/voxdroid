@@ -40,7 +40,8 @@ def enable(on):
     for key in ("enabled_accessibility_services", "accessibility_button_targets"):
         current = adb("shell", "settings", "get", "secure", key).decode().strip()
         entries = [v for v in current.split(":") if v and v != "null" and v != COMPONENT]
-        if on:
+        # Android's button on this service would switch it off, so it is only ever removed from the button's list.
+        if on and key == "enabled_accessibility_services":
             entries.append(COMPONENT)
         value = ":".join(entries)
         adb("shell", "settings", "put", "secure", key, value if value else "''")

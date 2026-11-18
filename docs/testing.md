@@ -1,8 +1,33 @@
 # Manual checklist
 
+## Android's button on a three-button navigation bar — 2026-11-18
+
+Pixel 10, Android 17 (SDK 37), switched to three-button navigation with the accessibility button in
+the bar. Same method as the section below: the isolated `.captiontest` build beside production,
+the loopback stub, the Try field; settings recorded first and compared equal afterwards.
+
+- **voxdroid button alone behind Android's button:** a ♿ tap started a take and a second stopped it,
+  with the keyboard up and with it down; the text landed. It kept working after the app was
+  updated in place while both services were on.
+- **Android's button assigned to voxdroid itself** (a shortcut left from 0.3.0): each ♿ tap switched
+  the dictation service off or on. Nothing dictated, and the card went from "Ready" to "service
+  off" and back.
+- **Assigned to both:** the first tap opened Android's "Choose a feature" list with the two entries.
+  Choosing voxdroid made every later tap switch the service off or on; choosing voxdroid button
+  dictated.
+- **The pill covered the bar** with no keyboard up: the recording pill lay over Back, Home and
+  Recents, and the wider "no text field" notice also over ♿. Fixed here: it rests above the bar
+  (above the handle in gesture navigation), checked in both modes.
+- **The card's warning,** added here: with Android's button assigned to voxdroid itself the card
+  was red and named the shortcut; its button opened Accessibility settings; with that shortcut
+  turned off there the card was green again and ♿ dictated.
+
+**Not checked:** any Samsung phone. Whether One UI lets an app read which service its button is
+assigned to is unknown; if it refuses, the card shows no warning.
+
 ## Tap control and voxdroid button (#98) — 2026-11-18
 
-Pixel 10, Android 16, gesture navigation, Wi-Fi adb. The isolated `.captiontest` build ran beside
+Pixel 10, Android 17, gesture navigation, Wi-Fi adb. The isolated `.captiontest` build ran beside
 production; production's settings, token and service were never touched. Synthetic loopback
 STT/cleanup (`tools/caption_test_server.py` over `adb reverse`), the app's own Try field. The
 secure settings were recorded first, compared equal afterwards, and the test package was
@@ -489,8 +514,9 @@ there, enable it over adb: `adb shell settings get secure enabled_accessibility_
 `put` back what it printed with
 `:io.github.iteramen.voxdroid/io.github.iteramen.voxdroid.VoxdroidA11yService` appended (the
 component alone when it printed `null`) — a bare `put` switches every other accessibility service
-off. The same for `accessibility_button_targets`. A debug build granted `WRITE_SECURE_SETTINGS`
-does both from the status card's **Turn on**.
+off. Leave `accessibility_button_targets` alone: Android's button assigned to this service switches
+it off. A debug build granted `WRITE_SECURE_SETTINGS` does the same from the status card's
+**Turn on**.
 
 - [ ] in WhatsApp with text typed and Gboard up, hold volume-down: the pill appears above Gboard
       with a red dot counting from `0:00`, and Gboard stays
@@ -514,6 +540,10 @@ does both from the status card's **Turn on**.
 - [ ] choose **Nothing on screen**: neither starts a take; volume-down still does
 - [ ] turn voxdroid itself off with voxdroid button on: a tap on Android's button does nothing, and
       the status card says the service is off
+- [ ] give voxdroid itself (not voxdroid button) the accessibility-button shortcut: the status card
+      turns red and names that shortcut; turn the shortcut off and the card is green again
+- [ ] three-button navigation, no keyboard up: the recording pill and a notice sit above the
+      navigation bar; Back, Home, Recents and Android's accessibility button all take their taps
 - [ ] the Try screen's hint names the chosen tap control
 - [ ] the same in Keep and in one Compose field (Google Messages)
 - [ ] force-stop ChatGPT, open it and tap its text box, then trigger at once: it records, no

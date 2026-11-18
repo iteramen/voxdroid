@@ -11,12 +11,10 @@ internal object SelfEnable {
 
     fun turnOn(context: Context, component: String) {
         val resolver = context.contentResolver
-        for (key in listOf(Secure.ENABLED_ACCESSIBILITY_SERVICES, BUTTON_TARGETS)) {
-            Secure.putString(resolver, key, withService(Secure.getString(resolver, key), component))
-        }
+        val key = Secure.ENABLED_ACCESSIBILITY_SERVICES
+        Secure.putString(resolver, key, withService(Secure.getString(resolver, key), component))
         Secure.putInt(resolver, Secure.ACCESSIBILITY_ENABLED, 1)
     }
 
     private const val WRITE_SECURE_SETTINGS = "android.permission.WRITE_SECURE_SETTINGS"
-    private const val BUTTON_TARGETS = "accessibility_button_targets"
 }

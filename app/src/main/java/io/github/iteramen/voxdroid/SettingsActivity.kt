@@ -125,6 +125,7 @@ class SettingsActivity : AppCompatActivity() {
             endpointSet = settings.sttBaseUrl.isNotBlank(),
             probe = latest,
             endpointBlocked = insecureBlocked(settings.sttBaseUrl, settings.allowInsecureHttp),
+            buttonOnService = buttonOnService(),
         )
         val ready = found.isEmpty()
         val card: Int
@@ -160,6 +161,10 @@ class SettingsActivity : AppCompatActivity() {
                     startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
                 }
             }
+            Problem.ButtonSwitchesService -> {
+                action.setText(R.string.status_open_accessibility)
+                action.setOnClickListener { startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+            }
             Problem.MicrophoneMissing -> {
                 // After a final denial the dialog answers at once, so open the app's page instead.
                 val step = microphoneStep(
@@ -193,6 +198,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun problemText(problem: Problem): Int = when (problem) {
         Problem.ServiceOff -> R.string.status_problem_service
+        Problem.ButtonSwitchesService -> R.string.status_problem_button_on_service
         Problem.MicrophoneMissing -> R.string.status_problem_microphone
         Problem.NoEndpoint -> R.string.status_problem_endpoint_unset
         Problem.EndpointBlocked -> R.string.status_problem_endpoint_blocked
@@ -201,6 +207,13 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun serviceOn(): Boolean =
         dictationServiceOn(Secure.getString(contentResolver, Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty(), packageName)
+
+    /** A shortcut left over from 0.3.0, or put on the wrong entry. A phone that refuses the read shows no warning. */
+    private fun buttonOnService(): Boolean = try {
+        dictationServiceOn(Secure.getString(contentResolver, "accessibility_button_targets").orEmpty(), packageName)
+    } catch (_: SecurityException) {
+        false
+    }
 
     /** `plain http blocked` while the switch refuses it, so a red card explains itself. */
     private fun endpointLine(): String {
