@@ -6,6 +6,18 @@ import org.junit.Test
 class ReadinessTest {
 
     @Test
+    fun onlyTheDictationServiceCountsAsOn() {
+        val pkg = "io.github.iteramen.voxdroid"
+        assertEquals(true, dictationServiceOn("other/.X:${serviceComponent(pkg)}", pkg))
+        assertEquals(true, dictationServiceOn("$pkg/.VoxdroidA11yService", pkg))
+        assertEquals(false, dictationServiceOn("$pkg/$pkg.ButtonService", pkg))
+        assertEquals(false, dictationServiceOn("$pkg/.ButtonService", pkg))
+        assertEquals(false, dictationServiceOn(serviceComponent("$pkg.captiontest"), pkg))
+        assertEquals(true, dictationServiceOn(serviceComponent("$pkg.captiontest"), "$pkg.captiontest"))
+        assertEquals(false, dictationServiceOn("", pkg))
+    }
+
+    @Test
     fun readyWhenEverythingHolds() {
         assertEquals(emptyList<Problem>(), problems(true, true, true, Probe.Reachable(48), false))
     }

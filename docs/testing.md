@@ -1,5 +1,34 @@
 # Manual checklist
 
+## Tap control and voxdroid button (#98) — 2026-11-18
+
+Pixel 10, Android 16, gesture navigation, Wi-Fi adb. The isolated `.captiontest` build ran beside
+production; production's settings, token and service were never touched. Synthetic loopback
+STT/cleanup (`tools/caption_test_server.py` over `adb reverse`), the app's own Try field. The
+secure settings were recorded first, compared equal afterwards, and the test package was
+uninstalled.
+
+- **Upgrade:** 0.6.2 code, service enabled with no shortcut, then this build over it. The service
+  stayed on, `accessibility_button_targets` stayed empty, no button appeared, and the "… button"
+  service was listed Off.
+- **Old switch:** a stored `trigger_button` true showed **Floating 🎤 control** chosen (card:
+  "Hold volume-down · Floating 🎤 control"); false showed **Nothing on screen**.
+- **Turning on voxdroid button in Settings:** its page had only the shortcut toggle. After the
+  consent dialog the button appeared, bound with `capabilities=0` and `requestA11yBtn=true`.
+- **Accessibility button chosen:** the 🎤 was gone and the card named the button. A ♿ tap started a
+  take (pill, mic indicator), a second tap stopped it, and the text landed. The stub saw one valid
+  WAV and one cleanup call.
+- **Floating chosen:** a ♿ tap started nothing (no stub call). The 🎤 dictated the same way.
+- **Nothing on screen:** neither control started anything (no stub call, no 🎤 window).
+- **Main service off, voxdroid button on:** a ♿ tap did nothing, nothing crashed, and the card said
+  "service off". It said "Ready" before the fix in this PR: the check matched any service from the
+  package.
+- **Try hint:** names the chosen control.
+
+**Not checked:** volume-down on the test service. Production also filters keys, so it gets them
+first, and an injected hold started nothing. This change does not touch the key path. Also not
+checked: any Samsung phone, and the three-button navigation bar.
+
 ## Easy start qualification — 2026-11-14
 
 `EasyStartTest` checks endpoint/model defaults, removal of old default tokens, disabled language
@@ -483,7 +512,9 @@ does both from the status card's **Turn on**.
 - [ ] choose **Floating 🎤 control** with voxdroid button still on: a tap on Android's button
       starts nothing; the 🎤 dictates
 - [ ] choose **Nothing on screen**: neither starts a take; volume-down still does
-- [ ] turn voxdroid itself off with voxdroid button on: a tap on Android's button does nothing
+- [ ] turn voxdroid itself off with voxdroid button on: a tap on Android's button does nothing, and
+      the status card says the service is off
+- [ ] the Try screen's hint names the chosen tap control
 - [ ] the same in Keep and in one Compose field (Google Messages)
 - [ ] force-stop ChatGPT, open it and tap its text box, then trigger at once: it records, no
       `no text field`

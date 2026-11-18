@@ -54,6 +54,10 @@ fun laneCodes(chipLanguages: List<String>, laneBaseUrl: (String) -> String): Lis
 /** The application id and the Kotlin package differ, so the class's own name is used. */
 internal fun serviceComponent(packageName: String): String = "$packageName/${VoxdroidA11yService::class.java.name}"
 
+/** voxdroid button alone does not dictate. Android may write the class relative to the package (`pkg/.Class`). */
+internal fun dictationServiceOn(enabled: String, packageName: String): Boolean =
+    enabled.split(':').any { it.replace("$packageName/.", "$packageName/$packageName.") == serviceComponent(packageName) }
+
 internal fun withService(current: String?, component: String): String =
     (current.orEmpty().split(':').filter { it.isNotBlank() && it != "null" } - component + component)
         .joinToString(":")

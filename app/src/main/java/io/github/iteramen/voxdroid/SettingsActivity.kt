@@ -199,10 +199,8 @@ class SettingsActivity : AppCompatActivity() {
         Problem.EndpointUnreachable -> R.string.status_problem_endpoint_down
     }
 
-    private fun serviceOn(): Boolean {
-        val enabled = Secure.getString(contentResolver, Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
-        return enabled.split(':').any { it.startsWith("$packageName/") }
-    }
+    private fun serviceOn(): Boolean =
+        dictationServiceOn(Secure.getString(contentResolver, Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty(), packageName)
 
     /** `plain http blocked` while the switch refuses it, so a red card explains itself. */
     private fun endpointLine(): String {
