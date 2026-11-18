@@ -292,6 +292,19 @@ not post notifications (`cmd appops get` read `POST_NOTIFICATION: ignore`):
   the paragraph was chosen, where the same run without the tap still showed it. During the dictation the notice lay
   over the recording pill, covering its Stop and ✕ until the notice went.
 
+Recorded 2026-11-19 on `cb2408d`, Pixel 10 (Android 17), isolated `readaloudtest` build beside
+production, over Android's Display settings page, a loopback stub as the speech server:
+
+- *Read-aloud pick hint goes with the picker*: as expected. With the picker left open, the *pick
+  the text* hint was still up in a screenshot finished 4.4 s after the 🔊 tap. Closing the picker
+  about 1.3 s after that tap took the hint with it each way: no pill in a screenshot taken within
+  0.8 s of picking a paragraph (the narration started), within 0.5 s of Home bringing the launcher
+  in front, and within 1.2 s of a tap outside every choice and of a second tap on 🔊. With the
+  speech server unreachable (the port mapping removed), the pick showed *Read aloud failed. Check
+  the TTS server, network and Tailscale.* instead: still up in a screenshot taken 3.1 to 3.9 s
+  after the pick and gone in one taken 4.2 to 5.1 s after it. That held when the pick came 3.4 s
+  after 🔊, with the hint's own time nearly up.
+
 Everything here needs a handset; the JVM tests (`./gradlew testDebugUnitTest`) cover the logic
 that runs without one. Run this against the debug APK (`./gradlew assembleDebug`) before a PR that
 touches the service. The boxes stay unticked: this is the template for each run, not a record of

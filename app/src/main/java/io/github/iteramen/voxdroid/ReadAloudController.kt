@@ -15,6 +15,7 @@ import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -45,14 +46,13 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     private var glyphParams: WindowManager.LayoutParams? = null
     private var glyphContext: ReadControlContext? = null
     private var glyphSpace: ControlSpace? = null
-    private var picker: View? = null
-    private var active = false
+    private val life = ReadAloudLifecycle<View, Choice>({ removeWindow(it, "picker") }, { noticePill.hide() },
+        { generation.incrementAndGet() }, ::release)
     private var sourcePackage: String? = null
     private var sourceWindow = -1
     private var track: AudioTrack? = null
     private var media = false
     private var focused = false
-    private var choices = emptyList<Choice>()
     private var selected: Choice? = null
     private var selectedText: String? = null
     private var contentKept = 0
@@ -65,7 +65,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         .setAudioAttributes(attributes).setWillPauseWhenDucked(true)
         .setOnAudioFocusChangeListener({ change -> if (readAloudStopsOnFocusChange(change)) cancel() }, main).build()
 
-    val busy: Boolean get() = active || picker != null
+    val busy: Boolean get() = life.busy
 
     fun observe(event: AccessibilityEvent?) {
         // With neither control on there is nothing to place, so no window is looked at.
@@ -79,13 +79,9 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         }
         if (busy) {
             val sameSource = root != null && root.windowId == sourceWindow && root.packageName?.toString() == sourcePackage
-            val invalid = readAloudInvalidated(
-                sameSource,
-                event != null && event.packageName?.toString() == sourcePackage, event?.eventType,
-                picker != null, sameSource && (picker != null || selectionStillCurrent()))
-            if (invalid) cancel()
-            else if (active && event?.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED &&
-                event.packageName?.toString() == sourcePackage) contentKept++
+            val fromSource = event != null && event.packageName?.toString() == sourcePackage
+            val invalid = life.observed(sameSource, fromSource, event?.eventType, ::selectionStillCurrent)
+            if (!invalid && life.active && event?.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && fromSource) contentKept++
         }
         showGlyph()
     }
@@ -193,7 +189,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         box.addView(action("read_speaker", R.drawable.ic_control_speaker, R.string.read_speak_stop, speaker) {
             chooseOrStop()
         }, LinearLayout.LayoutParams(dp(48), dp(48)))
-        if (active) params.flags = params.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        if (life.active) params.flags = params.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         windows.addView(box, params); glyph = box; glyphParams = params; glyphContext = context; glyphSpace = space
     }
 
@@ -207,14 +203,22 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         windows.updateViewLayout(view, params)
     }
 
-    private fun hideGlyph() { glyph?.let { runCatching { windows.removeView(it) } }; glyph = null; glyphParams = null; glyphContext = null; glyphSpace = null }
-    // Only a picker that was up withdraws the pill: it holds the pick hint, never a failure notice posted around a cancel.
-    private fun hidePicker() { picker?.let { runCatching { windows.removeView(it) }; noticePill.hide() }; picker = null; choices = emptyList() }
+    private fun hideGlyph() { glyph?.let { removeWindow(it, "control") }; glyph = null; glyphParams = null; glyphContext = null; glyphSpace = null }
+
+    /** Android throws when the window is already gone. The cancel this is part of goes on; the failure is logged by its kind alone. */
+    private fun removeWindow(view: View, which: String) {
+        try {
+            windows.removeView(view)
+        } catch (failed: RuntimeException) {
+            Log.w(TAG, "read aloud: $which window not removed: ${failed.javaClass.simpleName}")
+        }
+    }
 
     private class Choice(val node: AccessibilityNodeInfo, val bounds: Rect)
 
-    private fun chooseOrStop() {
-        if (busy) { cancel(); return }
+    private fun chooseOrStop() = life.speakerTapped(::choose)
+
+    private fun choose() {
         if (!prefs.enabled) { notice(service.getString(R.string.read_enable_first)); return }
         if (!canStart()) { notice(service.getString(R.string.read_finish_first)); return }
         if (audio.mode != AudioManager.MODE_NORMAL) { notice(service.getString(R.string.read_finish_first)); return }
@@ -234,7 +238,6 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         }
         if (candidates.isEmpty()) { notice(service.getString(R.string.read_no_text)); return }
         sourcePackage = root.packageName?.toString(); sourceWindow = root.windowId
-        choices = candidates
         val paint = Paint().apply { color = 0xff64b5f6.toInt(); style = Paint.Style.STROKE; strokeWidth = 4 * service.resources.displayMetrics.density }
         val overlay = object : View(service) {
             override fun onDraw(canvas: Canvas) {
@@ -247,20 +250,17 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
                     performClick()
                     val chosen = candidates.filter { it.bounds.contains(event.rawX.toInt(), event.rawY.toInt()) }
                         .minByOrNull { it.bounds.width().toLong() * it.bounds.height() }
-                    hidePicker()
-                    if (chosen == null) cancel() else {
+                    life.touched(chosen, {
                         val currentRoot = service.getRootInActiveWindow(0)
-                        if (currentRoot?.windowId != sourceWindow || currentRoot.packageName?.toString() != sourcePackage ||
-                            !choiceStillCurrent(chosen)) cancel()
-                        else speak(chosen, chosen.node.text?.toString().orEmpty())
-                    }
+                        currentRoot?.windowId == sourceWindow && currentRoot.packageName?.toString() == sourcePackage && choiceStillCurrent(it)
+                    }) { speak(it, it.node.text?.toString().orEmpty()) }
                 }; return true
             }
             override fun performClick(): Boolean { super.performClick(); return true }
         }
         windows.addView(overlay, WindowManager.LayoutParams(-1, -1, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT))
-        picker = overlay
+        life.pick(overlay, candidates)
         notice(service.getString(R.string.read_pick_text))
     }
 
@@ -271,7 +271,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         val id = generation.incrementAndGet()
         lastError = "none"
         try { beginMedia(); media = true } catch (_: RuntimeException) { lastError = "media_foreground_failed"; notice(service.getString(R.string.read_failed)); return }
-        active = true
+        life.active = true
         selected = choice; selectedText = text
         keepScreenOn(true)
         worker.queue.clear()
@@ -315,8 +315,10 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
         } finally { synchronized(lock) { if (track === player) track = null }; player.release() }
     }
 
-    fun cancel() {
-        generation.incrementAndGet(); hidePicker(); active = false
+    fun cancel() = life.cancel()
+
+    /** The rest of a cancel, after the picker is gone: playback, the screen, audio focus and the media service. */
+    private fun release() {
         selected = null; selectedText = null
         keepScreenOn(false)
         worker.queue.clear()
@@ -332,7 +334,7 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
     /** Called only from the isolated debug package's service dump: no text, endpoints, tokens or app identity. */
     fun diagnostics(out: java.io.PrintWriter) {
         val playing = synchronized(lock) { track?.playState == AudioTrack.PLAYSTATE_PLAYING }
-        out.println("read-aloud enabled=${prefs.enabled} active=$active picking=${picker != null} playing=$playing starts=$playbackStarts completed=$playbackCompletes error=$lastError")
+        out.println("read-aloud enabled=${prefs.enabled} active=${life.active} picking=${life.picker.up} playing=$playing starts=$playbackStarts completed=$playbackCompletes error=$lastError")
         val root = service.getRootInActiveWindow(0)
         val awake = glyphParams?.flags?.and(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0 && glyphParams != null
         out.println("read-state glyph=${glyph != null} root=${root != null} ownRoot=${root?.packageName?.toString() == service.packageName} locked=${service.getSystemService(KeyguardManager::class.java).isKeyguardLocked} keepScreenOn=$awake contentKept=$contentKept")
@@ -344,9 +346,59 @@ internal class ReadAloudController(private val service: AccessibilityService, pr
                 if (child.isShown) out.println("read-control ${child.tag}=${Rect(location[0], location[1], location[0] + child.width, location[1] + child.height).toShortString()}")
             }
         }
-        choices.forEachIndexed { index, choice -> out.println("read-choice $index chars=${choice.node.text?.length ?: 0} bounds=${choice.bounds.toShortString()}") }
+        life.choices.forEachIndexed { index, choice -> out.println("read-choice $index chars=${choice.node.text?.length ?: 0} bounds=${choice.bounds.toShortString()}") }
     }
     // Android drops a toast from the service over another app while notifications are not allowed.
     private val noticePill: Pill by lazy { Pill(service, Settings(service), {}, {}, { noticePill.hide() }) }
     private fun notice(text: String) { noticePill.flash(text, flashMs(true), maxLines = 5) }
 }
+
+/** The picker overlay's window. Only a picker that was up withdraws the pill: it holds the pick hint, never a failure notice posted around a cancel. */
+internal class PickerWindow<V : Any>(private val remove: (V) -> Unit, private val hideHint: () -> Unit) {
+    private var view: V? = null
+    val up: Boolean get() = view != null
+    fun open(view: V) { this.view = view }
+    fun close() {
+        val was = view ?: return
+        view = null
+        try { remove(was) } finally { hideHint() }
+    }
+}
+
+/**
+ * Read aloud's picker and narration lifecycle with no Android types, so a JVM test runs the close paths the service runs.
+ * [invalidate] makes any speech still in flight stale; [release] is the rest of a cancel (see the controller).
+ */
+internal class ReadAloudLifecycle<V : Any, C : Any>(
+    remove: (V) -> Unit, hideHint: () -> Unit, private val invalidate: () -> Unit, private val release: () -> Unit,
+) {
+    val picker = PickerWindow(remove, hideHint)
+    var active = false
+    var choices = emptyList<C>()
+        private set
+    val busy: Boolean get() = active || picker.up
+
+    fun pick(overlay: V, candidates: List<C>) { choices = candidates; picker.open(overlay) }
+
+    private fun hidePicker() { picker.close(); choices = emptyList() }
+
+    fun cancel() { invalidate(); hidePicker(); active = false; release() }
+
+    /** The speaker: tapped while choosing or speaking it stops; otherwise [start] looks for text to offer. */
+    fun speakerTapped(start: () -> Unit) { if (busy) cancel() else start() }
+
+    /** A tap on the picker. The picker goes either way; a tap outside every choice, or on one that is no longer current, cancels. */
+    fun touched(chosen: C?, stillCurrent: (C) -> Boolean, speak: (C) -> Unit) {
+        hidePicker()
+        if (chosen == null || !stillCurrent(chosen)) cancel() else speak(chosen)
+    }
+
+    /** An accessibility event while busy: cancels and answers true when the source is no longer what was chosen from. */
+    fun observed(sameSource: Boolean, eventFromSource: Boolean, eventType: Int?, selectionCurrent: () -> Boolean): Boolean {
+        val invalid = readAloudInvalidated(sameSource, eventFromSource, eventType, picker.up, sameSource && (picker.up || selectionCurrent()))
+        if (invalid) cancel()
+        return invalid
+    }
+}
+
+private const val TAG = "voxdroid"
