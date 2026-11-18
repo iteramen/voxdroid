@@ -263,6 +263,7 @@ Handset checklist (record actual results below; these rows alone are not passes)
 | Upgrade over a build that stored caption consent in `voxdroid.xml` | Captions are off after the upgrade; once the service has connected, the command above no longer names `voxdroid.xml`; turning the switch on shows the disclosure again and captions then work. |
 | Read-aloud language token without its own URL | Hebrew with a voice and a token, no Hebrew base URL, the token switch off: reading Hebrew is refused with a message naming the missing URL, and the English server receives no request. |
 | Read-aloud notices with notifications not allowed | Notifications not allowed for voxdroid, in another app: 🔊 while a dictation runs, 🔊 over a page with no text, 🔊 over a page with text (the *pick the text* hint), and a refused or failed read each show their message in full on a pill over that app, which ✕ closes and which goes on its own after a few seconds. |
+| Read-aloud pick hint goes with the picker | In another app, 🔊 over a page with text, then close the picker each way: pick a paragraph, tap 🔊 again, tap outside every choice, switch to another app. Each time the *pick the text* hint goes at once. A read that fails after the pick (server off) still shows its failure message for its full few seconds. |
 | Token box and autofill | Enter a token on the Speech page with an autofill service enabled: no offer to save it. |
 
 Recorded 2026-11-18 on `effb625` (details in "The 0.6.0 rows that were never run (#89)" at the top):
