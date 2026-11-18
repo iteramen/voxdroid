@@ -3,10 +3,10 @@ Speaking, reading and listening should be easier to reach.
 voxdroid is an Android accessibility app built first for people who find typing painful or difficult, including people with RSI or motor impairments. It also offers private voice-message captions for people who are deaf or hard of hearing, and read aloud for people who have difficulty seeing or reading text.
 
 DICTATE WITH YOUR EXISTING KEYBOARD
-Keep your own keyboard. Focus a text field, hold Volume Down or tap the floating microphone, speak, then stop. Your transcript lands at the original cursor. Optional cleanup can add punctuation and remove fillers. Password fields are excluded, and changing the target field prevents an unintended insertion.
+Keep your own keyboard. Focus a text field, hold Volume Down or tap the floating microphone (or Android's accessibility button, if you prefer it), speak, then stop. Your transcript lands at the original cursor. Optional cleanup can add punctuation and remove fillers. Password fields are excluded, and changing the target field prevents an unintended insertion.
 
 READ RECEIVED VOICE MESSAGES
-Select a downloaded WhatsApp or Telegram voice note and use the floating microphone to start the supported share flow. The caption appears in a private panel over the original conversation. It is not automatically pasted or sent to anyone. You can optionally remember captions for 30 days and delete them in the app. Supported sharing currently requires the English interface in those messaging apps.
+Select a downloaded WhatsApp or Telegram voice note and tap the floating microphone or accessibility button to start the supported share flow. The caption appears in a private panel over the original conversation. It is not automatically pasted or sent to anyone. You can optionally remember captions for 30 days and delete them in the app. Supported sharing currently requires the English interface in those messaging apps.
 
 HEAR TEXT YOU CHOOSE
 Tap the floating speaker, then choose an outlined, visible text block. Tap the speaker again to stop. Read aloud excludes password fields and editable text. English, Hebrew and Russian have separate voice and endpoint settings; available languages and voice quality depend on the servers you configure.

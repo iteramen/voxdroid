@@ -15,8 +15,8 @@ and the service puts it where the person already is: one gesture starts a dictat
 they are typing in, with their own keyboard staying up, and the transcript lands at the cursor.
 General hands-free dictation for anyone else is a use of the same service, not a different one.
 
-Three gestures reach the service (`res/xml/a11y_entry.xml`); the user picks one tap control on the
-Triggers page:
+Three gestures reach the service (`res/xml/a11y_entry.xml`); the user picks one tap control, or
+none, on the Triggers page:
 
 - the **floating 🎤 control** (`ReadAloudController`), with the original contextual dictation/caption action;
 - or **Android's accessibility button** (`flagRequestAccessibilityButton`;

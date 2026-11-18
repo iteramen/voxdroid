@@ -371,10 +371,11 @@ supported foreground header outside message lists, then selected-note metadata w
 chrome is present. Source package, window and header are RAM-only context, not cache identity.
 Native English Share controls are supported initially; an unknown or multi-selection is refused.
 
-Select one downloaded note, tap the floating 🎤 control, and choose **Caption with Voxdroid** in
-Android's chooser. The controller invokes Telegram Share or WhatsApp's overflow → Share; it never
+Select one downloaded note, tap the chosen tap control (the floating 🎤 or Android's accessibility
+button; with **Nothing on screen** chosen, captions have no trigger), and choose **Caption with
+Voxdroid** in Android's chooser. The controller invokes Telegram Share or WhatsApp's overflow → Share; it never
 chooses a recipient, taps Send, inserts into the composer or records the microphone. Normal
-volume-down dictation is unchanged, and the floating 🎤 control still stops an active dictation.
+volume-down dictation is unchanged, and the tap control still stops an active dictation.
 
 A Telegram Share click is not proof that sharing opened: an undownloaded note can expose an
 enabled Share control and then stay in Telegram. A four-second start check invalidates a request
@@ -531,7 +532,7 @@ Every STT, lane and cleanup request goes through `Http.kt` — `boundedPost`:
 
 `ReadAloudController` owns the draggable 🎤/🔊 overlay. In the own Try screen, the focused editable
 test field allows 🎤 only; own settings
-and credential screens keep the overlay hidden. The floating-microphone toggle still applies,
+and credential screens keep the overlay hidden. The 🎤 shows only with the floating control chosen (`tap_trigger`),
 and changing between own and external windows rebuilds the visible controls. No new exported
 trigger is introduced. Read-only blocks are discovered only on a
 speaker press, bounded to 600 foreground nodes; a second tap selects one refreshed block. Picker

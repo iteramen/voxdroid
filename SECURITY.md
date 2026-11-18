@@ -479,7 +479,7 @@ already compromised when its checksum was recorded, or one with no published adv
 
 `ReadAloudController` provides a draggable accessibility overlay with contextual 🎤 and optional 🔊.
 On Voxdroid's own Try screen, an input-focused editable `try_field` allows the microphone control
-only, subject to the floating-microphone toggle. Own settings/credential windows, password focus
+only, and only with the floating control chosen (`tap_trigger`). Own settings/credential windows, password focus
 and lock hide the controls. Narration remains excluded from all Voxdroid-owned windows; changing
 between the Try field and external apps rebuilds the controls for the new context.
 The Triggers page chooses one tap control (`tap_trigger`): this 🎤, Android's accessibility button

@@ -169,8 +169,9 @@ Replace them with yours. A row that uses an `http://` endpoint and does not name
       `adb shell pm grant io.github.iteramen.voxdroid android.permission.RECORD_AUDIO` — the
       status card's **Grant the microphone** is what asks for it otherwise
 - [ ] the icon is a white microphone with a stem and a base on black, on each surface that draws
-      it: the launcher, the app drawer, Settings, Apps, the floating accessibility button (its icon
-      is the app icon, as the service declares none), and Settings, Accessibility's entry for the
+      it: the launcher, the app drawer, Settings, Apps, Android's accessibility button when it is
+      the chosen tap control and the shortcut is on (its icon is the app icon, as the service
+      declares none), and Settings, Accessibility's entry for the
       service if Android draws one there (note whether it does). Under the launcher's mask nothing
       is clipped; with themed icons on (Settings, Wallpaper and style) the same microphone shows
       tinted to the wallpaper
@@ -205,7 +206,7 @@ Languages), then a **Privacy policy** row.
       and `plain http` after it for an `http://` host that is not loopback (Allow insecure (http)
       endpoints on); the triggers line names the triggers that are on; the button reads **Try a
       dictation** and opens a field — dictate into it with the volume-down hold or the
-      accessibility button, and the text lands; the instruction above the field is whole and at
+      chosen tap control, and the text lands; the instruction above the field is whole and at
       body text size, the field focused
 - [ ] release build: turn the service off in Settings → Accessibility (or over adb, as in
       [Dictation over Gboard](#dictation-over-gboard), removing the voxdroid entry) and revoke the
@@ -216,8 +217,8 @@ Languages), then a **Privacy policy** row.
 - [ ] debug build: with the service off and no `WRITE_SECURE_SETTINGS`, the button reads **Open
       Accessibility settings** as above. Grant it with
       `adb shell pm grant io.github.iteramen.voxdroid android.permission.WRITE_SECURE_SETTINGS`:
-      the button reads **Turn on**, and a tap turns the service on, brings the floating
-      accessibility button back, leaves every other enabled accessibility service on, and leaves
+      the button reads **Turn on**, and a tap turns the service on, brings Android's
+      accessibility button back if the voxdroid shortcut was on, leaves every other enabled accessibility service on, and leaves
       the card naming only what is left
 - [ ] revoke the microphone in Android's app settings: the card is red and its button reads
       **Grant the microphone**; it shows Android's dialog, denying it once asks again on the next
@@ -478,6 +479,9 @@ does both from the status card's **Turn on**.
 - [ ] choose **Floating 🎤 control** with the voxdroid shortcut still on: a tap on Android's button
       starts nothing; the 🎤 dictates
 - [ ] choose **Nothing on screen**: neither starts a take; volume-down still does
+- [ ] fresh install (the separate captiontest build), service turned on for the first time, tap
+      control left at **Floating 🎤 control**: note whether Android turns the voxdroid shortcut on
+      by itself and shows its button, which would then do nothing
 - [ ] the same in Keep and in one Compose field (Google Messages)
 - [ ] force-stop ChatGPT, open it and tap its text box, then trigger at once: it records, no
       `no text field`
@@ -529,7 +533,7 @@ does both from the status card's **Turn on**.
 - [ ] an endpoint that returns empty text (or only spaces), with the cleanup pass on: `silence`
       flashes, nothing is inserted, and the next take shows no `polish failed` note
 - [ ] with an error pill and `↻ Retry` showing and no text field focused (mode Refuse), hold
-      volume-down (or tap the accessibility button): the pill and its Retry stay as they were; tap
+      volume-down (or tap the chosen tap control): the pill and its Retry stay as they were; tap
       into the original field again and tap Retry, and the same take lands
 - [ ] start a take, then lock the screen: nothing is typed after unlocking, and the pill is gone
 - [ ] screen timeout at 30 s: dictate for over 40 s without touching the phone and stop with
@@ -583,7 +587,7 @@ fails, is refused or is dropped, or lands raw after a failed cleanup, played on 
 while Android's **Touch feedback** is on. **Vibrate on start and done** is on the Triggers page, on
 by default.
 
-- [ ] hold volume-down in a chat: one click as the pill appears; tap the accessibility button
+- [ ] hold volume-down in a chat: one click as the pill appears; tap the chosen tap control
       instead: the same click
 - [ ] stop the take: one click as the text lands; mode Clipboard with no field focused: one click
       with `copied to the clipboard`
@@ -615,7 +619,7 @@ and **Tone volume (%)** (default on, 5) are on the Triggers page. Run with the r
 Not Disturb off unless a row says otherwise, and the notification volume up.
 
 - [ ] hold volume-down in a chat: one high beep, then the pill appears and the click plays; tap the
-      accessibility button instead: the same
+      chosen tap control instead: the same
 - [ ] stop the take: one lower beep as the text lands; mode Clipboard with no field focused: the
       same beep with `copied to the clipboard`
 - [ ] airplane mode on and dictate: the falling pair with the `stt transport` error pill; point
@@ -723,7 +727,7 @@ For both owner-prepared Telegram and WhatsApp fixture conversations (a combined 
 remains unchecked until all its cases have evidence for both apps):
 
 - [ ] Caption enable disclosure is clear; Enable and Remember default off independently.
-- [ ] One received note selected → accessibility button → native Share chooser → Caption with
+- [ ] One received note selected → chosen tap control → native Share chooser → Caption with
       Voxdroid → private readable panel over the original chat. No composer change or Send.
 - [ ] First share reaches STT then configured cleanup; server validates normalized WAV. Real
       configured STT also produces a readable result, separately from test-server static text.
