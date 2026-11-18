@@ -1,5 +1,75 @@
 # Manual checklist
 
+## The 0.6.0 rows that were never run (#89) — 2026-11-18
+
+Pixel 10, Android 17 (SDK 37), gesture navigation, Wi-Fi adb. Isolated builds from `effb625`
+(0.6.4): `.captiontest` for the STT, dictation-log and configuration rows, then `.readaloudtest`
+for the read-aloud and floating-control rows, each beside production. Production's settings,
+tokens and service were never touched. A loopback stub over `adb reverse` gave the STT reply
+shapes, a silent TTS reply and one fixture page (an English paragraph, a Hebrew paragraph, a plain
+field, a password field) opened in the phone's browser; synthetic text and tokens only. Driven by
+screenshots and taps, with the test service's own diagnostics; no UIAutomator. Font scale, display
+density, the backup transport and the accessibility settings were recorded first and compared
+equal afterwards, and both test packages were uninstalled.
+
+- **STT reply of 1,000,000 `[`:** the pill read `stt JSON` with `↻ Retry`; the service stayed on.
+- **STT reply of empty objects, 1,048,575 bytes:** the pill read `silence`; the service stayed on.
+- **STT reply of 500,000 letters, no field focused, Copy to the clipboard:** the pill read `copied
+  to the clipboard` and the service stayed on. The clip's length was measured by pasting it into
+  the empty Try field: the cursor stood at 100,000 (`dumpsys input_method`).
+- **The same reply into a focused field:** the empty Try field's cursor went from 0 to 100,000. A
+  second take after that text moved it to 200,001. Both the service and the app stayed up, with
+  nothing in the crash buffer.
+- **Report while the entry goes away:** two windows of the test app in split screen. With a Report
+  preview open in one, *Delete the dictation log* confirmed in the other: the preview read "This
+  entry was deleted or has expired." at once. Report on another entry, planted with its own text,
+  showed that text; switching *Keep a dictation log* off in the other window turned it to the same
+  message, and `files/dictation_log` was empty.
+- **Report preview at the largest sizes:** `font_scale` 2.0 and `wm density 540`. The notice, the
+  report and *Continue to GitHub*, *Copy* and *Cancel* were readable and reachable by scrolling,
+  with nothing clipped. Production's floating control lay over the page title, which a single
+  install does not show on its own pages.
+- **Copy, then paste:** Android's copy confirmation showed dots and no text. Pasting into the Try
+  field gave 407 characters; the Delivered text, Expected and Details sections and `Events: none`
+  were on screen, the Raw transcript section above them was not captured. The test package held no
+  token then, so this says nothing about tokens.
+- **Consent off a backup:** captions and read aloud switched on through their disclosures. The
+  `grep -l` for `voice_captions` and for `tts_enabled` each named `shared_prefs/secrets.xml` only
+  (control: `stt_base_url` named `voxdroid.xml`).
+- **Backup and restore:** the test package only, through Android's local test transport (`bmgr
+  backupnow`, data cleared, `bmgr restore`). `voxdroid.xml` came back and `secrets.xml` did not:
+  neither consent nor the token returned, and both switches showed off. The same with the
+  transport's `is_device_transfer=true`. The phone's own transport was selected again afterwards.
+- **Token box and autofill:** Google's autofill service was the phone's enabled one. A synthetic
+  token typed into *STT token* stayed masked, with no suggestion and no offer to save on OK or on
+  leaving the page.
+- **Read-aloud language token without its own URL:** a Hebrew voice and token, no Hebrew base URL,
+  the token switch off. Choosing the Hebrew paragraph spoke nothing and the stub received no TTS
+  request. **No message appeared**, which differs from the row. `adb logcat` showed `Suppressing
+  toast from package … by user request` for each of the service's notices, the picker's hint
+  included: the test package may not post notifications (the manifest declares no
+  `POST_NOTIFICATIONS`), and Android then drops a toast from a package that is not in front. Filed as #106.
+- **Service off after a notification Stop:** not run as written. Opening the notification shade
+  ended the narration and removed its notification before Stop could be tapped (twice; the service
+  was in the foreground with the read-aloud notification while it spoke). Run without that step,
+  with the service switched off by taking it out of `enabled_accessibility_services` over adb while
+  a dictation recorded: the pill and the control went at once, the microphone indicator within a
+  second, and `dumpsys activity services` listed nothing for the package. Switched on again there
+  was one control; a narration and a dictation each started with its foreground notification, and
+  the dictated text landed in the page's field. Filed as #107.
+- **Floating control context:** with the tap control on *Nothing on screen* and read aloud off, no
+  control over the browser or the launcher; with *Floating 🎤 control* chosen again, 🎤 showed on
+  returning to the browser. With the page's password field focused the control was gone
+  (production's too) and came back on the plain field. On the test app's own pages it was hidden;
+  on the Try page with its field focused only 🎤 showed, read aloud being on. On the lock screen
+  the diagnostics read `locked=true glyph=false`. With both on, 🎤 and 🔊 showed together in the
+  browser, 🔊 read the English paragraph (one stub request) and 🎤 dictated.
+
+**Not checked:** Report on a phone with no browser (the owner's browsers were not disabled); a
+real transfer to a second handset; the notification's Stop itself; the control coming back after
+the lock screen, since the phone cannot be unlocked over adb. The app's version label read
+`(unknown)` instead of the commit in these worktree builds.
+
 ## Android's button on a three-button navigation bar — 2026-11-18
 
 Pixel 10, Android 17 (SDK 37), switched to three-button navigation with the accessibility button in
@@ -121,6 +191,13 @@ removal. Microphone permission was verified before the take, revoked afterward, 
 the original accessibility settings restored. No production configuration, credentials,
 history or audio files were copied. Other rows below remain pending unless separately recorded.
 
+Handset checkpoint, 2026-11-18, isolated `captiontest` build from `effb625`: *Report while the
+entry goes away* gave its expected result for Delete and for switching the log off, each from a
+second window in split screen; the Report preview stayed readable and unclipped at the largest
+font and display size; the copy confirmation showed no text and a paste gave the report. *Report
+on a phone with no browser* was not run: the owner's browsers were not disabled. Details in "The
+0.6.0 rows that were never run (#89)" at the top.
+
 - [ ] During Recording, Delete all or switch logging off/on before stopping: that take must
   not create a record. Enabling logging after recording has started applies only to later takes.
 - [ ] After a failed take, Delete all and then Retry: no deleted record returns. A subsequent
@@ -186,6 +263,15 @@ Handset checklist (record actual results below; these rows alone are not passes)
 | Upgrade over a build that stored caption consent in `voxdroid.xml` | Captions are off after the upgrade; once the service has connected, the command above no longer names `voxdroid.xml`; turning the switch on shows the disclosure again and captions then work. |
 | Read-aloud language token without its own URL | Hebrew with a voice and a token, no Hebrew base URL, the token switch off: reading Hebrew is refused with a message naming the missing URL, and the English server receives no request. |
 | Token box and autofill | Enter a token on the Speech page with an autofill service enabled: no offer to save it. |
+
+Recorded 2026-11-18 on `effb625` (details in "The 0.6.0 rows that were never run (#89)" at the top):
+
+- *Consent off a backup*: as expected, with read aloud switched on as well. A backup and restore of
+  the isolated package through Android's local test transport, in its backup mode and in its
+  device-transfer mode, brought back neither consent. A transfer to a second handset was not run.
+- *Read-aloud language token without its own URL*: differs. Hebrew was not read and the English
+  server received no request, but no message appeared: Android suppressed the service's toast. Filed as #106.
+- *Token box and autofill*: as expected, with Google's autofill service enabled.
 
 Everything here needs a handset; the JVM tests (`./gradlew testDebugUnitTest`) cover the logic
 that runs without one. Run this against the debug APK (`./gradlew assembleDebug`) before a PR that
@@ -384,6 +470,9 @@ Against a working STT endpoint:
       clip holds 100,000 characters, and the service is still on
 - [ ] the same reply into a focused plain text field: the field gains 100,000 characters (one more
       with the leading space), and both voxdroid and the app holding the field stay up
+
+The four stub rows above were run on 2026-11-18 on `effb625` and each gave its expected result:
+see "The 0.6.0 rows that were never run (#89)" at the top.
 - [ ] point `STT endpoint` at a tailnet host (a `100.x` address or a `*.ts.net` name) and disconnect
       Tailscale, then dictate: the pill reads `stt timed out — Tailscale not connected?` or
       `stt unreachable — Tailscale not connected?`, with no token, URL or server text on it, and it
@@ -1044,7 +1133,7 @@ and remove the test package afterwards. Record the exact committed APK used for 
 | Automatic timeout with USB wake disabled | During synthesis/playback, display stays awake beyond its configured timeout | Passed a9eac33, 18 s observation against 15 s timeout, USB wake off |
 | Completion, cancellation and failed TTS | `keepScreenOn=false`; idle display can time out | Flag release passed on completion/cancel/503; idle timeout in final regression |
 | Manual power-button lock during speech | Speech stops, glyph disappears and no late restart | Injected screen-off passed a9eac33; physical button not separately tested |
-| Service off after a notification Stop | Stop a narration from its notification, then start a dictation and switch the service off in Accessibility settings while it records: the microphone indicator goes out at once, and `adb shell dumpsys activity services <package>` lists no `VoxdroidA11yService` record (expected before the fix: the record stays, with `startRequested=true`). Switching the service back on gives one pill and one floating control; a second narration and a dictation then both start, each with its notification. | Not run |
+| Service off after a notification Stop | Stop a narration from its notification, then start a dictation and switch the service off in Accessibility settings while it records: the microphone indicator goes out at once, and `adb shell dumpsys activity services <package>` lists no `VoxdroidA11yService` record (expected before the fix: the record stays, with `startRequested=true`). Switching the service back on gives one pill and one floating control; a second narration and a dictation then both start, each with its notification. | Not run as written, 2026-11-18 on `effb625`: opening the notification shade ended the narration and removed its notification before Stop could be tapped. Without the notification Stop, and with the service switched off over adb while a dictation recorded: indicator out at once, no service record; switched on again, one control, and a narration and a dictation each started with its notification. Filed as #107 |
 | A block of several chunks (over 1,500 characters of ordinary prose) | The first speech starts as before; later chunks follow with no silence longer than a sentence pause, and a chunk starts at a sentence start wherever the text has sentence ends. Stop during the second chunk: silence at once and no late speech. | Chunks passed on the 0.6.1 release, Pixel 10 / Android 17: a three-paragraph message went as four requests, each made while the previous chunk played. Stop not run |
 | A notification sound during speech | Narration plays on through it. `adb logcat -d` shows `onAudioFocusChange(-3)` dispatched to `ReadAloudController` and no `abandonAudioFocus()` from voxdroid after it. An incoming call or another app's playback still stops it. | Not run |
 
@@ -1221,3 +1310,8 @@ The control decides where it may show from every accessibility event (`ReadAloud
 | *Floating 🎤 control* and read aloud both off | No floating control over any app. Turning *Floating 🎤 control* back on shows it on returning to another app. |
 | *Floating 🎤 control* on: a field marked as a password field focused, the lock screen, voxdroid's own pages | The control is hidden; it returns on leaving. On the Try page with its field focused, only 🎤 shows. |
 | *Floating 🎤 control* and read aloud on, in another app | 🎤 and 🔊 show together and both act. |
+
+Recorded 2026-11-18 on `effb625`, isolated `readaloudtest` build beside production: the three rows
+gave their expected results over the phone's browser, the launcher and the test app's own pages.
+On the lock screen the control was hidden; its return after unlocking was not checked. Details in
+"The 0.6.0 rows that were never run (#89)" at the top.
