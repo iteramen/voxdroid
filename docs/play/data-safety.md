@@ -90,12 +90,12 @@ their own account. Voxdroid makes no network request itself, holds no GitHub cre
 never posts (`DictationReport`, `DictationLogActivity`). The data is a dictated transcript, which
 the **App activity → Other user-generated content** row already declares as collected for App
 functionality; for a dictation made into a chat the user may consider it message content, as the
-Messages row already covers. This draft treats the transfer as the same specific, user-initiated,
-disclosed action as Copy: the preview states the recipient and that the text is sent on opening.
-Unlike Copy the recipient is fixed by the developer and receives the data over the network, so
-the owner must decide in the Console whether the user-initiated exception holds or the row's
-Shared answer becomes Yes (purpose: App functionality, optional); do not submit the form without
-that decision. The privacy policy names GitHub as the recipient.
+Messages row already covers. The labelled **Continue to GitHub** action is a specific,
+user-initiated transfer the user expects: the preview names GitHub as the recipient and states
+that the text is sent on opening. Although the recipient is fixed by the developer and receives
+the data over the network, unlike Copy, this draft applies the user-initiated exception to it, so
+both rows keep their Shared answer. This is an implementation-based interpretation, not a Google
+approval. The privacy policy names GitHub as the recipient.
 
 ## Other data and accessibility
 
