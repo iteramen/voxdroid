@@ -482,9 +482,11 @@ On Voxdroid's own Try screen, an input-focused editable `try_field` allows the m
 only, and only with the floating control chosen (`tap_trigger`). Own settings/credential windows, password focus
 and lock hide the controls. Narration remains excluded from all Voxdroid-owned windows; changing
 between the Try field and external apps rebuilds the controls for the new context.
-The Triggers page chooses one tap control (`tap_trigger`): this 🎤, Android's accessibility button
-(`flagRequestAccessibilityButton`, `AccessibilityButtonCallback.onClicked`), or none. A tap on the
-one not chosen does nothing.
+The Triggers page chooses one tap control (`tap_trigger`): this 🎤, Android's accessibility button,
+or none. A tap on the one not chosen does nothing. The accessibility button comes from a second,
+off-by-default service, `ButtonService` (`res/xml/a11y_button.xml`): `flagRequestAccessibilityButton`
+and nothing else, so no events, window content or key filtering. Its `onClicked` reaches the main
+service through `ButtonBridge` in the same process, and does nothing while the main service is off.
 Read aloud is off by default and enabling it explains screen access and the TTS data flow. On a
 speaker press it examines at most 600 nodes from the active foreground tree, skips password
 subtrees and editable text, and outlines visible read-only blocks of at least 15 characters. Those

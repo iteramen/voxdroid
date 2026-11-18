@@ -50,7 +50,7 @@ first item:
 1. **Turn on the service.** The button opens Android's Accessibility settings; turn voxdroid on
    there. The floating 🎤 control appears outside Voxdroid settings. On the Triggers page you can
    tap Android's accessibility button instead, or have nothing on screen; the accessibility button
-   also needs the voxdroid shortcut on in Android's Accessibility settings.
+   also needs **voxdroid button** turned on in Android's Accessibility settings.
 2. **Grant the microphone.**
 3. **Speech:** the STT endpoint (the base URL; voxdroid appends `/audio/transcriptions` itself),
    a bearer token if your server needs one, the model name (sent as `model`; whisper.cpp ignores

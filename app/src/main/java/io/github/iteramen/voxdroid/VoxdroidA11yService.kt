@@ -1,7 +1,6 @@
 package io.github.iteramen.voxdroid
 
 import android.Manifest
-import android.accessibilityservice.AccessibilityButtonController
 import android.accessibilityservice.AccessibilityService
 import android.app.Notification
 import android.app.NotificationChannel
@@ -60,11 +59,9 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         if (key?.startsWith("tts_") == true || key == "trigger_button" || key == "tap_trigger") readAloud?.preferencesChanged()
     }
 
-    private val button = object : AccessibilityButtonController.AccessibilityButtonCallback() {
-        override fun onClicked(controller: AccessibilityButtonController) {
-            if (BuildConfig.DEBUG) buttonClicks++
-            buttonAction(TapTrigger.AccessibilityButton)
-        }
+    private val accessibilityButton = {
+        if (BuildConfig.DEBUG) buttonClicks++
+        buttonAction(TapTrigger.AccessibilityButton)
     }
 
     private val hold = Runnable { if (gesture.holdElapsed()) dispatch(TakeEvent.Trigger) }
@@ -100,7 +97,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         getSharedPreferences("voxdroid", MODE_PRIVATE).edit().remove("voice_captions").apply()
         getSharedPreferences("voxdroid", MODE_PRIVATE).registerOnSharedPreferenceChangeListener(captionPrefs)
         getSharedPreferences("secrets", MODE_PRIVATE).registerOnSharedPreferenceChangeListener(captionPrefs)
-        accessibilityButtonController.registerAccessibilityButtonCallback(button)
+        ButtonBridge.tap = accessibilityButton
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
         readAloud?.observe(null)
         logWriter.execute { dictationLog.prune() }
@@ -152,6 +149,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
     override fun onDestroy() {
         readAloud?.destroy()
         CaptionServiceBridge.controller = null
+        if (ButtonBridge.tap === accessibilityButton) ButtonBridge.tap = null
         captions?.destroy()
         getSharedPreferences("voxdroid", MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(captionPrefs)
         getSharedPreferences("secrets", MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(captionPrefs)

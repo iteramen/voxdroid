@@ -8,10 +8,14 @@ build-provenance attestation are published from it on GitHub Releases.
 Added
 - Android's accessibility button is back as a way to dictate. Since 0.4.0 voxdroid no longer asked
   Android for it, so a voxdroid shortcut set up under 0.3.0 did nothing. The Triggers page now
-  offers one tap control out of three: the floating 🎤 control, Android's accessibility button
-  (turn on the voxdroid shortcut in Android's Accessibility settings too), or nothing on screen. A
-  tap does the same as before on either. The *Floating 🎤 control* switch becomes this choice: on
-  reads as the floating control, off as nothing on screen.
+  offers one tap control out of three: the floating 🎤 control, Android's accessibility button, or
+  nothing on screen. A tap does the same as before on either. The *Floating 🎤 control* switch
+  becomes this choice: on reads as the floating control, off as nothing on screen.
+- **voxdroid button**, a second entry in Android's Accessibility settings. Turning it on puts
+  Android's accessibility button on screen and passes its taps to voxdroid; it reads nothing on
+  screen and receives no keys. It is separate because Android keeps the button on screen for as long
+  as a service that asks for it is on, so asking from voxdroid itself would add the button for
+  everyone. A voxdroid shortcut left over from 0.3.0 does not dictate; turn it off.
 
 ## 0.6.2 — 2026-11-16
 

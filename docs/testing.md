@@ -472,16 +472,18 @@ does both from the status card's **Turn on**.
 - [ ] tap the accessibility button, speak, tap it again: same as above
 - [ ] Triggers page, tap control: an install upgraded from 0.6.2 with *Floating 🎤 control* on
       shows **Floating 🎤 control** chosen, and one with it off shows **Nothing on screen**
-- [ ] choose **Android's accessibility button** and turn on the voxdroid shortcut in Android's
-      Accessibility settings: Android shows its button (navigation bar or floating, per the phone);
-      a tap starts and a second tap stops a take; the floating 🎤 is gone (🔊 stays while read
-      aloud is on); the status card's triggers line names the accessibility button
-- [ ] choose **Floating 🎤 control** with the voxdroid shortcut still on: a tap on Android's button
+- [ ] upgrade from 0.6.2 with voxdroid on and no voxdroid shortcut: voxdroid stays on, Android's
+      button does not appear, `accessibility_button_targets` stays as it was, and **voxdroid
+      button** is listed Off in Android's Accessibility settings
+- [ ] turn on **voxdroid button** there: its page has only the shortcut toggle; after the consent
+      dialog Android shows its button (navigation bar or floating, per the phone)
+- [ ] choose **Accessibility button**: a tap starts and a second tap stops a take; the floating 🎤
+      is gone (🔊 stays while read aloud is on); the status card's triggers line names the
+      accessibility button
+- [ ] choose **Floating 🎤 control** with voxdroid button still on: a tap on Android's button
       starts nothing; the 🎤 dictates
 - [ ] choose **Nothing on screen**: neither starts a take; volume-down still does
-- [ ] fresh install (the separate captiontest build), service turned on for the first time, tap
-      control left at **Floating 🎤 control**: note whether Android turns the voxdroid shortcut on
-      by itself and shows its button, which would then do nothing
+- [ ] turn voxdroid itself off with voxdroid button on: a tap on Android's button does nothing
 - [ ] the same in Keep and in one Compose field (Google Messages)
 - [ ] force-stop ChatGPT, open it and tap its text box, then trigger at once: it records, no
       `no text field`

@@ -45,12 +45,14 @@ interrupted restore can be retried from the encrypted file. It exports no audio,
 caption consent or Android grants. It adds no runtime dependency or exported component. Normal
 same-signer upgrades retain preferences without this path.
 
-Three activities and one accessibility service ([AndroidManifest.xml](../app/src/main/AndroidManifest.xml)).
+Three activities and two accessibility services, the second only for Android's accessibility button
+([AndroidManifest.xml](../app/src/main/AndroidManifest.xml)).
 Logic that needs no Android lives in plain functions and classes, so the JVM tests reach it.
 
 | File | Owns |
 |---|---|
 | [VoxdroidA11yService.kt](../app/src/main/java/io/github/iteramen/voxdroid/VoxdroidA11yService.kt) | the host (`TakeHost`): keys, button, screen-off, recording under a foreground service, the worker, delivery |
+| `ButtonService.kt` | **voxdroid button**: Android's accessibility button, each tap handed to the host through `ButtonBridge` |
 | [Take.kt](../app/src/main/java/io/github/iteramen/voxdroid/Take.kt) | the state machine, take numbering, the audio held for Retry |
 | `VolumeGesture.kt`, `Recorder.kt` | hold-to-start and press-to-stop; `AudioRecorder` (16 kHz mono PCM16 into memory), `wav` |
 | `Transcriber.kt`, `SttClient.kt`, `Routed.kt` | `dictate` (the no-speech gate); the multipart request and reply parsing; lanes and the auto-detect resend |
@@ -135,10 +137,14 @@ or replace the recording/error pill. Caption cancellation and service destructio
   floor 300) starts a take; a press while recording stops it on key-down; a short press otherwise
   is re-applied as one volume step (`adjustSuggestedStreamVolume`); key repeats are swallowed.
 - **Tap control** (`tap_trigger`, `TapTrigger`), one of three: the **floating 🎤 control**
-  (`ReadAloudController`), **Android's accessibility button** (`flagRequestAccessibilityButton`,
-  `AccessibilityButtonCallback.onClicked`; Android shows it once the user turns on the voxdroid
-  shortcut in Accessibility settings), or none. A tap on the chosen one is a Trigger; a tap on the
-  other does nothing. An install from before the choice keeps its old switch: `trigger_button` on
+  (`ReadAloudController`), **Android's accessibility button**, or none. A tap on the chosen one is
+  a Trigger; a tap on the other does nothing. The button belongs to a second accessibility service,
+  `ButtonService` (`a11y_button.xml`, `flagRequestAccessibilityButton` only), which hands
+  `onClicked` to the main service through `ButtonBridge`. Android fixes that request at install
+  (`REQUEST_ACCESSIBILITY_BUTTON_CHANGE`) and keeps a requesting service on only while one of its
+  shortcuts is assigned, adding the button to an already-enabled service on upgrade. In the main
+  service it would put the button on every user's screen; in its own service only those who turn
+  on **voxdroid button** get it. An install from before the choice keeps its old switch: `trigger_button` on
   reads as the floating control, off as none.
 - The volume-down hold can be switched off (`trigger_volume`) and the tap control set to none; the
   status card lists the triggers on.
