@@ -19,6 +19,16 @@ internal fun micFailureBar(failed: RuntimeException): String = when {
     else -> "mic: unavailable"
 }
 
+/** Runs [start]; if it throws, runs [release] once and rethrows, so a recorder that would not start is not left allocated. */
+internal fun startOrRelease(start: () -> Unit, release: () -> Unit) {
+    try {
+        start()
+    } catch (failed: RuntimeException) {
+        release()
+        throw failed
+    }
+}
+
 /** 16 kHz mono PCM16; a handset that refuses it fails loudly, and [stop] after a [start] that threw returns an empty take. */
 class AudioRecorder(private val context: Context) {
 
@@ -51,8 +61,8 @@ class AudioRecorder(private val context: Context) {
             record.release()
             error(MIC_RATE_UNSUPPORTED)
         }
+        startOrRelease(record::startRecording, record::release)
         capturing = true
-        record.startRecording()
         this.record = record
         reader = Thread({ read(record, bufferBytes) }, READER_THREAD).apply { start() }
     }
