@@ -9,9 +9,23 @@ or DejaVu Sans on Linux). Different fonts can change the feature graphic;
 the checked-in Windows render is the reviewed output. The mark geometry derives
 from `app/src/main/res/drawable/ic_launcher_foreground.xml`.
 
-**Screenshots pending:** the phone was disconnected during store preparation.
-The earlier synthetic test-page screenshot is 1080 x 2424, beyond Play's 2:1
-aspect-ratio limit, and is not included as a submission screenshot.
+**Screenshots:** three captures under `screenshots/`, taken on 2026-11-18 from the
+signed 0.6.4 GitHub release (`effb625`, versionCode 15) installed on a Pixel 10
+(Android 17, 1080 x 2424), with `adb exec-out screencap -p`. The display was set
+to 1080 x 2160 for the captures (`wm size`) and reset afterwards, because the
+native height is beyond Play's 2:1 aspect-ratio limit. The status bar, the top
+150 px, is cropped off because it showed the phone's own notification icons; the
+files are 1080 x 2010 RGB PNGs and nothing else in them is edited.
+
+- `01-features.png`: the main page scrolled to the feature menu. The status card
+  above the menu names the phone's own endpoint and is left out of the frame.
+- `02-dictation.png`: the Try page during a dictation, with the keyboard up and
+  the recording pill showing its timer, Stop and cancel. The take was cancelled,
+  so no audio was sent and there is no transcript.
+- `03-triggers.png`: the Triggers page.
+
+No narration or caption interaction is captured yet: each needs a speech server
+answering with synthetic content.
 
 Capture at least two real screens from the release build using synthetic text:
 the main feature menu and a visible narration/caption interaction. Do not expose
