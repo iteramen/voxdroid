@@ -3,7 +3,7 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
-## Unreleased
+## 0.6.4 — 2026-11-18
 
 Fixed
 - The pill no longer covers Android's navigation bar. With no keyboard up it sat at the bottom
