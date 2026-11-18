@@ -274,6 +274,23 @@ Recorded 2026-11-18 on `effb625` (details in "The 0.6.0 rows that were never run
   server received no request, but no message appeared: Android suppressed the service's toast. Filed as #106.
 - *Token box and autofill*: as expected, with Google's autofill service enabled.
 
+Recorded 2026-11-19 on `69bbee3`, Pixel 10 (Android 17), isolated `readaloudtest` build beside
+production, a loopback stub and one synthetic page in the phone's browser. The test package could
+not post notifications (`cmd appops get` read `POST_NOTIFICATION: ignore`):
+
+- *Read-aloud language token without its own URL*: as expected. Choosing the Hebrew paragraph
+  showed "Read aloud: the he token needs a he base URL; to use the English endpoint, switch on its
+  token instead" in full on a pill over the browser, nothing was read, and the stub received no
+  speech request (five runs).
+- *Read-aloud notices with notifications not allowed*: as expected. Each message showed in full on
+  a pill over the browser: 🔊 while a dictation recorded in the page's field (*Finish the current
+  dictation, voice caption or call first.*), 🔊 over a page with no text (*No visible read-only
+  text block found…*), 🔊 over the page with text (the *pick the text* hint), the refused Hebrew
+  read above, and a failed read with the stub answering 500 (*Read aloud: TTS returned HTTP 500*).
+  Each was gone in a screenshot about five seconds later. ✕ closed the refusal: gone 1.6 s after
+  the paragraph was chosen, where the same run without the tap still showed it. During the dictation the notice lay
+  over the recording pill, covering its Stop and ✕ until the notice went.
+
 Everything here needs a handset; the JVM tests (`./gradlew testDebugUnitTest`) cover the logic
 that runs without one. Run this against the debug APK (`./gradlew assembleDebug`) before a PR that
 touches the service. The boxes stay unticked: this is the template for each run, not a record of
