@@ -5,6 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 import java.io.IOException
 import java.net.ConnectException
 import java.net.NoRouteToHostException
@@ -45,6 +46,18 @@ class NoticeTest {
         assertFalse(flashesOver(TakeState.Error("grant the microphone in voxdroid", canRetry = false)))
         assertFalse(flashesOver(TakeState.Recording))
         assertFalse(flashesOver(TakeState.Working(Stage.Stt)))
+    }
+
+    /** Reads the main sources off disk; `app/build.gradle.kts` lists them as test inputs. */
+    @Test
+    fun theAccessibilityServiceShowsItsNoticesOnAnOverlayNeverAToast() {
+        val sources = sequenceOf("src/main/java", "app/src/main/java").map(::File).first(File::exists)
+            .walk().filter { it.isFile && it.extension == "kt" }.toList()
+        val toast = Regex("""\bToast\b""")
+        assertTrue("positive control: the settings screens' own toasts match", sources.any { it.name == "SectionFragment.kt" && toast.containsMatchIn(it.readText()) })
+        val service = sources.filter { Regex("""\bAccessibilityService\b""").containsMatchIn(it.readText()) }
+        assertTrue("positive control: the service-side sources are found", service.map { it.name }.containsAll(setOf("ReadAloudController.kt", "CaptionController.kt", "Pill.kt")))
+        assertEquals("Android suppresses these over another app", emptyList<String>(), service.filter { toast.containsMatchIn(it.readText()) }.map { it.name })
     }
 
     @Test
