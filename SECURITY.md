@@ -522,9 +522,11 @@ at 50 ms intervals, with a separate total deadline and generation checks before 
 I/O. Cancellation during registration is checked before opening a stream. Late replies cannot
 play. Already-admitted network I/O may still reach or finish on the server; it cannot be recalled.
 Playback uses a mediaPlayback foreground service
-and notification with Stop, not a microphone service; no microphone permission is needed. Stop
-reaches the service as a start; the service stops itself again at once (`onStartCommand` —
-`stopSelf`), so it stays a bound-only service that Android destroys when it is switched off. Text and
+and its notification, not a microphone service; no microphone permission is needed. The
+notification carries no action: voxdroid does not ask for the notification permission, so Android
+does not show it, and the floating speaker stops playback. Nothing starts the service by intent,
+and a start that did arrive is stopped at once (`onStartCommand` — `stopSelf`), so it stays a
+bound-only service that Android destroys when it is switched off. Text and
 generated audio never enter files, caption history, the clipboard or dictation logs. TTS
 configuration/tokens are included in explicit encrypted settings export; enable consent is not.
 The consent bit lives in backup-excluded `secrets.xml`, so Android cloud/device restore cannot

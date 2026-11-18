@@ -460,19 +460,15 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         check(machine.state == TakeState.Idle)
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel("read-aloud", getString(R.string.read_channel), NotificationManager.IMPORTANCE_LOW))
-        val stop = android.app.PendingIntent.getService(this, 44,
-            Intent(this, VoxdroidA11yService::class.java).setAction(READ_STOP),
-            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
+        // No action on it: voxdroid does not ask for the notification permission, so Android never shows this notification.
         val note = Notification.Builder(this, "read-aloud").setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
-            .setContentTitle(getString(R.string.read_notification)).setOngoing(true)
-            .addAction(Notification.Action.Builder(null, getString(R.string.read_stop), stop).build()).build()
+            .setContentTitle(getString(R.string.read_notification)).setOngoing(true).build()
         startForeground(2, note, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == READ_STOP) readAloud?.cancel()
-        // The notification's Stop arrives as a start. Left started, the service would survive being switched off in
-        // Accessibility settings, recorder included: Android destroys a service only once it is neither bound nor started.
+        // Nothing starts this service by intent. If something ever does, it must not stay started: it would survive being
+        // switched off in Accessibility settings, recorder included, since Android destroys a service only once it is neither bound nor started.
         stopSelf(startId)
         return START_NOT_STICKY
     }
@@ -490,7 +486,6 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
 
     private companion object {
         const val TAG = "voxdroid"
-        const val READ_STOP = "io.github.iteramen.voxdroid.STOP_READ_ALOUD"
         const val CHANNEL = "recording"
         const val NOTIFICATION_ID = 1
         const val TICK_MS = 500L

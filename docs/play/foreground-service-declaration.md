@@ -31,9 +31,9 @@ leaving the source app, locking the phone or starting dictation also cancels it.
 **Why immediate/continuous:** deferral disconnects speech from the chosen text;
 interruption prevents the user hearing it through. This is an accessibility
 read-aloud action, not a background batch download. It requires no microphone.
-The service creates a media-playback notification with a Stop action. Notification
-visibility depends on Android's settings/permissions; do not promise that every
-device shows that action in its notification drawer. Demonstrate the floating Stop.
+The service creates a media-playback notification with no action. voxdroid does not
+ask for the notification permission, so Android does not show it in the notification
+drawer. Demonstrate the floating Stop.
 
 **Video:** enable Read aloud through its disclosure, choose one synthetic block,
 show/hear playback and stop it. Show that the microphone indicator stays off.

@@ -24,7 +24,7 @@ voxdroid declares five Android permissions (`AndroidManifest.xml`):
   pill and Android's microphone indicator show. voxdroid does not request the notification
   permission.
 - **Foreground media playback** (`FOREGROUND_SERVICE_MEDIA_PLAYBACK`), to synthesize and play an
-  explicitly selected text block under a notification with Stop; no microphone access is needed.
+  explicitly selected text block; no microphone access is needed. The floating speaker stops it.
 
 The built app also carries `io.github.iteramen.voxdroid.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`,
 which an AndroidX library adds: it is signature-level, so only an app signed with voxdroid's own

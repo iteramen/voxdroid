@@ -3,6 +3,18 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Fixed
+- Read aloud's notices are visible again. They were toasts from the service, which Android drops
+  for an app that may not post notifications, so a refusal such as a missing server address showed
+  nothing. They now appear on a pill over the app in front.
+
+Removed
+- The Stop action on read aloud's notification. voxdroid does not ask for the notification
+  permission, so Android never showed that notification and the action could not be reached. The
+  floating speaker stops a narration, as before.
+
 ## 0.6.4 — 2026-11-18
 
 Fixed
