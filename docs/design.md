@@ -232,7 +232,13 @@ fixes Compose's later answers, so the field compares equal at delivery.
   drops control characters, format (`Cf`, a Unicode 16.0 table in the code) characters except
   U+200C–U+200F, and unpaired surrogates, logging only the count (`droppedNote`); then trim,
   one terminal `.` comes off (never from `..`) while `strip_terminal_period` is on, and the text
-  is cut to 100,000 UTF-16 units (`MAX_TYPED_CHARS`, never inside a surrogate pair).
+  is cut to 100,000 UTF-16 units (`MAX_TYPED_CHARS`, never inside a surrogate pair). With
+  `line_breaks` on and an insert into a multi-line field (`keepsLineBreaks`: `Field.multiLine`,
+  from `node.isMultiLine` or `isMultiLineTextType` on the `EditorInfo`), each `\n`-separated line
+  is sanitised on its own and the `\n` between lines is kept, empty lines too; U+2028 and U+2029
+  still become spaces. A single-line field only displays a committed `\n` as a space, so it gets
+  the spaced text, and so do the clipboard, captions and an insert that falls back to the
+  clipboard. The field's IME action does not matter: `commitText` never fires it.
 - **Insert** (`FieldAccess.kt` — `insert`): one leading space when the character before the
   cursor is not whitespace, then one `commitText`. No input connection re-plans as no field.
 - **Clipboard** (`copy`): a plain clip, not marked sensitive, never cleared.
@@ -248,6 +254,10 @@ is declared content, never instructions.
 
 - `capitalize_first_word` off swaps rule 1 for `LOWERCASE_FIRST_RULE` (`Polish.kt` —
   `builtInPrompt`) and gives a lower-cased first-word "I" its capital back (`restoreFirstI`).
+- `line_breaks` on appends byovox's `LINE_BREAK_RULE` to rule 8 (`OUTPUT_RULE`): a spoken "new
+  line" or "new paragraph" becomes a break or an empty line. Captions never get it. With it on, any
+  newline the model writes survives into a multi-line field, and one said at the very end is
+  trimmed away.
 - A glossary (`stt_prompt`) appends `GLOSSARY_RULE` and the glossary (`systemPrompt`); the same
   text goes to STT as `prompt`.
 - The request (`PolishClient`): system prompt, user `<transcription>…</transcription>`,

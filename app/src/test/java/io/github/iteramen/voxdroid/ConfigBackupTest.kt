@@ -79,7 +79,7 @@ class ConfigBackupTest {
         assertEquals("nor from the file the consent lives in", snapshot, ConfigBackup.snapshot(snapshot.settings, snapshot.secrets + mapOf("voice_captions" to true)))
         for (secret in listOf(false, true)) assertFalse(ConfigBackup.allowed("voice_captions", secret))
         for (key in listOf("trigger_volume", "trigger_button", "allow_during_call", "audio_cues", "haptic_cues",
-            "capitalize_first_word", "strip_terminal_period", "allow_insecure_http")) assertTrue(ConfigBackup.allowed(key, false))
+            "capitalize_first_word", "strip_terminal_period", "line_breaks", "allow_insecure_http")) assertTrue(ConfigBackup.allowed(key, false))
     }
 
     @Test fun restoreRemovesAbsentConfigurationAndChangesTokensOnlyAfterEndpoints() {

@@ -106,6 +106,8 @@
     <string name="settings_capitalize_first_word_summary">Off lower-cases the first word instead, leaving I, proper nouns and acronyms alone.</string>
     <string name="settings_strip_terminal_period">Drop the terminal period</string>
     <string name="settings_strip_terminal_period_summary">Exactly one trailing . comes off what is typed; an ellipsis, ? and ! survive.</string>
+    <string name="settings_line_breaks">Line breaks</string>
+    <string name="settings_line_breaks_summary">A spoken \"new line\" or \"new paragraph\" becomes a line break in a multi-line field. Other fields and the clipboard get spaces.</string>
     <string name="settings_not_set">Not set</string>
     <string name="settings_token_stored">Set</string>
     <string name="settings_cleartext">Plain http: your audio, transcript and token cross the network in clear — fine over Tailscale or WireGuard, not over anything else.</string>

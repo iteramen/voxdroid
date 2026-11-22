@@ -572,7 +572,8 @@ and byovox's own bench is what says so.
 ## Commit
 
 The two transforms between the cleanup pass and `commitText`: sanitise, then trim and the one
-terminal period. `Drop the terminal period` is the last switch on the **Cleanup** page.
+terminal period. `Drop the terminal period` and `Line breaks` are the last switches on the
+**Cleanup** page.
 
 - [ ] dictate two sentences with a pause between them: one line lands, with no line break in it
       and no trailing period
@@ -585,6 +586,11 @@ terminal period. `Drop the terminal period` is the last switch on the **Cleanup*
       dictate: the text lands with the tab gone, and `adb logcat -s voxdroid` carries
       `commit: removed 1 control or format characters` and never the text; an ordinary dictation
       logs no such line
+- [ ] `Line breaks` on, Cleanup on, dictate "see you then new line bring the slides": it lands as
+      two lines in Google Messages and in Keep, and as one spaced line in a search box. In WhatsApp
+      and in Telegram, with their "Enter is send" setting both on and off, the dictation inserts a
+      line break and does not send the message. With `No text field, or the field changed` set to `Copy to the clipboard` and the take
+      started with no field focused, the copied text has spaces
 
 ## Language
 

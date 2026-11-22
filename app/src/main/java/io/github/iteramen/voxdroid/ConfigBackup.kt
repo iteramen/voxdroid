@@ -24,7 +24,7 @@ internal object ConfigBackup {
     private val text = setOf("stt_base_url", "stt_model", "stt_prompt", "polish_base_url", "polish_model",
         "chip_languages", "no_field_mode", "tap_trigger") + TTS_LANGUAGES.flatMap { listOf("tts_url_$it", "tts_model_$it", "tts_voice_$it") }
     private val flags = setOf("allow_insecure_http", "polish_enabled", "capitalize_first_word", "strip_terminal_period",
-        "trigger_volume", "trigger_button", "allow_during_call", "haptic_cues", "audio_cues", "tts_inherit_token_he", "tts_inherit_token_ru",
+        "line_breaks", "trigger_volume", "trigger_button", "allow_during_call", "haptic_cues", "audio_cues", "tts_inherit_token_he", "tts_inherit_token_ru",
         "read_anchor_right", "read_anchor_bottom")
     private val whole = setOf("stt_timeout_s", "polish_min_words", "polish_timeout_s", "volume_hold_ms",
         "cue_volume", "pill_bottom_above_keyboard", "tts_timeout_s", "read_glyph_x", "read_glyph_y")

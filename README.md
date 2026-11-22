@@ -81,6 +81,9 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 - **Discard:** tap **✕** while recording. Turning the screen off abandons the take at any stage.
 - **The text** lands at the cursor of the field that was focused when you started, with a space in
   front when needed. Line breaks become spaces, and one trailing period comes off (Cleanup page).
+  With **Line breaks** on (Cleanup page, off by default), a spoken "new line" or "new paragraph"
+  becomes a line break in a multi-line field; a single-line field and the clipboard still get
+  spaces.
 - **Errors** name the failing stage on the pill (`stt timed out`, `stt[he] HTTP 502`); after a failed
   transcription, **↻ Retry** sends the same audio again without re-speaking.
 - **Refused:** a password field; a phone call in progress, unless *Dictate during a call* is on; no

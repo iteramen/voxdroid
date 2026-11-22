@@ -37,6 +37,30 @@ class PolishPromptTest {
     }
 
     @Test
+    fun theFileCarriesTheOutputRuleExactlyOnceAndNoLineBreakRule() {
+        assertEquals(prompt, 1, occurrences(prompt, OUTPUT_RULE))
+        assertFalse(prompt, prompt.contains(LINE_BREAK_RULE))
+        assertEquals(prompt, builtInPrompt(prompt, capitalizeFirstWord = true, lineBreaks = false))
+    }
+
+    @Test
+    fun lineBreaksAppendTheirRuleToRuleEightAndChangeNothingElse() {
+        val on = builtInPrompt(prompt, capitalizeFirstWord = true, lineBreaks = true)
+
+        assertEquals(on, 1, occurrences(on, OUTPUT_RULE + LINE_BREAK_RULE))
+        assertEquals(prompt, on.replaceFirst(LINE_BREAK_RULE, ""))
+    }
+
+    @Test
+    fun lineBreaksComposeWithTheLoweredRuleOne() {
+        val both = builtInPrompt(prompt, capitalizeFirstWord = false, lineBreaks = true)
+
+        assertEquals(both, 1, occurrences(both, LOWERCASE_FIRST_RULE))
+        assertEquals(both, 1, occurrences(both, OUTPUT_RULE + LINE_BREAK_RULE))
+        assertEquals(builtInPrompt(prompt, capitalizeFirstWord = false), both.replaceFirst(LINE_BREAK_RULE, ""))
+    }
+
+    @Test
     fun aGlossaryAppendsTheRuleOnceWithItsText() {
         val composed = systemPrompt(prompt, "Grafana, Redis, Tailscale")
 

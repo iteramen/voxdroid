@@ -4,7 +4,7 @@ import android.media.AudioManager
 import android.text.InputType
 
 /** [Field.identity] is whatever the host compares fields by: the `AccessibilityNodeInfo` itself, whose `equals` is window plus node id. */
-data class Field(val identity: Any, val isPassword: Boolean)
+data class Field(val identity: Any, val isPassword: Boolean, val multiLine: Boolean = false)
 
 enum class NoFieldMode(val stored: String) {
     Refuse("refuse"),
@@ -39,7 +39,8 @@ fun admit(field: Field?, mode: NoFieldMode, inCall: Boolean): Admission = when {
 
 fun delivery(start: Field?, now: Field?, mode: NoFieldMode): Delivery {
     if (now?.isPassword == true) return Delivery.Drop(Notice.PasswordField)
-    if (start != null && start == now) return Delivery.Insert
+    // The same node, even if its EditorInfo read differently at the start; a password `now` is handled above.
+    if (start != null && start.identity == now?.identity) return Delivery.Insert
     val notice = if (start == null) Notice.NoField else Notice.FieldChanged
     return if (mode == NoFieldMode.Clipboard) Delivery.Clipboard(notice) else Delivery.Drop(notice)
 }
@@ -53,6 +54,15 @@ fun isPasswordInputType(inputType: Int): Boolean =
         InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD -> true
         else -> false
     }
+
+/** A text field that takes more than one line; a single-line field only displays a committed `\n` as a space. */
+fun isMultiLineTextType(inputType: Int): Boolean =
+    (inputType and InputType.TYPE_MASK_CLASS) == InputType.TYPE_CLASS_TEXT &&
+        (inputType and InputType.TYPE_TEXT_FLAG_MULTI_LINE) != 0
+
+/** Only an insert into a multi-line field keeps the dictated breaks; a copy and every other field get spaces. */
+fun keepsLineBreaks(lineBreaks: Boolean, decision: Delivery?, field: Field?): Boolean =
+    lineBreaks && decision == Delivery.Insert && field?.multiLine == true
 
 fun isCallMode(mode: Int): Boolean = when (mode) {
     AudioManager.MODE_IN_CALL,

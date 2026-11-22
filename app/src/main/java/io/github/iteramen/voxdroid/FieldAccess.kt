@@ -26,7 +26,7 @@ class FieldAccess(private val service: AccessibilityService) {
         // Compose sets no input type on its nodes but writes the variation into the EditorInfo (API 33).
         val imeType = service.inputMethod?.currentInputEditorInfo?.inputType ?: 0
         val password = node.isPassword || isPasswordInputType(node.inputType) || isPasswordInputType(imeType)
-        return Field(identity = node, isPassword = password)
+        return Field(identity = node, isPassword = password, multiLine = node.isMultiLine || isMultiLineTextType(imeType))
     }
 
     /** Adds one space when the character before the cursor is not whitespace; false when there is no input connection. */
