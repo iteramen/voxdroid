@@ -3,6 +3,15 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## 0.6.6 — 2026-11-22
+
+Added
+- **Line breaks** on the Cleanup page, off by default. With it on, a spoken "new line" or "new
+  paragraph" becomes a line break in a multi-line field, such as a chat or a note. A single-line
+  field, a clipboard copy and a caption get a space instead. The cleanup prompt does the
+  conversion, as byovox's `polish.line_breaks` does, so it needs Cleanup on. Inserting a line
+  break never presses Send.
+
 ## 0.6.5 — 2026-11-19
 
 Fixed
