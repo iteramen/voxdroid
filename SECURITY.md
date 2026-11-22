@@ -203,7 +203,8 @@ The error body is inspected only for fixed rejection fields and is never shown o
 No new data recipient, permission or accessibility capability is introduced.
 
 - The transcript the server returns is **typed into the focused field**. One sanitising pass runs
-  first: every `\n`, U+2028 and U+2029 becomes a space; control characters, every Unicode format
+  first: every `\n`, U+2028 and U+2029 becomes a space (with `line_breaks` on, a `\n` inserted
+  into a multi-line field stays a `\n`, and each line is sanitised on its own); control characters, every Unicode format
   character (category `Cf`, from a Unicode 16.0 table in the code rather than the device's ICU)
   except LRM, RLM, ZWNJ and ZWJ, and any unpaired surrogate are removed; the text is trimmed and,
   while `strip_terminal_period` is on (the default), loses one terminal `.` (never from `..`). The count of removed characters is logged, never the text (`Commit.kt` —

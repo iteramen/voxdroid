@@ -310,15 +310,25 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
         var shown: PillText? = null
         val start = startField
         startField = null
-        val result = finish(text, settings.stripTerminalPeriod)
+        val result = finish(text, settings.stripTerminalPeriod, keepLineBreaks = false)
         droppedNote(result.dropped)?.let { Log.i(TAG, it) }
         val finished = result.text
         var decision: Delivery? = null
         if (finished.isNotEmpty()) {
-            val planned = delivery(start, fields.focused(), settings.noFieldMode)
-            // No input connection is the same as no field.
-            decision = if (planned != Delivery.Insert || fields.insert(finished)) planned else delivery(null, null, settings.noFieldMode)
-            landed = if (decision is Delivery.Drop) "" else finished
+            val now = fields.focused()
+            val planned = delivery(start, now, settings.noFieldMode)
+            val typed = if (keepsLineBreaks(settings.lineBreaks, planned, now)) {
+                finish(text, settings.stripTerminalPeriod, keepLineBreaks = true).text
+            } else {
+                finished
+            }
+            // No input connection is the same as no field; the fallback copy gets the spaced text.
+            decision = if (planned != Delivery.Insert || fields.insert(typed)) planned else delivery(null, null, settings.noFieldMode)
+            landed = when (decision) {
+                is Delivery.Drop -> ""
+                Delivery.Insert -> typed
+                is Delivery.Clipboard -> finished
+            }
             when (decision) {
                 Delivery.Insert -> Unit
                 is Delivery.Clipboard -> {
@@ -432,7 +442,7 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             baseUrl = settings.polishBaseUrl, allowInsecureHttp = settings.allowInsecureHttp,
             model = settings.polishModel, token = settings.polishToken,
             timeoutMs = clampTimeoutS(settings.polishTimeoutS) * MILLIS_PER_SECOND.toInt(),
-            systemPrompt = systemPrompt(builtInPrompt(polishPrompt, settings.capitalizeFirstWord), settings.sttPrompt),
+            systemPrompt = systemPrompt(builtInPrompt(polishPrompt, settings.capitalizeFirstWord, settings.lineBreaks), settings.sttPrompt),
             current = current,
         )
     }

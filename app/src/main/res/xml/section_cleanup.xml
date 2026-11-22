@@ -53,4 +53,10 @@
         android:summary="@string/settings_strip_terminal_period_summary"
         android:title="@string/settings_strip_terminal_period" />
 
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="line_breaks"
+        android:summary="@string/settings_line_breaks_summary"
+        android:title="@string/settings_line_breaks" />
+
 </PreferenceScreen>

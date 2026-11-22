@@ -68,6 +68,8 @@ class Settings(context: Context) {
 
     val stripTerminalPeriod: Boolean get() = prefs.getBoolean("strip_terminal_period", true)
 
+    val lineBreaks: Boolean get() = prefs.getBoolean("line_breaks", false)
+
     val triggerVolume: Boolean get() = prefs.getBoolean("trigger_volume", true)
 
     val tapTrigger: TapTrigger get() = TapTrigger.parse(prefs.getString("tap_trigger", null), prefs.getBoolean("trigger_button", true))

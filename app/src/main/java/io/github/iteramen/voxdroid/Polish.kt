@@ -15,8 +15,15 @@ internal const val GLOSSARY_RULE = """10. Technical terms from the glossary belo
 internal fun readBuiltInPrompt(resources: Resources): String =
     resources.openRawResource(R.raw.polish_prompt).use { it.readBytes().toString(Charsets.UTF_8) }
 
-internal fun builtInPrompt(prompt: String, capitalizeFirstWord: Boolean): String =
-    if (capitalizeFirstWord) prompt else prompt.replaceFirst(CAPITALISE_FIRST_RULE, LOWERCASE_FIRST_RULE)
+internal const val OUTPUT_RULE = """8. Output only the cleaned text: no quotes around it, no explanation, no trailing commentary."""
+
+/** Appended to rule 8 when Line breaks is on; byovox's `LINE_BREAK_RULE`, byte for byte. */
+internal const val LINE_BREAK_RULE = """ A spoken "new line" is a line break in the output and a spoken "new paragraph" is an empty line, and the words themselves are dropped: "see you then new line bring the slides" comes back as "See you then." with "Bring the slides" on the line below. A break never replaces punctuation, in any language: the sentence before it still ends with its period, question mark or exclamation mark, written before the break, and the line after it starts with a capital letter. The same holds for "новая строка", "с новой строки", "новый абзац", "שורה חדשה" and "פסקה חדשה". Never break a line the speaker did not dictate. When the sentence is *about* a new line or paragraph, the words stay words: "add a new line at the end of the file", "the new paragraph is too long"."""
+
+internal fun builtInPrompt(prompt: String, capitalizeFirstWord: Boolean, lineBreaks: Boolean = false): String {
+    val ruled = if (capitalizeFirstWord) prompt else prompt.replaceFirst(CAPITALISE_FIRST_RULE, LOWERCASE_FIRST_RULE)
+    return if (lineBreaks) ruled.replaceFirst(OUTPUT_RULE, OUTPUT_RULE + LINE_BREAK_RULE) else ruled
+}
 
 internal fun systemPrompt(base: String, glossary: String?): String {
     val terms = glossary?.trim().orEmpty()

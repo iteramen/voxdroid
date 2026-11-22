@@ -55,9 +55,16 @@ internal fun sanitize(text: String): Sanitized {
 internal fun droppedNote(dropped: Int): String? =
     if (dropped > 0) "commit: removed $dropped control or format characters" else null
 
+/** With [keepLineBreaks] each `\n`-separated line is sanitised on its own and the `\n` between them kept. */
+private fun sanitizeKeeping(text: String, keepLineBreaks: Boolean): Sanitized {
+    if (!keepLineBreaks) return sanitize(text)
+    val lines = text.split('\n').map(::sanitize)
+    return Sanitized(lines.joinToString("\n") { it.text }, lines.sumOf { it.dropped })
+}
+
 /** [sanitize], trim, exactly one terminal `.` off when [stripTerminalPeriod] (`..` and `?` stay), then a cut to [MAX_TYPED_CHARS]. */
-fun finish(text: String, stripTerminalPeriod: Boolean): Finished {
-    val sanitized = sanitize(text)
+fun finish(text: String, stripTerminalPeriod: Boolean, keepLineBreaks: Boolean = false): Finished {
+    val sanitized = sanitizeKeeping(text, keepLineBreaks)
     var typed = sanitized.text.trim()
     if (stripTerminalPeriod && typed.endsWith('.') && !typed.endsWith("..")) {
         typed = typed.dropLast(1).trimEnd()

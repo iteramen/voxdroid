@@ -143,6 +143,38 @@ class DeliveryTest {
     }
 
     @Test
+    fun aMultiLineTextTypeIsRecognisedAlsoWithFlags() {
+        val multi = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        assertTrue(isMultiLineTextType(multi))
+        assertTrue(isMultiLineTextType(multi or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE))
+    }
+
+    @Test
+    fun aSingleLineOrNonTextTypeIsNotMultiLine() {
+        assertFalse(isMultiLineTextType(InputType.TYPE_CLASS_TEXT))
+        assertFalse(isMultiLineTextType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI))
+        assertFalse(isMultiLineTextType(InputType.TYPE_CLASS_PHONE))
+        assertFalse(isMultiLineTextType(InputType.TYPE_CLASS_NUMBER))
+        assertFalse(isMultiLineTextType(InputType.TYPE_NULL))
+        assertFalse(isMultiLineTextType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_TEXT_FLAG_MULTI_LINE))
+    }
+
+    @Test
+    fun onlyAnInsertIntoAMultiLineFieldKeepsTheBreaks() {
+        val multi = chat.copy(multiLine = true)
+        assertTrue(keepsLineBreaks(lineBreaks = true, Delivery.Insert, multi))
+        assertFalse("switch off", keepsLineBreaks(lineBreaks = false, Delivery.Insert, multi))
+        assertFalse("single-line field", keepsLineBreaks(lineBreaks = true, Delivery.Insert, chat))
+        assertFalse("clipboard", keepsLineBreaks(lineBreaks = true, Delivery.Clipboard(Notice.FieldChanged), multi))
+        assertFalse("no field", keepsLineBreaks(lineBreaks = true, Delivery.Insert, null))
+    }
+
+    @Test
+    fun theSameNodeReadAsMultiLineOnlyAtOneEndStillGetsTheText() {
+        assertEquals(Delivery.Insert, delivery(chat, chat.copy(multiLine = true), NoFieldMode.Refuse))
+    }
+
+    @Test
     fun theModeParsesWithRefuseAsTheDefault() {
         assertEquals(NoFieldMode.Clipboard, NoFieldMode.parse("clipboard"))
         assertEquals(NoFieldMode.Refuse, NoFieldMode.parse("refuse"))

@@ -57,6 +57,37 @@ class CommitTest {
     }
 
     @Test
+    fun withLineBreaksOffANewlineStillBecomesASpace() {
+        assertEquals("a b", finish("a\nb", stripTerminalPeriod = true, keepLineBreaks = false).text)
+    }
+
+    @Test
+    fun withLineBreaksOnTheDictatedBreakIsKept() {
+        val finished = finish("See you then.\nBring the slides", stripTerminalPeriod = true, keepLineBreaks = true)
+
+        assertEquals("See you then.\nBring the slides", finished.text)
+        assertEquals(0, finished.dropped)
+    }
+
+    @Test
+    fun withLineBreaksOnANewParagraphKeepsItsEmptyLine() {
+        assertEquals("a\n\nb", finish("a\n\nb", stripTerminalPeriod = true, keepLineBreaks = true).text)
+    }
+
+    @Test
+    fun withLineBreaksOnLeadingAndTrailingBreaksAreTrimmed() {
+        assertEquals("Hello\nthere", finish("\n\nHello\nthere.\n", stripTerminalPeriod = true, keepLineBreaks = true).text)
+    }
+
+    @Test
+    fun withLineBreaksOnEveryLineIsStillSanitised() {
+        val finished = finish("a‮b\nc\td e\n f", stripTerminalPeriod = true, keepLineBreaks = true)
+
+        assertEquals("ab\ncd e\n f", finished.text)
+        assertEquals(2, finished.dropped)
+    }
+
+    @Test
     fun aTabIsDroppedAndCounted() {
         val finished = finish("a\tb", stripTerminalPeriod = true)
 
