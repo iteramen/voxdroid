@@ -170,6 +170,16 @@ class DeliveryTest {
     }
 
     @Test
+    fun onlyTheInsertLandsTheBrokenLinesAndAFallbackCopyGetsTheSpacedText() {
+        val typed = "See you then.\nBring the slides"
+        val spaced = "See you then. Bring the slides"
+        assertEquals(typed, landedText(Delivery.Insert, typed, spaced))
+        // A failed insert falls back to delivery(null, null, Clipboard): the copy never carries a break.
+        assertEquals(spaced, landedText(delivery(null, null, NoFieldMode.Clipboard), typed, spaced))
+        assertEquals("", landedText(delivery(null, null, NoFieldMode.Refuse), typed, spaced))
+    }
+
+    @Test
     fun theSameNodeReadAsMultiLineOnlyAtOneEndStillGetsTheText() {
         assertEquals(Delivery.Insert, delivery(chat, chat.copy(multiLine = true), NoFieldMode.Refuse))
     }

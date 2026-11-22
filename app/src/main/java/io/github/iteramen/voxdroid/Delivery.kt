@@ -64,6 +64,13 @@ fun isMultiLineTextType(inputType: Int): Boolean =
 fun keepsLineBreaks(lineBreaks: Boolean, decision: Delivery?, field: Field?): Boolean =
     lineBreaks && decision == Delivery.Insert && field?.multiLine == true
 
+/** What a decision lands: [typed] only for the insert, the [spaced] text for a copy (a failed insert's fallback too), nothing for a drop. */
+fun landedText(decision: Delivery, typed: String, spaced: String): String = when (decision) {
+    Delivery.Insert -> typed
+    is Delivery.Clipboard -> spaced
+    is Delivery.Drop -> ""
+}
+
 fun isCallMode(mode: Int): Boolean = when (mode) {
     AudioManager.MODE_IN_CALL,
     AudioManager.MODE_IN_COMMUNICATION,

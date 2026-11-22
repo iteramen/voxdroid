@@ -324,15 +324,11 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             }
             // No input connection is the same as no field; the fallback copy gets the spaced text.
             decision = if (planned != Delivery.Insert || fields.insert(typed)) planned else delivery(null, null, settings.noFieldMode)
-            landed = when (decision) {
-                is Delivery.Drop -> ""
-                Delivery.Insert -> typed
-                is Delivery.Clipboard -> finished
-            }
+            landed = landedText(decision, typed, finished)
             when (decision) {
                 Delivery.Insert -> Unit
                 is Delivery.Clipboard -> {
-                    fields.copy(finished)
+                    fields.copy(landed)
                     shown = deliveryText(decision.notice, copied = true)
                 }
                 is Delivery.Drop -> shown = deliveryText(decision.notice, copied = false)
