@@ -24,6 +24,7 @@ review = "adversarial-review"
 validation = "ci"
 validation_checks = ["gates"]
 test_first_for_bugs = true
+test_paths = ["app/src/test/*", "tools/test_*.py"]
 
 [rolling_issues]
 loop_runs = "Loop runs"
