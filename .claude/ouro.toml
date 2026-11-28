@@ -17,6 +17,7 @@ type = ["bug", "enhancement", "documentation"]
 [[gate]]
 run = "pwsh -NoProfile -Command \"wsl -d Ubuntu-22.04 -- bash -lc './gradlew lint testDebugUnitTest assembleDebug'\""
 ci = "./gradlew lint testDebugUnitTest assembleDebug"
+paths = ["app", "gradle", "build.gradle.kts", "settings.gradle.kts", "gradle.properties"]
 
 [ship]
 policy = "stop-at-pr"
