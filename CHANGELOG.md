@@ -3,6 +3,13 @@
 Notable changes per release. Each release is a tag; a signed APK, its `SHA256SUMS` and a
 build-provenance attestation are published from it on GitHub Releases.
 
+## Unreleased
+
+Fixed
+- With tones on, a dictation starts listening as soon as you trigger it, as byovox does. The
+  microphone used to wait for the start tone to finish, about half a second over Bluetooth. The
+  tone now plays as recording starts and is part of the recording.
+
 ## 0.6.6 — 2026-11-22
 
 Added

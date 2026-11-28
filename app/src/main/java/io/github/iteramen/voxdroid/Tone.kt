@@ -24,7 +24,7 @@ enum class Tone(val notes: List<Note>) {
     val ms: Int get() = notes.sumOf { it.ms }
 }
 
-/** The tone for a haptic [cue]; a Confirm plays [confirm], since the start tone plays before the microphone opens, not with the start's click. */
+/** The tone for a haptic [cue]; a Confirm plays [confirm], since the start tone comes from the take as the microphone opens, not from the start's click. */
 fun toneFor(cue: Cue, confirm: Tone?): Tone? = when (cue) {
     Cue.None -> null
     Cue.Confirm -> confirm
@@ -58,14 +58,10 @@ class TonePlayer(context: Context, private val settings: Settings, private val m
 
     private class Playing(val track: AudioTrack, val focus: AudioFocusRequest)
 
-    /**
-     * Returns false, and never calls [done], when nothing plays: the tones are off or muted, focus is
-     * refused, or the device will not open a track. Otherwise [done] runs on [main] once the tone has
-     * left the speaker, never before this returns.
-     */
-    fun play(tone: Tone, done: (() -> Unit)? = null): Boolean {
+    /** Plays nothing when the tones are off or muted, focus is refused, or the device will not open a track. */
+    fun play(tone: Tone) {
         val percent = settings.cueVolume
-        if (!audible(settings.audioCues, percent, audio.ringerMode, notifications.currentInterruptionFilter)) return false
+        if (!audible(settings.audioCues, percent, audio.ringerMode, notifications.currentInterruptionFilter)) return
         stop()
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
@@ -74,7 +70,7 @@ class TonePlayer(context: Context, private val settings: Settings, private val m
         val focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
             .setAudioAttributes(attributes)
             .build()
-        if (audio.requestAudioFocus(focus) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) return false
+        if (audio.requestAudioFocus(focus) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) return
         val samples = pcm(tone, percent, SAMPLE_RATE)
         var track: AudioTrack? = null
         try {
@@ -99,7 +95,6 @@ class TonePlayer(context: Context, private val settings: Settings, private val m
                 if (finished) return@Runnable
                 finished = true
                 if (playing === p) stop()
-                done?.invoke()
             }
             // The marker is the last frame played out; the guard covers the output latency after it.
             track.notificationMarkerPosition = samples.size
@@ -111,7 +106,7 @@ class TonePlayer(context: Context, private val settings: Settings, private val m
                 override fun onPeriodicNotification(t: AudioTrack) = Unit
             }, main)
             track.play()
-            // A marker that never arrives must not hold a take at Starting.
+            // A marker that never arrives must not hold the track and the audio focus.
             main.postDelayed(finish, tone.ms + FALLBACK_MS)
         } catch (failed: RuntimeException) {
             // UnsupportedOperationException from build, IllegalStateException from write or play.
@@ -119,12 +114,10 @@ class TonePlayer(context: Context, private val settings: Settings, private val m
             if (playing?.track === track) playing = null
             track?.release()
             audio.abandonAudioFocusRequest(focus)
-            return false
         }
-        return true
     }
 
-    /** Releases the tone playing, if any; a pending [play] `done` still runs on [main] unless its callbacks are removed. */
+    /** Releases the tone playing, if any. */
     fun stop() {
         val p = playing ?: return
         playing = null

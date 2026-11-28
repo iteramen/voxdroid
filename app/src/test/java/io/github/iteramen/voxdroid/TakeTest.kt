@@ -5,12 +5,12 @@ import org.junit.Test
 
 class TakeTest {
 
-    private class FakeHost(var startError: String? = null, var tone: Boolean = false) : TakeHost {
+    private class FakeHost(var startError: String? = null) : TakeHost {
         val calls = mutableListOf<String>()
         val delivered = mutableListOf<String>()
         var sent: ByteArray? = null
-        override fun startTone(take: Int): Boolean { calls += "tone#$take"; return tone }
         override fun startRecording(): String? { calls += "start"; return startError }
+        override fun startTone() { calls += "tone" }
         override fun stopRecording(): ByteArray { calls += "stop"; return byteArrayOf(1, 2, 3) }
         override fun armCap() { calls += "arm" }
         override fun cancelCap() { calls += "cancel-cap" }
@@ -28,7 +28,7 @@ class TakeTest {
         assertEquals(TakeState.Recording, take.state)
         take.on(TakeEvent.Trigger)
         assertEquals(TakeState.Working(Stage.Stt), take.state)
-        assertEquals(listOf("tone#1", "start", "arm", "cancel-cap", "stop", "transcribe#${take.currentTake}"), host.calls)
+        assertEquals(listOf("start", "arm", "tone", "cancel-cap", "stop", "transcribe#${take.currentTake}"), host.calls)
     }
 
     @Test
@@ -75,7 +75,7 @@ class TakeTest {
         assertEquals(TakeState.Error("mic: permission missing", canRetry = false), t.state)
         t.on(TakeEvent.Retry)
         assertEquals(TakeState.Error("mic: permission missing", canRetry = false), t.state)
-        assertEquals(listOf("tone#1", "start"), missing.calls)
+        assertEquals(listOf("start"), missing.calls)
     }
 
     @Test
@@ -92,7 +92,7 @@ class TakeTest {
         val stale = take.currentTake
         take.on(TakeEvent.Cancel)
         assertEquals(TakeState.Idle, take.state)
-        assertEquals(listOf("tone#1", "start", "arm", "cancel-cap", "stop", "ended"), host.calls)
+        assertEquals(listOf("start", "arm", "tone", "cancel-cap", "stop", "ended"), host.calls)
         take.on(TakeEvent.Transcript("late", stale))
         assertEquals(emptyList<String>(), host.delivered)
     }
@@ -214,63 +214,18 @@ class TakeTest {
     }
 
     @Test
-    fun theMicrophoneOpensOnlyOnceTheStartToneHasEnded() {
-        host.tone = true
+    fun aTriggerFromIdleRecordsAtOnceAndThenRequestsTheStartTone() {
         take.on(TakeEvent.Trigger)
-        assertEquals(TakeState.Starting, take.state)
-        assertEquals(listOf("tone#1"), host.calls)
-        take.on(TakeEvent.StartToneEnded(take.currentTake))
         assertEquals(TakeState.Recording, take.state)
-        assertEquals(listOf("tone#1", "start", "arm"), host.calls)
+        assertEquals(listOf("start", "arm", "tone"), host.calls)
     }
 
     @Test
-    fun aTriggerOrRetryDuringTheStartToneIsIgnored() {
-        host.tone = true
-        take.on(TakeEvent.Trigger)
-        take.on(TakeEvent.Trigger)
-        take.on(TakeEvent.Retry)
-        take.on(TakeEvent.CapReached)
-        assertEquals(TakeState.Starting, take.state)
-        assertEquals(listOf("tone#1"), host.calls)
-        take.on(TakeEvent.StartToneEnded(take.currentTake))
-        assertEquals(1, host.calls.count { it == "start" })
-    }
-
-    @Test
-    fun cancelDuringTheStartToneNeverOpensTheMicrophone() {
-        host.tone = true
-        take.on(TakeEvent.Trigger)
-        val stale = take.currentTake
-        take.on(TakeEvent.Cancel)
-        assertEquals(TakeState.Idle, take.state)
-        assertEquals(listOf("tone#1", "ended"), host.calls)
-        take.on(TakeEvent.StartToneEnded(stale))
-        assertEquals(TakeState.Idle, take.state)
-        assertEquals(listOf("tone#1", "ended"), host.calls)
-    }
-
-    @Test
-    fun aCancelledTakesToneEndingDoesNotOpenTheNextTakeEarly() {
-        host.tone = true
-        take.on(TakeEvent.Trigger)
-        val a = take.currentTake
-        take.on(TakeEvent.Cancel)
-        take.on(TakeEvent.Trigger)
-        take.on(TakeEvent.StartToneEnded(a))
-        assertEquals(TakeState.Starting, take.state)
-        assertEquals(0, host.calls.count { it == "start" })
-        take.on(TakeEvent.StartToneEnded(take.currentTake))
-        assertEquals(TakeState.Recording, take.state)
-    }
-
-    @Test
-    fun aMicrophoneThatWillNotOpenAfterTheToneIsAnError() {
-        host.tone = true
+    fun aMicrophoneThatWillNotOpenPlaysNoStartTone() {
         host.startError = "mic: unavailable"
         take.on(TakeEvent.Trigger)
-        take.on(TakeEvent.StartToneEnded(take.currentTake))
         assertEquals(TakeState.Error("mic: unavailable", canRetry = false), take.state)
+        assertEquals(0, host.calls.count { it == "tone" })
     }
 
     @Test

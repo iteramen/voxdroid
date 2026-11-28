@@ -2,8 +2,6 @@ package io.github.iteramen.voxdroid
 
 sealed interface TakeState {
     data object Idle : TakeState
-    /** The start tone is playing; the microphone opens once it has finished, so the tone is not recorded. */
-    data object Starting : TakeState
     data object Recording : TakeState
     data class Working(val stage: Stage) : TakeState
     data class Error(val message: String, val canRetry: Boolean) : TakeState
@@ -19,16 +17,15 @@ sealed interface TakeEvent {
     data object Retry : TakeEvent
     data object Cancel : TakeEvent
     data object CapReached : TakeEvent
-    data class StartToneEnded(val take: Int) : TakeEvent
     data class Polishing(val take: Int) : TakeEvent
     data class Transcript(val text: String, val take: Int) : TakeEvent
     data class Failure(val message: String, val take: Int) : TakeEvent
 }
 
 interface TakeHost {
-    /** True when the start tone plays: [TakeEvent.StartToneEnded] for [take] then follows, never before this returns. */
-    fun startTone(take: Int): Boolean
     fun startRecording(): String?
+    /** Called once the microphone is open: the start tone plays over the recording when tones are on. */
+    fun startTone()
     fun stopRecording(): ByteArray
     fun armCap()
     fun cancelCap()
@@ -55,10 +52,9 @@ class Take(private val host: TakeHost) {
             TakeEvent.Trigger -> when (state) {
                 TakeState.Idle, is TakeState.Error -> begin()
                 TakeState.Recording -> stopAndTranscribe()
-                TakeState.Starting, is TakeState.Working -> Unit
+                is TakeState.Working -> Unit
             }
             TakeEvent.CapReached -> if (state == TakeState.Recording) stopAndTranscribe()
-            is TakeEvent.StartToneEnded -> if (event.take == currentTake && state == TakeState.Starting) start()
             TakeEvent.Retry -> {
                 val held = audio
                 if (state is TakeState.Error && held != null) {
@@ -84,10 +80,6 @@ class Take(private val host: TakeHost) {
     private fun begin() {
         currentTake++
         audio = null
-        if (host.startTone(currentTake)) state = TakeState.Starting else start()
-    }
-
-    private fun start() {
         val error = host.startRecording()
         if (error != null) {
             state = TakeState.Error(error, canRetry = false)
@@ -95,6 +87,7 @@ class Take(private val host: TakeHost) {
         }
         state = TakeState.Recording
         host.armCap()
+        host.startTone()
     }
 
     private fun stopAndTranscribe() {

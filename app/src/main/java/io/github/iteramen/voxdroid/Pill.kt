@@ -66,8 +66,6 @@ class Pill(
                 primary.setOnClickListener { onRetry() }
             }
             TakeState.Idle -> hide()
-            // Never rendered: the service keeps whatever the pill showed until the microphone opens.
-            TakeState.Starting -> Unit
         }
         keepScreenOn(keepsScreenOn(state))
     }

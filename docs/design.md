@@ -79,8 +79,8 @@ result back. A second single-thread executor (`logWriter`) writes dictation log 
 ## The take is a state machine
 
 ```
-Idle ──Trigger, admitted──▶ [Starting] ──▶ Recording ──Trigger or 5-min cap──▶ Working(Stt) ──▶ Working(Polish) ──▶ Idle, delivered
-Starting                    → only while the start tone plays; the microphone opens at its StartToneEnded
+Idle ──Trigger, admitted──▶ Recording ──Trigger or 5-min cap──▶ Working(Stt) ──▶ Working(Polish) ──▶ Idle, delivered
+Recording                   → the microphone opens at once; the start tone plays with it and is recorded
 Trigger not admitted        → no state change; notice and reject cue (no field, password field, call)
 startRecording fails        → Error without Retry (e.g. microphone not granted, 16 kHz refused)
 Cancel                      → Idle from any state: ✕ on the pill (hidden while Working), screen off, service destroyed
@@ -90,7 +90,7 @@ polish fails or is blocked  → the raw transcript is delivered, with a notice a
 delivery                    → insert, clipboard or drop (see Delivery)
 ```
 
-`Take.on` is the whole machine; a Trigger while Starting or Working is ignored. Each take has a number
+`Take.on` is the whole machine; a Trigger while Working is ignored. Each take has a number
 (`currentTake`, bumped by a start and a cancel); a result for any other take is dropped, and the
 worker asks `current` before each lane, `vad` or default-endpoint resend and before cleanup, so a
 cancelled take starts no new request beyond the one resend of an upload that got no status. The
@@ -98,10 +98,10 @@ audio is held in `Take.audio` from the stop until delivery, a cancel or a new ta
 The start field is kept through an Error, so a Retry delivers into it.
 
 1. **Trigger.** `dispatch` looks up the focused field, reads the audio mode and asks `admit`;
-   admitted, it stores the start field and the keyboard's language tag, and the start tone plays
-   (`startTone`) before `startRecording`. `startRecording` checks
-   `RECORD_AUDIO`, starts a microphone-type foreground service on a low-importance notification
-   (`goForeground`) and opens `AudioRecorder` on `VOICE_RECOGNITION`. The stop makes a
+   admitted, it stores the start field and the keyboard's language tag, and `startRecording`
+   opens the log record, checks `RECORD_AUDIO`, starts a microphone-type foreground service on a
+   low-importance notification (`goForeground`) and opens `AudioRecorder` on `VOICE_RECOGNITION`.
+   Once it is open, the start tone plays (`startTone`). The stop makes a
    44-byte-header WAV in memory (`Recorder.kt` — `wav`).
 2. **Transcribe.** Multipart POST to `{base_url}/audio/transcriptions`: `file`, `model`,
    `response_format`, the language fields, `prompt` (the glossary, when set), and `vad=true` on a
@@ -181,11 +181,12 @@ click plays (`toneFor`). Nothing for a stop, a cancel, silence or an empty take.
 plays a static `AudioTrack` with `USAGE_NOTIFICATION_EVENT` under
 `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`, so the notification volume and the normal speaker, headset
 or Bluetooth routing apply; it plays nothing unless the ringer is normal and the interruption
-filter is `ALL` (`audible`: silent, vibrate and any Do Not Disturb mute it). The start tone holds
-the take at `Starting`: the microphone opens 100 ms after the track's last frame has played (or
-500 ms past the tone's length if that marker never comes), so the tone is not recorded. A refused
-focus, a track that will not open or a stale tone end leaves the take to start at once or be
-dropped by its take number; `onDestroy` releases the track and removes the pending end.
+filter is `ALL` (`audible`: silent, vibrate and any Do Not Disturb mute it). As in byovox, the
+microphone opens first and the start tone plays once it is open, with the start's click and the
+recording pill; the tone is recorded and nothing is cut from the take. A microphone that will not
+open plays no start tone. The track is released 100 ms after its last frame has played (or 500 ms
+past the tone's length if that marker never comes); a refused focus or a track that will not open
+plays nothing; `onDestroy` releases the track and removes the pending release.
 
 ## Language policy and routing
 
@@ -327,7 +328,7 @@ log** switch (off by default) and **Delete the dictation log** (with confirmatio
   has no duration. No audio, token, endpoint userinfo or query, response body or exception text:
   `safeDetail` accepts only complete, known diagnostic shapes; unknown text is replaced by
   an omission marker instead of attempting partial secret redaction.
-- **Capture.** `startTone` opens the record (`begin`) at take start, before recording, taking
+- **Capture.** `startRecording` opens the record (`begin`) at take start, before the microphone, taking
   a ticket only if logging is already on. `transcribe` updates that record (`attempt`);
   a Retry of the same take adds a `Retry` event to the open record. Client and routing notes
   (`note`) become `Transport` events for a connection failure and its resend (`SttClient.send`),
