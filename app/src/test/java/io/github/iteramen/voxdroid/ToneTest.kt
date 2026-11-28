@@ -44,13 +44,11 @@ class ToneTest {
     @Test
     fun stateChangesOtherThanAnErrorAreSilent() {
         val silent = listOf(
-            "the tone begins" to cueFor(TakeState.Idle, TakeState.Starting, sameTake = false),
-            "the microphone opens" to cueFor(TakeState.Starting, TakeState.Recording, sameTake = true),
+            "the microphone opens, its tone from the take" to cueFor(TakeState.Idle, TakeState.Recording, sameTake = false),
             "stop" to cueFor(TakeState.Recording, TakeState.Working(Stage.Stt), sameTake = true),
             "polish" to cueFor(TakeState.Working(Stage.Stt), TakeState.Working(Stage.Polish), sameTake = true),
             "silence" to cueFor(TakeState.Working(Stage.Stt), TakeState.Idle, sameTake = true),
             "cancel" to cueFor(TakeState.Recording, TakeState.Idle, sameTake = false),
-            "cancel during the tone" to cueFor(TakeState.Starting, TakeState.Idle, sameTake = false),
             "an admitted trigger" to cueFor(Admission.Record),
         )
         for ((what, cue) in silent) assertNull(what, toneFor(cue, null))

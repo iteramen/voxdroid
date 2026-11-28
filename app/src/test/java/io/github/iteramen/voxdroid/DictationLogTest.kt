@@ -452,9 +452,11 @@ class DictationLogTest {
     fun privacyChangesDuringRecordingFenceTheFirstTranscription() {
         for (change in listOf("delete", "off-on", "enable")) {
             assertTrue(log.setEnabled(change != "enable"))
+            var started = 0
             val machine = Take(object : TakeHost {
-                override fun startTone(take: Int): Boolean { capture.begin(take); return false }
-                override fun startRecording(): String? = null
+                // Tracks currentTake: every start bumps it, and nothing here cancels.
+                override fun startRecording(): String? { capture.begin(++started); return null }
+                override fun startTone() = Unit
                 override fun stopRecording() = ByteArray(0)
                 override fun armCap() = Unit
                 override fun cancelCap() = Unit

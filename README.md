@@ -73,8 +73,8 @@ dictation**. While the screen is open, it checks every five seconds that the spe
 ## Dictate
 
 - **Start:** hold volume-down (500 ms by default, at least 300; Triggers page) or tap the
-  floating 🎤 control (or Android's accessibility button, if you chose it). Recording starts once the start tone has played (at once with tones off)
-  and the pill appears above the keyboard with a red dot and a timer. A quick volume-down press while idle still lowers the volume.
+  floating 🎤 control (or Android's accessibility button, if you chose it). Recording starts at once, with the start tone
+  when tones are on, and the pill appears above the keyboard with a red dot and a timer. A quick volume-down press while idle still lowers the volume.
 - **Stop:** press volume-down, tap the floating 🎤 control or the accessibility button again, or tap **■ Stop** on the pill.
   There is no silence timeout: pause to think as long as you like. A take stops itself at five
   minutes and is transcribed.

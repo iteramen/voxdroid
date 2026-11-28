@@ -803,12 +803,12 @@ by default.
 
 ## Cue tones
 
-A high beep (880 Hz) before recording starts, a lower one (660 Hz) when text lands or is copied,
+A high beep (880 Hz) as recording starts, a lower one (660 Hz) when text lands or is copied,
 a falling pair (440 Hz, then 220 Hz) wherever the double click plays. **Tones on start and done**
 and **Tone volume (%)** (default on, 5) are on the Triggers page. Run with the ringer on and Do
 Not Disturb off unless a row says otherwise, and the notification volume up.
 
-- [ ] hold volume-down in a chat: one high beep, then the pill appears and the click plays; tap the
+- [ ] hold volume-down in a chat: one high beep as the pill appears and the click plays; tap the
       chosen tap control instead: the same
 - [ ] stop the take: one lower beep as the text lands; mode Clipboard with no field focused: the
       same beep with `copied to the clipboard`
@@ -820,20 +820,24 @@ Not Disturb off unless a row says otherwise, and the notification volume up.
       pair with `field changed — not inserted`
 - [ ] trigger in silence and stop: no tone with `silence`; `✕` while recording, the screen turning
       off while the pill reads `stt…`, and Stop alone: no tone
-- [ ] trigger and tap `✕` within the beep, or turn the screen off within it: no pill, no microphone
-      indicator, and no tone afterwards
+- [ ] trigger and tap `✕` within the beep, or turn the screen off within it: the pill and the
+      microphone indicator go, and no tone follows
 - [ ] turn **Tones on start and done** off: none of the rows above beeps, and the clicks still play
 - [ ] **Tone volume (%)** at 0: no tone; at 5 against 50: the second is clearly louder; the setting
       survives a force stop
 - [ ] tones on, **Vibrate on start and done** off: beeps and no clicks; both on: both, the click
-      at the start coming once the beep has finished
+      at the start coming with the beep
 - [ ] ringer on vibrate, ringer silent, and Do Not Disturb on (in each case try Priority only
       too): no tone, the clicks unchanged, and the system volumes and DND state unchanged afterwards
 - [ ] with music playing: the music ducks for each beep and comes back
 - [ ] the beeps come from the phone speaker with nothing connected, from a wired headset when
       plugged in, and from a Bluetooth headset when connected; a take starts and lands each time
-- [ ] dictate one word on the speaker at volume 100 % against a server that logs or keeps the
-      upload: the start beep is not in the uploaded audio
+- [ ] tones on, the accessibility button as the trigger: from the launcher's button-tap log to the
+      microphone opening in `adb shell dumpsys audio`, within about 250 ms, on the phone speaker and
+      over Bluetooth; the start beep is still audible on both
+- [ ] on the phone speaker and over Bluetooth, the same spoken sentence with tones on and off: the
+      transcript does not change because of the beep; a take with no speech, tones on, still comes
+      back as `silence`, not as text made from the beep
 
 ## Voice-message processing
 

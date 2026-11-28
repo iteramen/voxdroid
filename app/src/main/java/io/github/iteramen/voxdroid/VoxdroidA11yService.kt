@@ -218,16 +218,13 @@ class VoxdroidA11yService : AccessibilityService(), TakeHost {
             main.removeCallbacks(tick)
             return
         }
-        if (state == TakeState.Starting) return
         pill.show(state, (SystemClock.elapsedRealtime() - recordingSince) / MILLIS_PER_SECOND)
     }
 
-    override fun startTone(take: Int): Boolean {
-        capture.begin(take)
-        return tones.play(Tone.Start) { dispatch(TakeEvent.StartToneEnded(take)) }
-    }
+    override fun startTone() = tones.play(Tone.Start)
 
     override fun startRecording(): String? {
+        capture.begin(machine.currentTake)
         // A microphone foreground service without RECORD_AUDIO throws a SecurityException on Android 14+,
         // so the permission is checked first and named.
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
